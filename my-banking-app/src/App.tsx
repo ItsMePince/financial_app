@@ -1,4 +1,4 @@
-import React from 'react';
+import React from 'react'; 
 import { User, Download, Upload, TrendingUp, Calendar, Home, BarChart3 } from 'lucide-react';
 import './App.css';
 
