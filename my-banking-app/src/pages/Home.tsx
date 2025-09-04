@@ -1,9 +1,10 @@
 import React from 'react';
-import { User, Home, BarChart3, Calculator } from 'lucide-react';
-import './App.css';
+import BottomNav from './buttomnav'; // ใช้ไฟล์เดิมได้ แต่คอมโพเนนต์ต้องชื่อ BottomNav
+import './buttomnav.css';
+import './Home.css';
 
-function App() {
-  const username = 'Amanda'; // ประกาศนอก JSX
+function Home() {
+  const username = 'Amanda';
 
   return (
     <div className="App">
@@ -53,14 +54,14 @@ function App() {
         {/* Recent Transactions Header */}
         <div className="transaction-header">
           <span className="transaction-title active">ล่าสุด</span>
-          <span className="transaction-link" >ดูทั้งหมด</span>
+          <span className="transaction-link">ดูทั้งหมด</span>
         </div>
 
         {/* Recent Transaction */}
         <div className="transaction-item">
           <div className="transaction-info">
             <div className="transaction-avatar"></div>
-            <span className="transaction-description">ซื้อหยุกรอบ</span>
+            <span className="transaction-description">ซื้อหมูกรอบ</span>
           </div>
           <span className="transaction-amount">-200</span>
         </div>
@@ -88,29 +89,9 @@ function App() {
       </div>
 
       {/* Bottom Navigation */}
-      <div className="bottom-nav">
-        <div className="nav-buttons">
-          <button className="nav-button">
-            <div className="nav-icon">
-              <Calculator size={20} />
-            </div>
-          </button>
-
-          <button className="nav-button">
-            <div className="nav-icon">
-              <Home size={20} />
-            </div>
-          </button>
-
-          <button className="nav-button">
-            <div className="nav-icon">
-              <BarChart3 size={20} />
-            </div>
-          </button>
-        </div>
-      </div>
+      <BottomNav />
     </div>
   );
 }
 
-export default App;
+export default Home;
