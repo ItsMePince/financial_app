@@ -1,0 +1,52 @@
+.month-wrapper {
+  max-width: 430px;
+  margin: auto;
+  padding: 16px;
+  font-family: sans-serif;
+}
+
+.month-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: teal;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.summary-card {
+  background: #e6f7f2;
+  border-radius: 16px;
+  padding: 16px;
+  margin-top: 12px;
+}
+
+.summary-title {
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.month-switcher {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.kpi-row {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 12px;
+}
+
+.income { color: #10b981; font-weight: bold; }
+.expense { color: #ef4444; font-weight: bold; }
+.balance { color: #0ea5e9; font-weight: bold; }
