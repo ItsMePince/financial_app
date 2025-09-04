@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useState } from "react";
 import "./expense.css";
 import { ClipboardList, MapPin, Utensils, Car, Gift } from "lucide-react";
-
+import BottomNav from './buttomnav';
 /* ================= Icons (inline SVG) ================= */
 const ChevronDown = () => (
   <svg viewBox="0 0 24 24" className="icon">
@@ -318,6 +318,7 @@ export default function Expense() {
           <IconCheck />
         </button>
       </div>
+        <BottomNav />  
     </div>
   );
 }

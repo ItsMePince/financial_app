@@ -12,7 +12,7 @@ import {
   Car, Bike,Banknote,
   Gift, Coffee,
 } from "lucide-react";
-
+import BottomNav from './buttomnav';
 type LucideIcon = React.ComponentType<{ className?: string }>;
 type IconItem = { key: string; label: string; Icon: LucideIcon };
 
@@ -204,6 +204,7 @@ export default function IncomeCustom() {
           ))
         )}
       </section>
+      <BottomNav />  
     </div>
   );
 }

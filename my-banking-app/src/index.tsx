@@ -11,7 +11,7 @@ import Login from './pages/Login';
 import Month from './pages/month';
 import Signup from './pages/SignUp';
 import Summary from './pages/summary';
-
+import AccountSelect from './pages/AccountSelect';
 
 
 
@@ -24,7 +24,7 @@ const root = ReactDOM.createRoot(
 );
 root.render(
   <React.StrictMode>
-    <Expense />
+    < Income/>
   </React.StrictMode>
 );
 

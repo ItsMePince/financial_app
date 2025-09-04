@@ -111,3 +111,48 @@ body { margin: 0; background: var(--bg); font-family: system-ui, -apple-system, 
   font-size: 1.4rem;
 }
 .icon { transform: translateY(1px); }
+:root {
+  --nav-bg: var(--bg-elev);
+  --nav-border: rgba(0,0,0,.06);
+  --nav-icon: #374151;        /* สีไอคอน/ตัวอักษร */
+  --nav-chip: #ccfbf1;        /* พื้นหลังไอคอนวงกลม ถ้าใช้ */
+}
+
+.bottom-nav {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 1rem;
+  background: var(--nav-bg);
+  border: 1px solid var(--nav-border);
+  border-radius: 999px;
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,.12);
+  padding: .5rem;
+  z-index: 30;
+  display: flex;
+  gap: .25rem;
+}
+
+.bottom-nav .nav-button {
+  background: none;
+  border: 0;
+  color: var(--nav-icon);     /* ✅ กำหนดสีไอคอนที่นี่ */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 3.8rem;
+  padding: .5rem 0;
+  cursor: pointer;
+  transition: transform .18s ease;
+}
+
+.bottom-nav .nav-button:hover { transform: translateY(-2px); }
+
+.bottom-nav .nav-icon {
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  background: var(--nav-chip);
+  display: grid;
+  place-items: center;
+}

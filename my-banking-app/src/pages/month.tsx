@@ -10,7 +10,7 @@ import {
   YAxis,
   Tooltip,
 } from "recharts";
-import "./Month.css";
+import "./month.css";
 
 import {
   CalendarDays,
@@ -21,6 +21,7 @@ import {
   LineChart,
 } from "lucide-react";
 
+import BottomNav from './buttomnav';
 export type Transaction = {
   id: string;
   date: string;      // YYYY-MM-DD
@@ -236,18 +237,7 @@ export default function Month({ transactions = demoTx }: MonthProps) {
         );
       })}
 
-      {/* Bottom nav */}
-      <footer className="bottom-nav">
-        <button className="icon-btn" aria-label="รายการ">
-          <ReceiptText size={18} />
-        </button>
-        <button className="icon-btn" aria-label="หน้าหลัก">
-          <Home size={18} />
-        </button>
-        <button className="icon-btn" aria-label="กราฟ">
-          <LineChart size={18} />
-        </button>
-      </footer>
+      <BottomNav />  
     </div>
   );
 }

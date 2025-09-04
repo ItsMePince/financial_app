@@ -24,7 +24,7 @@ import {
   ChevronLeft,     // prev day
   ChevronRight,    // next day
 } from "lucide-react";
-
+import BottomNav from './buttomnav';
 // แมปชื่อหมวด → ไอคอน (เพิ่ม/แก้ได้ตามต้องการ)
 const iconMap: Record<string, LucideIcon> = {
   "ค่าเดินทาง": Bus,
@@ -206,18 +206,7 @@ export default function Day({
         )}
       </section>
 
-      {/* Bottom nav */}
-      <footer className="bottom-nav">
-        <button className="icon-btn" aria-label="รายการ">
-          <ReceiptText size={18} />
-        </button>
-        <button className="icon-btn" aria-label="หน้าหลัก">
-          <Home size={18} />
-        </button>
-        <button className="icon-btn" aria-label="กราฟ">
-          <LineChart size={18} />
-        </button>
-      </footer>
+      <BottomNav />  
     </div>
   );
 }

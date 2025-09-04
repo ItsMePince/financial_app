@@ -13,6 +13,7 @@ import {
   LineChart,
 } from "lucide-react";
 
+import BottomNav from './buttomnav';
 type AccountType = "เงินสด" | "ธนาคาร" | "บัตรเครดิต";
 const ACCOUNT_TYPES: AccountType[] = ["เงินสด", "ธนาคาร", "บัตรเครดิต"];
 
@@ -146,17 +147,7 @@ export default function AccountNew() {
         </div>
       </form>
 
-      <footer className="dock">
-        <button className="dock-btn" type="button">
-          <Calculator className="dock-icon" />
-        </button>
-        <button className="dock-btn" type="button">
-          <Home className="dock-icon" />
-        </button>
-        <button className="dock-btn" type="button">
-          <LineChart className="dock-icon" />
-        </button>
-      </footer>
+      <BottomNav />  
     </div>
   );
 }

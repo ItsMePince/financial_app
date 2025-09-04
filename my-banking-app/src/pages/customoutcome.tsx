@@ -23,7 +23,7 @@ import {
   // Entertainment / Relax
   Gamepad, Music, Film, Popcorn, Clapperboard,Sprout,Search
 } from "lucide-react";
-
+import BottomNav from './buttomnav';
 type LucideIcon = React.ComponentType<{ className?: string }>;
 type IconItem = { key: string; label: string; Icon: LucideIcon };
 
@@ -221,6 +221,7 @@ export default function CategoryCustom() {
           ))
         )}
       </section>
+      <BottomNav />  
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import React, { useMemo, useRef, useState } from "react";
 import "./income.css";
+import BottomNav from './buttomnav';
 import {
   ClipboardList,
   MapPin,
@@ -315,6 +316,7 @@ export default function Income() {
           <IconCheck />
         </button>
       </div>
+     <BottomNav />  
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import "./App.css";
+import "./AccountSelect.css";
+import BottomNav from './buttomnav';
 
 type FilterKey = "ALL" | "CASH" | "BANK" | "CREDIT";
 
@@ -197,6 +198,8 @@ function Star({
           strokeLinejoin="round"
         />
       </svg>
+      <BottomNav />  
     </span>
+    
   );
 }
