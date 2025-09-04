@@ -2,6 +2,21 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import Home from './pages/Home';
+import AccountNew from './pages/accountnew';
+import CustomOutcome from './pages/customoutcome';
+import Day from './pages/day';
+import Expense from './pages/expense';
+import Income from './pages/income';
+import Login from './pages/Login';
+import Month from './pages/month';
+import Signup from './pages/SignUp';
+import Summary from './pages/summary';
+
+
+
+
+
+
 import reportWebVitals from './reportWebVitals';
 
 const root = ReactDOM.createRoot(
@@ -9,7 +24,7 @@ const root = ReactDOM.createRoot(
 );
 root.render(
   <React.StrictMode>
-    <Home />
+    <Expense />
   </React.StrictMode>
 );
 
