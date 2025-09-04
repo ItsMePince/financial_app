@@ -1,14 +1,22 @@
 .month-wrapper {
   max-width: 430px;
-  margin: auto;
+  margin: 0 auto;
   padding: 16px;
-  font-family: sans-serif;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans Thai", sans-serif;
+  color: #0b1b17;
 }
 
 .month-header {
   display: flex;
   align-items: center;
   gap: 12px;
+  margin-bottom: 8px;
+}
+
+.header-right .app-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
 }
 
 .avatar {
@@ -22,30 +30,131 @@
   justify-content: center;
 }
 
+/* ===== Summary ===== */
 .summary-card {
   background: #e6f7f2;
   border-radius: 16px;
   padding: 16px;
   margin-top: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.06);
 }
 
 .summary-title {
-  font-weight: bold;
+  font-weight: 700;
   margin-bottom: 8px;
 }
 
+/* Month switcher */
 .month-switcher {
   display: flex;
   justify-content: center;
+  align-items: center;
   gap: 12px;
   margin-bottom: 12px;
 }
+.nav-btn {
+  border: 0;
+  background: #ccfbf1;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.month-chip {
+  background: #fff;
+  border: 1px solid rgba(0,0,0,.06);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.calendar-ico { opacity: .85; }
 
+/* KPI row */
 .kpi-row {
   display: flex;
   justify-content: space-around;
+  gap: 12px;
   margin-bottom: 12px;
+  flex-wrap: wrap;
 }
+.income { color: #10b981; font-weight: 700; }
+.expense { color: #ef4444; font-weight: 700; }
+.balance { color: #0ea5e9; font-weight: 700; }
+
+/* Chart card */
+.chart-card {
+  background: #fff;
+  border: 1px solid rgba(0,0,0,.06);
+  border-radius: 12px;
+  padding: 8px;
+}
+
+.grid-header {
+  display: grid;
+  grid-template-columns: 80px 1fr 1fr 1fr;
+  gap: 8px;
+  margin: 12px 0 4px;
+  padding: 6px 4px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 80px 1fr 1fr 1fr;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 4px;
+  border-bottom: 1px solid rgba(0,0,0,.06);
+}
+
+.big-row {
+  display: grid;
+  grid-template-columns: 28px 1fr 28px; 
+  align-items: center;
+  gap: 10px;
+  background: #f0fbf7;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-top: 10px;
+}
+
+.row-title {
+  grid-column: 2;
+  justify-self: center;
+  font-weight: 600;
+}
+
+.big-row::after {
+  content: "";
+  grid-column: 3;
+}
+
+.left-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #ccfbf1;
+  display: grid;
+  place-items: center;
+}
+
+.left-badge {
+  justify-self: start;
+  background: #e6f7f2;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.cell { text-align: center; }
+.cell.remain { color: #0ea5e9; }
 
 .income { color: #10b981; font-weight: bold; }
 .expense { color: #ef4444; font-weight: bold; }
