@@ -3,19 +3,21 @@
   --bg: #f2fbf8;
   --card: #e6faf4;
   --bg-elev: #ffffff;
-  --teal: #00a896;
-  --teal-dark: #028d83;
+  --teal: #C4E7E0;
+  --teal-dark: #C4E7E0;
   --muted: #374151;
   --text: #111827;
+  --pos: #16a34a;
   --neg: #ef4444;
+  --border: #e5e7eb;
   --shadow: 0 8px 20px rgba(0,0,0,.08);
   --radius: 18px;
+  --chip: #d1fae5;           /* พื้นหลังวงกลมไอคอน */
+  --chip-icon: #0f766e; 
 }
 
+html, body { height: 100% }
 
-html,body {
-  height: 100%
-}
 .summary-page,
 .App {
   width: 100%;
@@ -24,9 +26,10 @@ html,body {
   padding: 12px 14px 120px;
   background: var(--bg);
   color: var(--text);
-  font-family: ui-sans-serif, system-ui;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
 }
 
+/* header ของหน้าสรุป (ถ้ามี) */
 .header {
   display: flex;
   align-items: center;
@@ -34,31 +37,8 @@ html,body {
   padding: 8px 4px 6px;
 }
 
-.profile-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 999px;
-  background: #1fb6aa;
-  color: #fff;
-  display: grid;
-  place-items: center;
-  font-weight: 700;
-  box-shadow: var(--shadow);
-}
-
-.profile-avatar::before {
-  content: attr(data-initial);
-}
-
-.username {
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.list-wrap {
-  display: grid;
-  gap: 16px;
-}
+/* ===== กล่องรายวัน ===== */
+.list-wrap { display: grid; gap: 16px; }
 
 .day-card {
   background: var(--card);
@@ -69,35 +49,38 @@ html,body {
 
 .day-header {
   background: linear-gradient(0deg, var(--teal) 0%, var(--teal-dark) 100%);
-  color: #fff;
+  color: #111827;
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
 }
+.day-date { font-weight: 800; }
+.day-total { font-size: 14px; }
+.day-total b { font-weight: 800; }
+.day-total .neg { color: #111827; }
 
-.day-date {
-  font-weight: 700;
-}
+.day-body { padding: 12px 12px 16px; }
 
-.day-total {
-  font-size: 14px;
-}
-
-.day-body {
-  padding: 12px 12px 16px;
-}
-
+/* ===== แถวรายการ =====
+   ใช้ Grid 2 คอลัมน์: ซ้าย 1fr / ขวา 88px (ตัวเลขเท่ากันทุกแถว) */
 .row {
-  position: relative;
-  display: grid;
-  grid-template-columns: 1fr auto;
+  display: grid !important;
   align-items: center;
-  padding: 8px 6px;
-  cursor: pointer;
+  gap: 12px;
+  margin: 8px 4px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: 0 4px 10px rgba(2,6,23,.05);
+  box-sizing: border-box;
+  grid-template-columns: 1fr 96px !important; /* เดิม 88px → เผื่อระยะขวา */
+  padding: 10px 14px;    
 }
 
+/* ซ้าย: ไอคอน + ข้อความ */
 .row-left {
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -107,167 +90,116 @@ html,body {
   width: 40px;
   height: 40px;
   border-radius: 999px;
-  background: var(--bg-elev);
   display: grid;
   place-items: center;
   color: var(--muted);
   box-shadow: var(--shadow);
+  background: var(--chip);   /* เขียวอ่อน */
+  color: var(--chip-icon);   /* สีเส้นไอคอน */
+  box-shadow: 0 2px 8px rgba(15,118,110,.15);
+}
+.row-avatar svg{
+  width: 18px;
+  height: 18px;
 }
 
-.row-text {
-  line-height: 1.2;
-}
-
+.row-text { min-width: 0; line-height: 1.2; }
 .row-title {
-  font-weight: 600;
-}
-
-.row-tag {
-  font-size: 13px;
-  color: var(--muted);
-}
-
-.row-amt {
-  font-weight: 600;
+  font-weight: 800;
   color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
+.row-tag { font-size: 13px; color: var(--muted); }
 
-.neg {
-  color: var(--neg);
+/* ขวา: คอลัมน์จำนวนเงิน (คงที่ + ชิดขวา) */
+.row-amt{
+  width: 88px;               /* ตัวเลขจริงอยู่กว้าง 88px */
+  padding-right: 8px;        /* เว้นจากขอบอีกนิดไม่ให้ชิดเกินไป */
+  text-align: right;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .2px;
 }
+.row-amt.neg { color: var(--neg); }
+.row-amt.pos { color: --pos; }
 
+/* เส้นคั่นเต็มแถว (พาดทั้ง 2 คอลัมน์) */
 .divider {
   grid-column: 1 / -1;
   height: 1px;
-  background: rgba(0, 0, 0, .12);
-  margin: 10px 0 0 56px;
+  background: var(--border);
+  margin: 10px 0 0 56px; /* เว้นซ้ายเท่า avatar */
 }
 
-.day-card.is-clickable {
-  cursor: pointer;
-  transition: transform .18s ease, box-shadow .18s ease;
-}
+/* hover ทั้งการ์ด */
+.day-card.is-clickable { cursor: pointer; transition: transform .18s, box-shadow .18s; }
+.day-card.is-clickable:hover { transform: translateY(-2px); box-shadow: 0 14px 28px rgba(0,0,0,.12); }
 
-.day-card.is-clickable:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 14px 28px rgba(0, 0, 0, .12);
-}
-
-/* Detail overlay */
+/* ===== Modal รายละเอียด ===== */
 .detail-overlay {
-  position: fixed;
-  inset: 0;
+  position: fixed; inset: 0;
   background: rgba(0, 0, 0, .4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: flex; align-items: center; justify-content: center;
   z-index: 40;
 }
 
 .detail-card {
-  width: 394px;
-  height: 357px;
-  background: #fbb6b6;
+  width: min(420px, 92vw);
+  background: var(--bg-elev);
   border-radius: 20px;
   padding: 16px;
   position: relative;
   box-shadow: var(--shadow);
-  display: flex;
-  flex-direction: column;
+  display: flex; flex-direction: column;
+  color: var(--text);
 }
 
 .detail-close {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--text);
+  position: absolute; top: 12px; right: 12px;
+  background: none; border: none; cursor: pointer; color: var(--text);
 }
 
-.detail-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
+.detail-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.detail-avatar { width: 36px; height: 36px; border-radius: 50%; background: #f1f5f9; }
+.detail-title { flex: 1; font-weight: 700; }
+.detail-actions { display: flex; gap: 6px; }
+.icon-btn { background: none; border: none; cursor: pointer; color: var(--text); }
+.detail-body { font-size: 14px; line-height: 1.5; color: var(--text); }
+
+/* ยูทิลสีลบ/บวกทั่วไป */
+.neg { color: var(--neg); }
+.pos { color: var(--pos); }
+
+/* ===== กว้างขึ้น + เว้นระยะมากขึ้น (override) ===== */
+
+/* ลด padding ซ้ายขวาของพื้นที่ภายใน day-card
+   เพื่อให้กล่อง (row) กว้างขึ้น */
+.day-body{
+  padding: 12px 8px 18px;            /* เดิม 12px 12px 16px */
 }
 
-.detail-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--bg-elev);
+/* กล่องแต่ละรายการ: เพิ่มระยะห่างแนวตั้ง และขยาย padding ในกล่อง */
+.row{
+  grid-template-columns: 1fr 96px !important; /* เผื่อขวาอีกนิด เลขไม่อึดอัด */
+  padding: 12px 16px;                          /* กล่องโปร่งขึ้น */
+  margin: 14px 0;                              /* ระยะห่างกล่องต่อกล่องมากขึ้น */
 }
 
-.detail-title {
-  flex: 1;
-  font-weight: 600;
+/* คอลัมน์ตัวเลข: กว้างเท่ากับ grid ขวา + เว้นจากขอบอีกนิด */
+.row-amt{
+  width: 96px;           /* ต้องเท่ากับคอลัมน์ขวาของ .row */
+  padding-right: 6px;    /* ไม่ให้ชิดขอบเกินไป */
+  text-align: right;
 }
 
-.detail-actions {
-  display: flex;
-  gap: 6px;
-}
+/* เส้นคั่นกลางแถว ถ้าไม่อยากให้แน่น เก็บออกได้เลย */
+.divider{ display: none; }
 
-.icon-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--text);
-}
+/* เว้นระยะระหว่าง day-card แต่ละวันมากขึ้น */
+.list-wrap{ gap: 24px; }                 /* เดิม 16px */
 
-.detail-body {
-  font-size: 14px;
-  line-height: 1.5;
-  color: var(--text);
-}
-
-
-
-/* buttomnav.css */
-:root {
-  --nav-bg: var(--bg-elev);
-  --nav-border: rgba(0,0,0,.06);
-  --nav-icon: #374151;        /* สีไอคอน/ตัวอักษร */
-  --nav-chip: #ccfbf1;        /* พื้นหลังไอคอนวงกลม ถ้าใช้ */
-}
-
-.bottom-nav {
-  position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: 1rem;
-  background: var(--nav-bg);
-  border: 1px solid var(--nav-border);
-  border-radius: 999px;
-  box-shadow: 0 10px 15px -3px rgba(0,0,0,.12);
-  padding: .5rem;
-  z-index: 30;
-  display: flex;
-  gap: .25rem;
-}
-
-.bottom-nav .nav-button {
-  background: none;
-  border: 0;
-  color: var(--nav-icon);     /* ✅ กำหนดสีไอคอนที่นี่ */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 3.8rem;
-  padding: .5rem 0;
-  cursor: pointer;
-  transition: transform .18s ease;
-}
-
-.bottom-nav .nav-button:hover { transform: translateY(-2px); }
-
-.bottom-nav .nav-icon {
-  width: 2.4rem;
-  height: 2.4rem;
-  border-radius: 50%;
-  background: var(--nav-chip);
-  display: grid;
-  place-items: center;
+/* ไอคอนในวงกลม — โทนเดียวกับหน้า Custom */
+:root{
+  --chip: #d1fae5;
+  --chip-icon: #0f766e;
 }

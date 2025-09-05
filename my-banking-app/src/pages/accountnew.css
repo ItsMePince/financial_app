@@ -1,166 +1,11 @@
-:root{
-  --border:#e5e7eb;
-  --muted:#9ca3af;
-  --text:#111827;
-  --bg:#ffffff;
-  --brand:#eaffc7;
-  --brand-text:#111827;
-  --chip:#d1fae5;
-}
-
-.accnew-wrap{
-  min-height:100dvh;
-  background:var(--bg);
-  color:var(--text);
-  max-width:420px;
-  margin:0 auto;
-  padding:16px 16px 96px;
-  box-sizing:border-box;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-}
-
-.accnew-topbar{
-  display:flex; align-items:center; gap:12px;
-  margin-bottom:8px;
-}
-.avatar{
-  width:32px; height:32px; border-radius:999px;
-  display:grid; place-items:center;
-  background:#10b981; color:white; font-weight:700;
-}
-.owner{ font-weight:600; }
-
-.title{
-  text-align:center; font-size:1.25rem; margin:14px 0 8px;
-}
-
-.form{ margin-top:8px; }
-
-.row{
-  display:flex; align-items:center; justify-content:space-between;
-  gap:12px; padding:12px 0; border-bottom:1px solid var(--border);
-}
-
-.label{ color:#111; font-weight:600; }
-.input{
-  flex:1;
-  outline:none;
-  border:none;
-  background:transparent;
-  text-align:right;
-  color:var(--text);
-
-  font-size: 1rem;      /* 👈 เพิ่มขนาด font */
-  line-height: 1.5rem;  /* 👈 เพิ่มความสูงบรรทัดให้โปร่งขึ้น */
-  padding: 6px 0;  
-}
-.input::placeholder{ color:var(--muted); }
-
-.select{
-  flex:1;
-  display:flex; justify-content:space-between; align-items:center;
-  color:var(--text);
-  cursor:pointer;
-}
-.select .placeholder{ color:var(--muted); }
-.chev{ color:var(--muted); margin-left:8px; }
-
-.dropdown{
-  border:1px solid var(--border); border-radius:12px; overflow:hidden;
-  margin-top:8px; margin-bottom:8px;
-}
-.dropdown .opt{
-  width:100%; text-align:left; padding:12px 14px; background:#fff;
-  border:0; border-bottom:1px solid var(--border); cursor:pointer;
-}
-.dropdown .opt:last-child{ border-bottom:0; }
-.dropdown .opt.active{ background:#f3f4f6; font-weight:600; }
-
-.icon-current .icon{ width:22px; height:22px; }
-
-.icon-grid{
-  margin:10px 0 4px;
-  display:flex; flex-wrap:wrap; gap:10px;
-}
-.icon-chip{
-  width:40px; height:40px; border-radius:999px;
-  display:grid; place-items:center;
-  border:none; background:var(--chip); cursor:pointer;
-  transition:transform .1s ease;
-}
-.icon-chip .icon{ width:20px; height:20px; }
-.icon-chip.active{ outline:2px solid #10b981; transform:scale(1.04); }
-
-.amount-wrap{ display:flex; align-items:center; gap:8px; }
-.unit{ color:var(--muted); }
-
-.actions{ display:flex; justify-content:flex-end; margin-top:16px; }
-.primary{
-  border:none; padding:10px 20px; border-radius:999px;
-  background:var(--brand); color:var(--brand-text); font-weight:700;
-  cursor:pointer;
-}
-
-.dock{
-  position:fixed; left:0; right:0; bottom:16px;
-  display:flex; justify-content:center; gap:12px;
-}
-.dock-btn{
-  width:42px; height:42px; border-radius:999px; border:none;
-  background:var(--chip); cursor:pointer; font-size:18px;
-   width: 50px;
-  height: 50px;
-  border-radius: 999px;
-  border: none;
-  background: var(--chip);
-  cursor: pointer;
-  display: grid;
-  place-items: center;
-}
-.dock-icon {
-  width: 22px;
-  height: 22px;
-  color: #111827; /* สีดำเข้ม */
-}
-
-
-.row:focus-within{
-  border-color:#10b981;
-  box-shadow:0 0 0 2px rgba(16,185,129,0.2);
-}
-/* ระยะห่างของหัวข้อ */
-.title {
-  text-align: center;
-  font-size: 1.5rem;
-  margin: 32px 0 24px; /* 👈 บรรทัดนี้ทำให้ห่างจากหัวข้อเยอะขึ้น */
-}
-
-/* กล่อง input แต่ละ row */
+/* ===== Canonical row (เหลืออันเดียวพอ) ===== */
 .row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 14px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  margin: 16px 0;   /* 👈 เพิ่มช่องว่างระหว่างกล่อง */
-  background: #fff;
-}
-
-/* effect เวลา focus */
-.row:focus-within {
-  border-color: #10b981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
-}
-/* กำหนดความสูงกล่องทุกอันให้เท่ากัน */
-.row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 0 16px;             /* ขอบด้านซ้าย-ขวา */
-  height: 56px;                /* 👈 ความสูงเท่ากันทุกกล่อง */
+  padding: 0 16px;
+  height: 56px;
   border: 1px solid var(--border);
   border-radius: 12px;
   margin: 16px 0;
@@ -168,76 +13,143 @@
   box-sizing: border-box;
 }
 
-/* ข้อความด้านใน input / select ให้เท่ากัน */
-.input,
-.select {
-  flex: 1;
-  height: 100%;                /* 👈 ยืดให้สูงเท่ากับ row */
-  font-size: 1rem;
-  line-height: 1.5rem;
-  border: none;
-  outline: none;
-  background: transparent;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;   /* ตัวหนังสือชิดขวา */
+/* เอฟเฟกต์ focus ของทั้งกล่อง */
+.row:focus-within {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16,185,129,.25);
 }
 
-/* placeholder */
-.input::placeholder {
+/* ===== Kill-pill: ลบความโค้ง/เงา/สไตล์พื้นฐานของ input ให้หมด ===== */
+.input,
+.select,
+.amount-wrap input,
+input,
+select,
+textarea {
+  flex: 1;
+  height: 100%;
+  font-size: 1rem;
+  line-height: 1.5rem;
+
+  /* สำคัญ: ตัดความเป็น "pill" ทิ้งทั้งหมด */
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+
+  /* กัน iOS/Safari ใส่สไตล์เอง */
+  -webkit-appearance: none;
+  appearance: none;
+
+  /* จัดข้อความ */
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+
+.input::placeholder,
+.amount-wrap input::placeholder {
   color: var(--muted);
 }
 
-/* select ให้เหมือน input */
 .select {
   cursor: pointer;
   justify-content: space-between;
 }
-.select .placeholder {
-  color: var(--muted);
-}
-:root {
-  --nav-bg: var(--bg-elev);
-  --nav-border: rgba(0,0,0,.06);
-  --nav-icon: #374151;        /* สีไอคอน/ตัวอักษร */
-  --nav-chip: #ccfbf1;        /* พื้นหลังไอคอนวงกลม ถ้าใช้ */
-}
 
-.bottom-nav {
-  position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: 1rem;
-  background: var(--nav-bg);
-  border: 1px solid var(--nav-border);
-  border-radius: 999px;
-  box-shadow: 0 10px 15px -3px rgba(0,0,0,.12);
-  padding: .5rem;
-  z-index: 30;
-  display: flex;
-  gap: .25rem;
-}
+.chev { color: var(--muted); margin-left: 8px; }
 
-.bottom-nav .nav-button {
-  background: none;
-  border: 0;
-  color: var(--nav-icon);     /* ✅ กำหนดสีไอคอนที่นี่ */
+
+.amount-wrap {
   display: flex;
   align-items: center;
-  justify-content: center;
-  min-width: 3.8rem;
-  padding: .5rem 0;
+  gap: 8px;
+}
+.amount-wrap .unit { color: var(--muted); }
+
+
+.primary {
+  border: none;
+  padding: 12px 20px;
+  border-radius: 999px;
+  background: var(--brand);
+  color: var(--brand-text);
+  font-weight: 700;
   cursor: pointer;
-  transition: transform .18s ease;
+}
+/* ===== คืนสไตล์ icon-chip ให้กลับมาเป็นวงกลมสวย ๆ ===== */
+.icon-grid {
+  margin: 10px 0 4px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
-.bottom-nav .nav-button:hover { transform: translateY(-2px); }
-
-.bottom-nav .nav-icon {
-  width: 2.4rem;
-  height: 2.4rem;
-  border-radius: 50%;
-  background: var(--nav-chip);
+.icon-chip {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;             
   display: grid;
   place-items: center;
+  border: none;
+  background: var(--chip);
+  cursor: pointer;
+  transition: transform .12s ease;
 }
+
+.icon-chip .icon {
+  width: 22px;
+  height: 22px;
+}
+
+.icon-chip.active {
+  outline: 2px solid #10b981;
+  transform: scale(1.08);
+}
+/* กล่อง dropdown ครอบ */
+.dropdown {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-top: 8px;
+  margin-bottom: 8px;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08); /* เงาเบาๆ */
+}
+
+/* ปุ่มแต่ละ option */
+.dropdown .opt {
+  width: 100%;
+  text-align: left;
+  padding: 14px 16px;
+  background: #fff;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.dropdown .opt:last-child {
+  border-bottom: 0;
+}
+
+/* เวลาชี้เมาส์ */
+.dropdown .opt:hover {
+  background: #f9fafb;
+}
+
+/* option ที่เลือกอยู่ */
+.dropdown .opt.active {
+  background: #ecfdf5;    /* เขียวอ่อน */
+  font-weight: 600;
+  color: #065f46;         /* เขียวเข้ม */
+}
+.title {
+  margin-top: 64px;   
+  margin-bottom: 24px;
+}
+
+

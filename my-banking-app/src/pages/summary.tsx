@@ -1,48 +1,67 @@
-import React, { useState } from 'react';
-import { Calculator, Home, BarChart3, Utensils, X, Edit, Trash2 } from 'lucide-react';
-import './summary.css';
-import BottomNav from './buttomnav';
-import './buttomnav.css';
-const entries = [
+// src/pages/summary.tsx
+import React, { useState } from "react";
+import { Utensils, X, Edit, Trash2 } from "lucide-react";
+import "./summary.css";
+import BottomNav from "./buttomnav";
+import "./buttomnav.css";
+
+type Item = {
+  title: string;
+  tag: string;
+  amount: number;
+  date?: string;
+  note?: string;
+  account?: string;
+  location?: string;
+};
+
+type DayEntry = {
+  date: string;
+  total: number;
+  items: Item[];
+};
+
+const entries: DayEntry[] = [
   {
-    date: 'อ. 26/08',
+    date: "อ. 26/08",
     total: -400,
     items: [
-      { title: 'ซื้อหมูกรอบ', tag: '#ซื้ออาหาร', amount: -200, date: '26/08/2025', note: 'โมโต้ : กล้วย', account: 'กสิกรไทย', location: 'เซเว่นหน้าบ้าน.' },
-      { title: 'ซื้อไอคอน', tag: '#ซื้ออาหาร', amount: -200 },
+      {
+        title: "ซื้อหมูกรอบ",
+        tag: "#ซื้ออาหาร",
+        amount: -200,
+        date: "26/08/2025",
+        note: "โมโต้ : กล้วย",
+        account: "กสิกรไทย",
+        location: "เซเว่นหน้าบ้าน.",
+      },
+      { title: "ซื้อไอคอน", tag: "#ซื้ออาหาร", amount: -200 },
     ],
   },
   {
-    date: 'อ. 27/08',
+    date: "อ. 27/08",
     total: -400,
     items: [
-      { title: 'ซื้อไอคอน', tag: '#ซื้ออาหาร', amount: -200 },
-      { title: 'ซื้อไอคอน', tag: '#ซื้ออาหาร', amount: -200 },
+      { title: "ซื้อไอคอน", tag: "#ซื้ออาหาร", amount: -200 },
+      { title: "ซื้อไอคอน", tag: "#ซื้ออาหาร", amount: -200 },
     ],
   },
   {
-    date: 'อ. 28/08',
+    date: "อ. 28/08",
     total: -400,
     items: [
-      { title: 'ซื้อไอคอน', tag: '#ซื้ออาหาร', amount: -200 },
-      { title: 'ซื้อไอคอน', tag: '#ซื้ออาหาร', amount: -200 },
+      { title: "ซื้อไอคอน", tag: "#ซื้ออาหาร", amount: -200 },
+      { title: "ซื้อไอคอน", tag: "#ซื้ออาหาร", amount: -200 },
     ],
   },
 ];
 
 export default function Summary() {
-  const username = 'Amanda';
-  const [selected, setSelected] = useState<any | null>(null);
+  const [selected, setSelected] = useState<Item | null>(null);
 
   return (
     <div className="App summary-page">
-      {/* Header */}
-      <div className="header">
-        <div className="profile-avatar" data-initial={username.trim().charAt(0).toUpperCase()} />
-        <h2 className="username">{username}</h2>
-      </div>
-
-      {/* Day cards */}
+      {/* รายการรายวัน */}
       <div className="list-wrap">
         {entries.map((day) => (
           <section
@@ -54,7 +73,9 @@ export default function Summary() {
           >
             <header className="day-header">
               <span className="day-date">{day.date}</span>
-              <span className="day-total">รวม: <b className="neg">{day.total.toLocaleString()}</b> ฿</span>
+              <span className="day-total">
+                รวม: <b className="neg">{day.total.toLocaleString()}</b> ฿
+              </span>
             </header>
 
             <div className="day-body">
@@ -62,7 +83,10 @@ export default function Summary() {
                 <div
                   key={idx}
                   className="row clickable"
-                  onClick={(e) => { e.stopPropagation(); setSelected(it); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelected(it);
+                  }}
                 >
                   <div className="row-left">
                     <div className="row-avatar">
@@ -73,8 +97,15 @@ export default function Summary() {
                       <div className="row-tag">{it.tag}</div>
                     </div>
                   </div>
-                  <div className="row-amt neg">{it.amount}</div>
-                  {idx !== day.items.length - 1 && <div className="divider" aria-hidden="true" />}
+
+                  {/* ✅ จำนวนเงิน: ชิดขวาริม + ฟอร์แมต + สีอัตโนมัติ */}
+                  <div className={`row-amt ${it.amount < 0 ? "neg" : "pos"}`}>
+                    {it.amount.toLocaleString()}
+                  </div>
+
+                  {idx !== day.items.length - 1 && (
+                    <div className="divider" aria-hidden="true" />
+                  )}
                 </div>
               ))}
             </div>
@@ -82,21 +113,36 @@ export default function Summary() {
         ))}
       </div>
 
-      {/* Detail modal */}
+      {/* Modal รายละเอียด */}
       {selected && (
         <div className="detail-overlay" onClick={() => setSelected(null)}>
-          <div className="detail-card" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
-            <button className="detail-close" onClick={() => setSelected(null)} aria-label="ปิด">
+          <div
+            className="detail-card"
+            role="dialog"
+            aria-modal="true"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="detail-close"
+              onClick={() => setSelected(null)}
+              aria-label="ปิด"
+            >
               <X size={20} />
             </button>
+
             <div className="detail-header">
-              <div className="detail-avatar"></div>
+              <div className="detail-avatar" />
               <h3 className="detail-title">{selected.title}</h3>
               <div className="detail-actions">
-                <button className="icon-btn" aria-label="แก้ไข"><Edit size={18} /></button>
-                <button className="icon-btn" aria-label="ลบ"><Trash2 size={18} /></button>
+                <button className="icon-btn" aria-label="แก้ไข">
+                  <Edit size={18} />
+                </button>
+                <button className="icon-btn" aria-label="ลบ">
+                  <Trash2 size={18} />
+                </button>
               </div>
             </div>
+
             <div className="detail-body">
               {selected.date && <p>{selected.date}</p>}
               {selected.note && <p>{selected.note}</p>}
@@ -107,9 +153,7 @@ export default function Summary() {
         </div>
       )}
 
-  
       <BottomNav />
     </div>
-    
   );
 }

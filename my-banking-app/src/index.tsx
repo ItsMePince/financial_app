@@ -1,34 +1,20 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import './index.css';
-import Home from './pages/Home';
-import AccountNew from './pages/accountnew';
-import CustomOutcome from './pages/customoutcome';
-import Day from './pages/day';
-import Expense from './pages/expense';
-import Income from './pages/income';
-import Login from './pages/Login';
-import Month from './pages/month';
-import Signup from './pages/SignUp';
-import Summary from './pages/summary';
-import AccountSelect from './pages/AccountSelect';
+// src/index.tsx
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
+import App from "./App";
+import "./index.css";
+import { TempCategoryProvider } from "./TempCategoryContext";
+import { PaymentMethodProvider } from "./PaymentMethodContext";
 
-
-
-
-
-import reportWebVitals from './reportWebVitals';
-
-const root = ReactDOM.createRoot(
-  document.getElementById('root') as HTMLElement
-);
-root.render(
+ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    < Income/>
+    <BrowserRouter>
+      <TempCategoryProvider>
+        <PaymentMethodProvider>
+          <App />
+        </PaymentMethodProvider>
+      </TempCategoryProvider>
+    </BrowserRouter>
   </React.StrictMode>
 );
-
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();

@@ -1,24 +1,22 @@
-// BottomNav.tsx
-import React from "react";
+import { Link, useLocation } from "react-router-dom";
 import { Calculator, Home, BarChart3 } from "lucide-react";
 import "./buttomnav.css";
 
-const BottomNav: React.FC = () => {
+export default function BottomNav() {
+  const location = useLocation();
+  const is = (p: string) => (location.pathname === p ? "active" : "");
+
   return (
     <div className="bottom-nav">
-      <button className="nav-button">
+      <Link to="/expense" className={`nav-button ${is("/expense")}`}>
         <Calculator size={24} />
-      </button>
-
-      <button className="nav-button">
+      </Link>
+      <Link to="/" className={`nav-button ${is("/")}`}>
         <Home size={24} />
-      </button>
-
-      <button className="nav-button">
+      </Link>
+      <Link to="/month" className={`nav-button ${is("/month")}`}>
         <BarChart3 size={24} />
-      </button>
+      </Link>
     </div>
   );
-};
-
-export default BottomNav;
+}

@@ -1,4 +1,7 @@
+// src/pages/CustomOutcome.tsx
+// @ts-nocheck
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./customoutcome.css";
 import {
   Check,
@@ -15,21 +18,23 @@ import {
   // Learning
   BookOpen, GraduationCap, Pencil,
   // Sports
-  Dumbbell, Goal, Trophy,Volleyball,
+  Dumbbell, Goal, Trophy, Volleyball,
   // Pets
   Dog, Cat, Fish, Bird,
   // Home / Family
   Home, Sofa, Bed, Wrench, Hammer,
   // Entertainment / Relax
-  Gamepad, Music, Film, Popcorn, Clapperboard,Sprout,Search
+  Gamepad, Music, Film, Popcorn, Clapperboard, Sprout, Search
 } from "lucide-react";
-import BottomNav from './buttomnav';
+import BottomNav from "./buttomnav";
+import { useTempCategory } from "../TempCategoryContext";
+
 type LucideIcon = React.ComponentType<{ className?: string }>;
 type IconItem = { key: string; label: string; Icon: LucideIcon };
 
 const ICON_SETS: Record<string, IconItem[]> = {
   "อาหาร & เครื่องดื่ม": [
-    { key: "utensils", label: "อาหาร", Icon: Utensils },
+    { key: "food", label: "อาหาร", Icon: Utensils },
     { key: "pizza", label: "พิซซ่า", Icon: Pizza },
     { key: "drumstick", label: "ไก่ทอด", Icon: Drumstick },
     { key: "coffee", label: "กาแฟ", Icon: Coffee },
@@ -56,7 +61,7 @@ const ICON_SETS: Record<string, IconItem[]> = {
     { key: "activity", label: "ออกกำลัง", Icon: Activity },
     { key: "pill", label: "ยา", Icon: Pill },
     { key: "hospital", label: "โรงพยาบาล", Icon: Hospital },
-    { key: "Ambulance", label: "ปฐมพยาบาล", Icon: Ambulance },
+    { key: "ambulance", label: "ปฐมพยาบาล", Icon: Ambulance },
   ],
   "เสื้อผ้า & ช้อปปิ้ง": [
     { key: "cart", label: "ช้อปปิ้ง", Icon: ShoppingCart },
@@ -85,8 +90,6 @@ const ICON_SETS: Record<string, IconItem[]> = {
     { key: "goal", label: "ฟุตบอล", Icon: Goal },
     { key: "trophy", label: "ถ้วยรางวัล", Icon: Trophy },
     { key: "volleyball", label: "วอลเลย์บอล", Icon: Volleyball },
-    
-
   ],
   "สัตว์เลี้ยง": [
     { key: "dog", label: "สุนัข", Icon: Dog },
@@ -112,6 +115,9 @@ const ICON_SETS: Record<string, IconItem[]> = {
 };
 
 export default function CategoryCustom() {
+  const nav = useNavigate();
+  const { setTempCategory } = useTempCategory();
+
   const [picked, setPicked] = useState<IconItem | null>(null);
   const [name, setName] = useState("");
   const [query, setQuery] = useState("");
@@ -120,13 +126,12 @@ export default function CategoryCustom() {
     const q = query.trim().toLowerCase();
     if (!q) return ICON_SETS;
 
-    // กรองแต่ละหมวดให้เหลือเฉพาะไอคอนที่ label (ไทย/อังกฤษ) ตรงกับ q
     const next: Record<string, IconItem[]> = {};
     Object.entries(ICON_SETS).forEach(([group, list]) => {
-         if (group.toLowerCase().includes(q)) {
-      next[group] = list;
-      return;
-    }
+      if (group.toLowerCase().includes(q)) {
+        next[group] = list;
+        return;
+      }
       const hit = list.filter(
         (it) =>
           it.label.toLowerCase().includes(q) ||
@@ -138,25 +143,22 @@ export default function CategoryCustom() {
   }, [query]);
 
   function handleConfirm() {
-    if (!picked || !name.trim()) {
+    const trimmed = name.trim();
+    if (!picked || !trimmed) {
       alert("กรุณาเลือกไอคอนและตั้งชื่อ");
       return;
     }
-    alert(`สร้างหมวด "${name.trim()}" ด้วยไอคอน ${picked.label} สำเร็จ`);
-    window.history.back();
+    // ✅ ตั้งค่าหมวดชั่วคราวแล้วกลับไปหน้า Expense
+    setTempCategory({ name: trimmed, iconKey: picked.key });
+    nav(-1); // กลับหน้าก่อนหน้า (Expense)
   }
 
   return (
     <div className="cc-wrap">
       {/* Header */}
       <header className="cc-header">
-        <div className="cc-topbar">
-          <div className="cc-avatar">A</div>
-          <div className="cc-owner">Amanda</div>
-        </div>
         <h1 className="cc-title">OutcomeCustom</h1>
       </header>
-
 
       {/* Search bar */}
       <div className="cc-search">
@@ -196,7 +198,6 @@ export default function CategoryCustom() {
         </button>
       </section>
 
-
       {/* Library (กรองตามคำค้น) */}
       <section className="cc-library">
         {Object.keys(filteredSets).length === 0 ? (
@@ -221,7 +222,8 @@ export default function CategoryCustom() {
           ))
         )}
       </section>
-      <BottomNav />  
+
+      <BottomNav />
     </div>
   );
 }

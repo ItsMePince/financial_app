@@ -1,158 +1,132 @@
-/* ===== Design Tokens ===== */
-:root {
+/* ===== Palette (solid mint) ===== */
+:root{
   --bg: #ffffff;
-  --ink: #111;
-  --muted: #777;
-  --pill: #C4E7E0;       /* กล่องดรอปดาวน์และโทนหลัก */
-  --pill-ghost: #d9f0eb; /* เงา/hover */
-  --divider: #AFAFAF;    /* เส้นคั่นตัวเลือกเมนู */
-  --star: #FFE761;       /* ดาวเหลือง */
-  --star-off: #A0A0A0;   /* ดาวเทา */
-  --container: 550px;    /* ล็อกสเกลมือถือ */
-  --radius-xxl: 28px;
+  --ink: #0f172a;
+  --muted: #6b7280;
+
+  --mint: #C4E7E0;      /* สีพื้นหลัก */
+  --mint-soft: #d7efe9; /* hover อ่อน */
+  --star: #FFE761;
+  --star-off: #B7BEC7;
+
+  --container: 550px;
+  --shadow: 0 6px 18px rgba(17,24,39,.08);
 }
 
-* { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--ink); }
-
-.screen { max-width: var(--container); margin: 0 auto; padding: 16px 16px 120px; }
-
-/* Header */
-.header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
-.avatar {
-  width: 40px; height: 40px; border-radius: 50%;
-  display: grid; place-items: center; background: #12c2a3; color: #fff; font-weight: 700;
-}
-.title { font-size: 1.1rem; font-weight: 700; }
-
-/* Dropdown */
-.dropdown { position: relative; margin-bottom: 14px; }
-.dropdown__button {
-  width: 100%;
-  background: var(--pill);
+/* ===== Base ===== */
+* { box-sizing: border-box }
+html, body { margin: 0 }
+body {
+  background: var(--bg);
+  font-family: system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   color: var(--ink);
-  border: none;
-  border-radius: var(--radius-xxl);
-  padding: 18px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  font-size: 1.3rem;
-  cursor: pointer;
 }
-.dropdown__button:hover { filter: brightness(0.98); }
-.chev { transition: transform .18s ease; }
-.chev.up { transform: rotate(180deg); }
+.screen {
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: 16px 16px 120px;
+}
 
-.dropdown__menu {
-  position: absolute; left: 0; right: 0; top: calc(100% + 8px);
-  background: var(--pill);
-  border-radius: 28px;
+/* ===== Header ===== */
+.header{ display:flex; align-items:center; gap:12px; margin:12px 0 6px }
+.avatar{ width:44px; height:44px; border-radius:50%; background:#0EC2A3; color:#fff; display:grid; place-items:center; font-weight:700 }
+.title{ font-size:1.55rem; font-weight:700 }
+
+/* ===== Dropdown (ปุ่มมินต์ทึบ ไม่มีกรอบขาว) ===== */
+.dropdown{
+  position: relative;
+  margin: 28px 0;                  /* ✅ เว้นห่างบนล่างมากขึ้น */
+  padding: 0;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0;
+}
+.dropdown::before,
+.dropdown::after{ content:none !important }
+
+.dropdown__button{
+  -webkit-appearance:none; appearance:none; outline:none;
+  width:100%;
+  border: none;
+  border-radius: 999px;
+  background: var(--mint);
+  background-clip: padding-box;
+  color: var(--ink);
+  padding: 24px 30px;              /* ✅ ขยาย padding ให้โปร่ง */
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  font-size:1.35rem; font-weight:800;  /* ✅ ใหญ่ขึ้นเล็กน้อย */
+  box-shadow: none;
+  cursor:pointer;
+}
+.dropdown__button:hover{ background: var(--mint-soft) }
+.chev{ margin-left:8px; transition: transform .18s ease }
+.chev.up{ transform: rotate(180deg) }
+
+.dropdown__menu{
+  position:absolute; left:0; right:0; top:calc(100% + 10px);
+  background: var(--mint);
+  border: none;
+  background-clip: padding-box;
+  border-radius: 24px;
   overflow: hidden;
-  box-shadow: 0 8px 24px rgba(0,0,0,.08);
-  padding: 8px 0;
-  z-index: 10;
+  box-shadow: var(--shadow);
+  z-index: 30;
+  padding: 0;
 }
-.dropdown__option {
-  padding: 16px 24px;
-  text-align: center;
-  font-size: 1.3rem;
-  cursor: pointer;
+.dropdown__option{
+  padding: 16px 22px; text-align:center; font-size:1.15rem; cursor:pointer;
 }
-.dropdown__option:hover { background: var(--pill-ghost); }
-.dropdown__option.with-sep { border-top: 1px solid var(--divider); }
+.dropdown__option + .dropdown__option{
+  border-top: 1px solid rgba(15,23,42,.06);
+}
+.dropdown__option:hover{ background: #e7f6f2 }
 
-/* List cards */
-.list { display: flex; flex-direction: column; gap: 16px; margin-top: 12px; }
-.card {
-  width: 100%;
-  padding: 26px 24px;
-  border-radius: 48px;
-  background: var(--pill);
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  text-align: left;
-  cursor: pointer;
+/* ===== List cards (mint pill + เงาเบา) ===== */
+.list{
+  display:flex;
+  flex-direction:column;
+  gap:28px;                       /* ✅ เว้นห่างการ์ดมากขึ้น */
+  margin-top: 26px;               /* ✅ ห่างจาก dropdown มากขึ้น */
 }
-.card:active { transform: translateY(1px); }
-.card__label { font-size: 1.1rem; font-weight: 500; }
+.card{
+  width:100%;
+  padding:26px 30px;              /* ขยาย padding ในการ์ด */
+  border-radius:999px;
+  background: var(--mint);
+  border: none;
+  background-clip: padding-box;
+  display:flex; align-items:center; justify-content:space-between;
+  box-shadow: var(--shadow);
+  cursor:pointer;
+}
+.card:hover{ background: var(--mint-soft) }
+.card__label{ font-size:1.25rem; font-weight:700 }
 
 /* Star */
-.star { display: inline-flex; color: var(--star-off); }
-.star.on { color: var(--star); }
+.star{ display:inline-flex; color:var(--star-off) }
+.star.on{ color:var(--star) }
+.star svg{ display:block }
 
-/* Floating Add Button */
-.fab-wrap { display: grid; place-content: center; margin-top: 28px; }
-.fab {
-  width: 76px; height: 76px;
-  border-radius: 50%;
-  border: none;
-  background: var(--pill);
-  font-size: 2.2rem; font-weight: 700;
-  cursor: pointer;
-  box-shadow: 0 8px 18px rgba(0,0,0,.08);
-}
 
-/* Bottom dock (demo icons) */
-.dock {
-  position: fixed; left: 0; right: 0; bottom: 16px;
-  display: flex; gap: 16px; justify-content: center;
-}
-.dock__btn {
-  width: 70px; height: 70px;
-  border-radius: 50%;
-  background: var(--pill);
-  display: grid; place-items: center;
-  border: none; cursor: pointer;
-  box-shadow: 0 6px 14px rgba(0,0,0,.06);
-  font-size: 1.4rem;
-}
-.icon { transform: translateY(1px); }
-:root {
-  --nav-bg: var(--bg-elev);
-  --nav-border: rgba(0,0,0,.06);
-  --nav-icon: #374151;        /* สีไอคอน/ตัวอักษร */
-  --nav-chip: #ccfbf1;        /* พื้นหลังไอคอนวงกลม ถ้าใช้ */
-}
 
-.bottom-nav {
-  position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: 1rem;
-  background: var(--nav-bg);
-  border: 1px solid var(--nav-border);
-  border-radius: 999px;
-  box-shadow: 0 10px 15px -3px rgba(0,0,0,.12);
-  padding: .5rem;
-  z-index: 30;
-  display: flex;
-  gap: .25rem;
+/* ===== BottomNav ===== */
+.bottom-nav{
+  position:fixed; left:50%; transform:translateX(-50%);
+  bottom:calc(16px + env(safe-area-inset-bottom));
+  background:#f5f5f5;
+  border:1px solid rgba(0,0,0,.06);
+  border-radius:999px;
+  padding:.6rem .65rem; display:flex; gap:.3rem;
+  box-shadow: var(--shadow); backdrop-filter: blur(6px); z-index:20;
 }
-
-.bottom-nav .nav-button {
-  background: none;
-  border: 0;
-  color: var(--nav-icon);     /* ✅ กำหนดสีไอคอนที่นี่ */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 3.8rem;
-  padding: .5rem 0;
-  cursor: pointer;
-  transition: transform .18s ease;
+.bottom-nav .nav-button{
+  min-width:3.7rem; border-radius:999px;
+  background:none; border:0; color:#0f172a;
+  display:flex; align-items:center; justify-content:center;
+  padding:.45rem 0; cursor:pointer;
 }
+.bottom-nav .nav-button:hover{ background:#ffffff }
 
-.bottom-nav .nav-button:hover { transform: translateY(-2px); }
-
-.bottom-nav .nav-icon {
-  width: 2.4rem;
-  height: 2.4rem;
-  border-radius: 50%;
-  background: var(--nav-chip);
-  display: grid;
-  place-items: center;
-}
+/* ===== Safety: ตัด halo ทุกปุ่ม pill ===== */
+button, .card, .dropdown__button{ background-clip: padding-box }

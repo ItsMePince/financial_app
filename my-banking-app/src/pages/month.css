@@ -1,24 +1,26 @@
+/* ================== Layout base ================== */
 .month-wrapper {
   max-width: 430px;
   margin: 0 auto;
   padding: 16px;
   font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans Thai", sans-serif;
   color: #0b1b17;
+  /* กัน BottomNav ทับคอนเทนต์ด้านล่าง */
+  padding-bottom: calc(110px + env(safe-area-inset-bottom));
 }
 
+/* เฮดเดอร์บนสุด (ถ้ามี) */
 .month-header {
   display: flex;
   align-items: center;
   gap: 12px;
   margin-bottom: 8px;
 }
-
 .header-right .app-title {
   font-size: 16px;
   font-weight: 600;
   margin: 0;
 }
-
 .avatar {
   width: 36px;
   height: 36px;
@@ -30,21 +32,21 @@
   justify-content: center;
 }
 
-/* ===== Summary ===== */
+/* ================== Summary card ================== */
 .summary-card {
   background: #e6f7f2;
   border-radius: 16px;
   padding: 16px;
   margin-top: 12px;
+  margin-bottom: 18px; /* เว้นจากส่วนล่างนิด */
   box-shadow: 0 8px 24px rgba(0,0,0,.06);
 }
-
 .summary-title {
   font-weight: 700;
   margin-bottom: 8px;
 }
 
-/* Month switcher */
+/* เดือนก่อน/ถัดไป */
 .month-switcher {
   display: flex;
   justify-content: center;
@@ -74,19 +76,20 @@
 }
 .calendar-ico { opacity: .85; }
 
-/* KPI row */
-.kpi-row {
+/* KPI row (รองรับทั้งชื่อเดิมและใหม่) */
+.kpi-row,
+.kpi-inline {
   display: flex;
   justify-content: space-around;
   gap: 12px;
   margin-bottom: 12px;
   flex-wrap: wrap;
 }
-.income { color: #10b981; font-weight: 700; }
+.income  { color: #10b981; font-weight: 700; }
 .expense { color: #ef4444; font-weight: 700; }
 .balance { color: #0ea5e9; font-weight: 700; }
 
-/* Chart card */
+/* กราฟ */
 .chart-card {
   background: #fff;
   border: 1px solid rgba(0,0,0,.06);
@@ -94,56 +97,64 @@
   padding: 8px;
 }
 
-.grid-header {
+/* ================== Grid header / rows ================== */
+/* ใช้กริดชุดเดียวกันทุกแถวเพื่อไม่ให้เอียง */
+.grid-header,
+.row,
+.big-row {
   display: grid;
-  grid-template-columns: 80px 1fr 1fr 1fr;
+  grid-template-columns: 80px 1fr 1fr 1fr; /* วันที่ | รายรับ | รายจ่าย | คงเหลือ */
   gap: 8px;
-  margin: 12px 0 4px;
+  align-items: center;
+}
+
+/* หัวตาราง */
+.grid-header {
+  margin: 18px 0 6px; /* เลื่อนลงนิดหน่อย */
   padding: 6px 4px;
   font-weight: 600;
   color: #374151;
 }
 
+/* แถวทั่วไป */
 .row {
-  display: grid;
-  grid-template-columns: 80px 1fr 1fr 1fr;
-  gap: 8px;
-  align-items: center;
   padding: 10px 4px;
   border-bottom: 1px solid rgba(0,0,0,.06);
+  text-decoration: none;
+  color: inherit;
 }
 
+/* ===== แถว "ทั้งหมด" ให้ตรงคอลัมน์ ===== */
 .big-row {
-  display: grid;
-  grid-template-columns: 28px 1fr 28px; 
-  align-items: center;
-  gap: 10px;
   background: #f0fbf7;
   border-radius: 10px;
-  padding: 10px 12px;
-  margin-top: 10px;
+  padding: 12px 14px;
+  margin-top: 14px;
 }
 
-.row-title {
-  grid-column: 2;
-  justify-self: center;
-  font-weight: 600;
-}
-
-.big-row::after {
-  content: "";
-  grid-column: 3;
-}
-
-.left-icon {
-  width: 28px;
-  height: 28px;
+/* ไอคอนซ้ายคอลัมน์ที่ 1 */
+.big-row .left-icon {
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   background: #ccfbf1;
   display: grid;
   place-items: center;
+  justify-self: start; /* ให้อยู่ชิดซ้ายในคอลัมน์วันที่ */
 }
 
+/* ข้อความ "ทั้งหมด" กินคอลัมน์ 2 ถึงสุดท้าย (2–4) */
+.big-row .row-title {
+  grid-column: 2 / -1;
+  justify-self: start;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* (ลบตัวเดิมที่ทำให้กริดเพี้ยน) */
+/* .big-row::after { ... }  -- ไม่ใช้แล้ว */
+
+/* ป้ายวันที่ (ของแต่ละรายการ) */
 .left-badge {
   justify-self: start;
   background: #e6f7f2;
@@ -153,24 +164,23 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* จัดสี/แนวคอลัมน์ตัวเลข */
 .cell { text-align: center; }
 .cell.remain { color: #0ea5e9; }
 
-.income { color: #10b981; font-weight: bold; }
-.expense { color: #ef4444; font-weight: bold; }
-.balance { color: #0ea5e9; font-weight: bold; }
+/* ================== BottomNav ================== */
 :root {
-  --nav-bg: var(--bg-elev);
+  --nav-bg: var(--bg-elev, #fff);
   --nav-border: rgba(0,0,0,.06);
-  --nav-icon: #374151;        /* สีไอคอน/ตัวอักษร */
-  --nav-chip: #ccfbf1;        /* พื้นหลังไอคอนวงกลม ถ้าใช้ */
+  --nav-icon: #374151;
+  --nav-chip: #ccfbf1;
 }
 
 .bottom-nav {
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  bottom: 1rem;
+  bottom: 18px; /* ขยับลงเล็กน้อยให้ลอยสวย */
   background: var(--nav-bg);
   border: 1px solid var(--nav-border);
   border-radius: 999px;
@@ -184,7 +194,7 @@
 .bottom-nav .nav-button {
   background: none;
   border: 0;
-  color: var(--nav-icon);     /* ✅ กำหนดสีไอคอนที่นี่ */
+  color: var(--nav-icon);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -193,7 +203,6 @@
   cursor: pointer;
   transition: transform .18s ease;
 }
-
 .bottom-nav .nav-button:hover { transform: translateY(-2px); }
 
 .bottom-nav .nav-icon {
@@ -203,4 +212,40 @@
   background: var(--nav-chip);
   display: grid;
   place-items: center;
+}
+/* ==== FORCE OVERRIDE: ให้หัวตาราง/ทุกแถวใช้กริดเดียวกันแบบบังคับ ==== */
+.month-wrapper .grid-header,
+.month-wrapper .row,
+.month-wrapper .big-row {
+  display: grid !important;
+  grid-template-columns: 80px 1fr 1fr 1fr !important; /* วันที่ | รายรับ | รายจ่าย | คงเหลือ */
+  gap: 8px !important;
+  align-items: center !important;
+}
+
+/* แถว "ทั้งหมด" ให้กินคอลัมน์ 2–4 */
+.month-wrapper .big-row .row-title {
+  grid-column: 2 / -1 !important;
+  justify-self: start !important;
+  font-weight: 700;
+}
+
+/* ไอคอนซ้ายให้ชิดซ้ายและขนาดคงที่ */
+.month-wrapper .big-row .left-icon {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 50%;
+  background: #ccfbf1;
+  display: grid;
+  place-items: center;
+  justify-self: start !important;
+}
+
+/* ยกเลิกตัว pseudo ที่ทำกริดเพี้ยน (ถ้าเคยมี) */
+.month-wrapper .big-row::after { content: none !important; }
+
+/* ป้ายวันที่ทุกรายการชิดซ้ายคอลัมน์แรก */
+.month-wrapper .left-badge,
+.month-wrapper .left-icon {
+  justify-self: start !important;
 }

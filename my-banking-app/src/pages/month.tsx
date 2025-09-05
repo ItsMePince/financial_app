@@ -1,4 +1,3 @@
-// src/pages/Month.tsx
 // @ts-nocheck
 import React, { useMemo, useState } from "react";
 import {
@@ -10,18 +9,17 @@ import {
   YAxis,
   Tooltip,
 } from "recharts";
+import { Link } from "react-router-dom";
 import "./month.css";
 
 import {
   CalendarDays,
   ChevronLeft,
   ChevronRight,
-  ReceiptText,
-  Home,
-  LineChart,
 } from "lucide-react";
 
-import BottomNav from './buttomnav';
+import BottomNav from "./buttomnav";
+
 export type Transaction = {
   id: string;
   date: string;      // YYYY-MM-DD
@@ -70,9 +68,7 @@ interface MonthProps {
 }
 
 export default function Month({ transactions = demoTx }: MonthProps) {
-  // ตั้งค่าเริ่มให้เดือนไปตรงกับ demo
   const [anchor, setAnchor] = useState<Date>(new Date("2025-08-01"));
-
   const monthLabel = formatThaiMonthYear(anchor);
 
   const { dailySeries, totals, monthTx } = useMemo(() => {
@@ -113,7 +109,7 @@ export default function Month({ transactions = demoTx }: MonthProps) {
     return {
       dailySeries: series,
       totals: { income: inc, expense: exp, balance: inc - exp },
-      monthTx: [...onlyThisMonth].sort((a,b)=> +new Date(b.date) - +new Date(a.date)), // สำหรับ list แสดงจากล่าสุด
+      monthTx: [...onlyThisMonth].sort((a,b)=> +new Date(b.date) - +new Date(a.date)), 
     };
   }, [transactions, anchor]);
 
@@ -122,15 +118,9 @@ export default function Month({ transactions = demoTx }: MonthProps) {
 
   return (
     <div className="month-wrapper">
-      {/* Header */}
-      <header className="month-header">
-        <div className="avatar">A</div>
-        <div className="header-right">
-          <h1 className="app-title">Amanda</h1>
-        </div>
-      </header>
 
-      {/* Summary card + month switcher + chart */}
+
+      {/* Summary card */}
       <section className="summary-card">
         <div className="summary-title">สรุปรายเดือน</div>
         <div className="month-switcher">
@@ -166,43 +156,17 @@ export default function Month({ transactions = demoTx }: MonthProps) {
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
-              <XAxis 
-                dataKey="name" 
-                tickLine={false} 
-                axisLine={false} 
-              />
-              <YAxis 
-                tickLine={false} 
-                axisLine={false} 
-                width={46} 
-              />
-              <Tooltip 
-                formatter={tooltipFormatter}
-                labelFormatter={tooltipLabelFormatter}
-              />
-              {/* ใช้ทั้งเส้น + จุดดูคล้าย mockup */}
-              <Area 
-                type="monotone" 
-                dataKey="income" 
-                stroke="#10b981" 
-                strokeWidth={3} 
-                dot={{ r: 3 }} 
-                fill="url(#income)" 
-              />
-              <Area 
-                type="monotone" 
-                dataKey="expense" 
-                stroke="#ef4444" 
-                strokeWidth={3} 
-                dot={{ r: 3 }} 
-                fill="url(#expense)" 
-              />
+              <XAxis dataKey="name" tickLine={false} axisLine={false} />
+              <YAxis tickLine={false} axisLine={false} width={46} />
+              <Tooltip formatter={tooltipFormatter} labelFormatter={tooltipLabelFormatter} />
+              <Area type="monotone" dataKey="income" stroke="#10b981" strokeWidth={3} dot={{ r: 3 }} fill="url(#income)" />
+              <Area type="monotone" dataKey="expense" stroke="#ef4444" strokeWidth={3} dot={{ r: 3 }} fill="url(#expense)" />
             </AreaChart>
           </ResponsiveContainer>
         </div>
       </section>
 
-      {/* Header row (วันที่/รายรับ/รายจ่าย/คงเหลือ) */}
+      {/* Header row */}
       <div className="grid-header">
         <div>วันที่</div>
         <div>รายรับ</div>
@@ -210,7 +174,7 @@ export default function Month({ transactions = demoTx }: MonthProps) {
         <div>คงเหลือ</div>
       </div>
 
-      {/* "ทั้งหมด" แถบใหญ่ */}
+      {/* "ทั้งหมด" */}
       <div className="row big-row">
         <div className="left-icon">
           <CalendarDays size={18} />
@@ -223,8 +187,14 @@ export default function Month({ transactions = demoTx }: MonthProps) {
         const d = new Date(t.date);
         const dd = String(d.getDate()).padStart(2, "0");
         const mm = String(d.getMonth() + 1).padStart(2, "0");
+        const yyyy = d.getFullYear();
         return (
-          <div className="row" key={t.id}>
+          <Link
+            to={`/day?date=${yyyy}-${mm}-${dd}`}
+            key={t.id}
+            className="row"
+            style={{ textDecoration: "none", color: "inherit" }}
+          >
             <div className="left-badge">{dd}/{mm}</div>
             <div className="cell income">
               {t.amount > 0 ? `${t.amount.toLocaleString()} ฿` : "0 ฿"}
@@ -233,7 +203,7 @@ export default function Month({ transactions = demoTx }: MonthProps) {
               {t.amount < 0 ? `${Math.abs(t.amount).toLocaleString()} ฿` : "0 ฿"}
             </div>
             <div className="cell remain">{t.amount.toLocaleString()} ฿</div>
-          </div>
+          </Link>
         );
       })}
 

@@ -599,4 +599,79 @@ body,
   font-weight: 600;
   text-align: center;
 }
+/* วงกลมของ Transaction */
+.transaction-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: #e5e7eb;   /* เทาอ่อน */
+  display: grid;
+  place-items: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,.08);
+}
+
+.tx-icon {
+  width: 18px;
+  height: 18px;
+  color: #374151;        /* เทาเข้ม */
+}
+
+/* วงกลมของการ์ดบัญชี */
+.category-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  background: #d1fae5;   /* เขียวอ่อน */
+  display: grid;
+  place-items: center;
+  margin-bottom: 10px;
+}
+
+.cat-icon {
+  width: 24px;
+  height: 24px;
+  color: #0f172a;        /* น้ำเงินเทาเข้ม */
+}
+/* ทำให้การ์ดวางปุ่ม ⋮ ได้ */
+.category-card.has-more { position: relative; }
+
+/* ปุ่ม ⋮ */
+.more-btn{
+  position:absolute;
+  top:10px; right:10px;
+  width:32px; height:32px;
+  border-radius:999px;
+  border:none;
+  background: transparent;
+  color:#0f172a;
+  display:grid; place-items:center;
+  cursor:pointer;
+  opacity:.7;
+}
+.more-btn:hover{ background: rgba(0,0,0,.06); opacity:1 }
+
+/* เมนูป๊อปโอเวอร์ */
+.more-menu{
+  position:absolute;
+  top:44px; right:10px;
+  min-width:130px;
+  background:#ffffff;
+  border:1px solid rgba(15,23,42,.08);
+  border-radius:14px;
+  box-shadow: 0 10px 24px rgba(17,24,39,.14);
+  padding:6px;
+  z-index: 50;
+}
+.more-item{
+  width:100%;
+  display:flex; align-items:center; gap:8px;
+  padding:10px 12px;
+  background:none; border:0; border-radius:10px;
+  color:#0f172a; cursor:pointer; text-align:left;
+  font-size:.95rem;
+}
+.more-item:hover{ background:#f3f4f6 }
+.more-item.danger{ color:#ef4444 }
+.more-item.danger:hover{ background:#fee2e2 }
+
 
