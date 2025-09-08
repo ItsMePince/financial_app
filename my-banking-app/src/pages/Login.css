@@ -5,38 +5,37 @@
   --su-input: #ffffff;
   --su-cta: #ebffb7;
   --container: 430px;
-  /* design tokens */
   --radius-pill: 9999px;
   --shadow: 0 8px 20px rgba(0, 0, 0, .08);
   --gap: 12px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-/* ===== base layout (kept for compatibility with previous su-* classes) ===== */
-.su-page,
+/* ===== SCOPE ทั้งหมดใต้ .login-page เพื่อกันชนกับเพจอื่น ===== */
 .login-page {
   min-height: 100vh;
   background: var(--su-bg);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 24px; /* breathing room on small screens */
+  padding: 24px;
 }
 
-/* outer wrapper / card */
-.su-wrapper,
-.card {
+/* card: ตัดวงรี/เงา/เลย์เอาต์แปลกจากกฎที่อื่น */
+.login-page .card {
   width: 100%;
-  max-width: 360px;
+  max-width: 320px;
   margin-inline: auto;
   text-align: center;
-  background: transparent; /* page tint handles bg */
+  background: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
   padding: 24px 20px 40px;
+  display: block !important;     /* กันโดนตั้งเป็น grid/flex จากที่อื่น */
 }
 
 /* avatar */
-.su-avatar,
-.avatar {
+.login-page .avatar {
   width: 72px;
   height: 72px;
   border-radius: var(--radius-pill);
@@ -46,13 +45,14 @@
   margin: 12px auto 10px;
   box-shadow: var(--shadow);
 }
-
-/* icon strokes inherit text color */
-.avatar svg { stroke: var(--su-text); fill: none; stroke-width: 2; }
+.login-page .avatar svg {
+  stroke: var(--su-text);
+  fill: none;
+  stroke-width: 2;
+}
 
 /* title */
-.su-title,
-.title {
+.login-page .title {
   margin: 6px 0 18px;
   font-size: 22px;
   line-height: 1.2;
@@ -62,17 +62,15 @@
 }
 
 /* form */
-.su-form,
-.form {
-  display: flex;
-  flex-direction: column;
+.login-page .form {
+  display: flex !important;      /* กันชน */
+  flex-direction: column !important;
   gap: var(--gap);
   padding-inline: 0;
 }
 
 /* label */
-.su-label,
-.label {
+.login-page .label {
   text-align: left;
   color: var(--su-muted);
   font-size: 14px;
@@ -82,9 +80,8 @@
   gap: 6px;
 }
 
-/* inputs */
-.su-input,
-.input {
+/* input */
+.login-page .input {
   height: 46px;
   min-height: 46px;
   width: 100%;
@@ -97,15 +94,12 @@
   font-size: 16px;
   box-sizing: border-box;
 }
-
-.su-input:focus,
-.input:focus {
+.login-page .input:focus {
   box-shadow: 0 0 0 3px rgba(2, 190, 163, .25), 0 10px 22px rgba(0, 0, 0, .1);
 }
 
 /* button */
-.su-submit,
-.btn {
+.login-page .btn {
   height: 46px;
   margin-top: 6px;
   border: none;
@@ -117,48 +111,34 @@
   cursor: pointer;
   transition: transform .12s ease, filter .12s ease;
 }
+.login-page .btn:hover { filter: brightness(.98); }
+.login-page .btn:active { transform: translateY(1px); }
 
-.su-submit:hover,
-.btn:hover { filter: brightness(.98); }
-
-.su-submit:active,
-.btn:active { transform: translateY(1px); }
-
-/* footer text */
-.su-footer,
-.footnote {
+/* footer */
+.login-page .footnote {
   margin-top: 14px;
   color: var(--su-muted);
   font-size: 14px;
 }
-
-/* link */
-.su-link,
-.link {
+.login-page .link {
   color: #0ea5a3;
   text-decoration: none;
   font-weight: 600;
 }
+.login-page .link:hover { text-decoration: underline; }
 
-.su-link:hover,
-.link:hover { text-decoration: underline; }
-
-/* ===== app container sizing (mobile-locked width, centered on desktop) ===== */
-html,
-body,
-#root,
-.App {
+/* ===== กำหนดความกว้างแอปแบบ mobile-locked ===== */
+html, body, #root, .App {
   width: 100%;
   max-width: var(--container) !important;
   margin-inline: auto !important;
   overflow-x: hidden;
 }
-
 @media (min-width: 768px) {
   .App { padding-block: 20px !important; }
 }
 
-/* bottom nav helper */
+/* bottom nav helper (ปล่อยไว้ตามเดิม) */
 .bottom-nav {
   left: 50%;
   transform: translateX(-50%);
