@@ -144,3 +144,9 @@ html, body, #root, .App {
   transform: translateX(-50%);
   bottom: calc(16px + var(--safe-bottom)) !important;
 }
+
+.login-page .input {
+  background: #fff !important;
+  border-radius: 30px !important;  
+  border: none;                    
+}
