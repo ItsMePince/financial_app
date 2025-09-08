@@ -1,28 +1,55 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./header.css";
 
 type AuthUser = { id: number; username: string; email: string; role: string };
 
 export default function Header() {
-  const user = useMemo(() => {
-    try {
-      const raw = localStorage.getItem("user");
-      return raw ? (JSON.parse(raw) as AuthUser) : null;
-    } catch {
-      return null;
-    }
+  const navigate = useNavigate();
+  const [user, setUser] = useState<AuthUser | null>(null);
+
+  useEffect(() => {
+    const readUser = () => {
+      try {
+        const raw = localStorage.getItem("user");
+        setUser(raw ? (JSON.parse(raw) as AuthUser) : null);
+      } catch {
+        setUser(null);
+      }
+    };
+    readUser();
+    window.addEventListener("storage", readUser);
+    window.addEventListener("auth-changed", readUser);
+    return () => {
+      window.removeEventListener("storage", readUser);
+      window.removeEventListener("auth-changed", readUser);
+    };
   }, []);
 
   const name = user?.username?.trim() || "Guest";
   const initial = name.charAt(0).toUpperCase();
 
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    window.dispatchEvent(new Event("auth-changed")); // แจ้ง Header ให้รีเฟรช
+    navigate("/login");
+  };
+
   return (
     <header className="app-header">
       <div className="container header__inner">
-        {/* Avatar วงกลมแสดงอักษรแรก */}
         <div className="header__avatar">{initial}</div>
-        {/* ชื่อเต็ม */}
         <div className="header__username">{name}</div>
+
+        {/* ให้ปุ่มโชว์เสมอ แต่ disabled ถ้าไม่ login เพื่อไม่หลงดีบั๊ก */}
+        <button
+          className="header__logout"
+          onClick={handleLogout}
+          disabled={!user}
+          title={user ? "Logout" : "You are not logged in"}
+        >
+          Logout
+        </button>
       </div>
     </header>
   );

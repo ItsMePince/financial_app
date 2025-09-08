@@ -1,5 +1,5 @@
 // src/App.tsx
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 
 // Header + Navbar
 import Header from "./components/Header";
@@ -33,14 +33,26 @@ function NotFound() {
 }
 
 export default function App() {
+  const location = useLocation();
+
+  // รองรับทั้ง BrowserRouter และ HashRouter
+  const rawPath =
+    location.hash && location.hash.startsWith("#/")
+      ? location.hash.slice(1) // "#/signup" -> "/signup"
+      : location.pathname;     // "/signup"
+
+  const path = rawPath.toLowerCase();
+
+  // ✅ ซ่อนเฉพาะหน้า auth เท่านั้น (ไม่ซ่อน "/")
+  const hideChrome = /^\/(login|signup)(\/|$)/.test(path);
+
   return (
     <div className="App">
-      {/* ✅ แสดง Header ทุกหน้า */}
-      <Header />
+      {!hideChrome && <Header />}
 
       <Routes>
-        {/* default หน้าแรก */}
-        <Route path="/" element={<Home />} />
+        {/* หน้าแรกเป็น Home */}
+        <Route path="/" element={<SignUp/>} />
 
         {/* เส้นทางการเงิน */}
         <Route path="/day" element={<Day />} />
@@ -68,8 +80,7 @@ export default function App() {
         <Route path="*" element={<NotFound />} />
       </Routes>
 
-      {/* ✅ Navbar ด้านล่าง */}
-      <BottomNav />
+      {!hideChrome && <BottomNav />}
     </div>
   );
 }
