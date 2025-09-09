@@ -11,7 +11,7 @@ export default function BottomNav() {
       <Link to="/expense" className={`nav-button ${is("/expense")}`}>
         <Calculator size={24} />
       </Link>
-      <Link to="/" className={`nav-button ${is("/")}`}>
+      <Link to="/home" className={`nav-button ${is("/home")}`}>
         <Home size={24} />
       </Link>
       <Link to="/month" className={`nav-button ${is("/month")}`}>

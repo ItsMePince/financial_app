@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom"; // เพิ่ม import นี้
 import "./Login.css";
 
 // Types for API responses
@@ -20,6 +21,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const navigate = useNavigate(); // เพิ่ม hook นี้
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,16 +41,23 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       const data: LoginResponse = await response.json();
       
       if (data.success && data.user) {
+        // ⭐ สำคัญ: ตั้งค่า authentication status
+        localStorage.setItem('isAuthenticated', 'true');
+        
         // เก็บข้อมูล user ใน localStorage สำหรับใช้ในหน้าอื่น
         localStorage.setItem('user', JSON.stringify(data.user));
+        
+        // ⭐ แจ้งให้ App component รู้ว่า auth state เปลี่ยน
+        window.dispatchEvent(new Event("auth-changed"));
         
         // เรียก callback function ถ้ามี
         if (onLoginSuccess) {
           onLoginSuccess(data.user);
-        } else {
-          // หรือ redirect ไปหน้า home
-          window.location.href = '/home';
         }
+        
+        // ใช้ navigate แทน window.location.href เพื่อให้ React Router ทำงาน
+        navigate('/home');
+        
       } else {
         setError(data.message || 'Login failed');
       }
@@ -58,6 +67,11 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // ฟังก์ชันสำหรับไป signup page
+  const goToSignUp = () => {
+    navigate('/signup');
   };
 
   return (
@@ -102,9 +116,9 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
           </label>
 
           {error && (
-            <div style={{ 
-              color: '#ef4444', 
-              fontSize: '14px', 
+            <div style={{
+              color: '#ef4444',
+              fontSize: '14px',
               textAlign: 'center',
               margin: '8px 0'
             }}>
@@ -117,9 +131,9 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
           </button>
         </form>
 
-        <div style={{ 
-          fontSize: '12px', 
-          color: '#6b7280', 
+        <div style={{
+          fontSize: '12px',
+          color: '#6b7280',
           marginTop: '12px',
           textAlign: 'center'
         }}>
@@ -127,9 +141,18 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
 
         <p className="footnote">
           Don't have an account?
-          <a className="link" href="#signup" onClick={(e) => e.preventDefault()}>
+          <button 
+            className="link" 
+            onClick={goToSignUp}
+            style={{ 
+              background: 'none', 
+              border: 'none', 
+              cursor: 'pointer',
+              textDecoration: 'underline' 
+            }}
+          >
             {" "}Sign Up
-          </a>
+          </button>
         </p>
       </div>
     </div>

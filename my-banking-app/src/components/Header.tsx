@@ -2,7 +2,12 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./header.css";
 
-type AuthUser = { id: number; username: string; email: string; role: string };
+type AuthUser = {
+  id: number;
+  username: string;
+  email: string;
+  role: string;
+};
 
 export default function Header() {
   const navigate = useNavigate();
@@ -30,8 +35,14 @@ export default function Header() {
   const initial = name.charAt(0).toUpperCase();
 
   const handleLogout = () => {
+    // ⭐ ลบข้อมูล authentication ทั้งหมด
     localStorage.removeItem("user");
-    window.dispatchEvent(new Event("auth-changed")); // แจ้ง Header ให้รีเฟรช
+    localStorage.removeItem("isAuthenticated"); // เพิ่มบรรทัดนี้
+    
+    // แจ้ง components อื่นให้รีเฟรช
+    window.dispatchEvent(new Event("auth-changed"));
+    
+    // ไปหน้า login
     navigate("/login");
   };
 
