@@ -56,6 +56,27 @@ export default function Home() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [openMenu, setOpenMenu] = useState<number | null>(null);
 
+  // ✅ state เดือน/ปี + ปุ่มเลื่อน
+  const today = new Date();
+  const [month, setMonth] = useState(today.getMonth() + 1); // 1-12
+  const [year, setYear] = useState(today.getFullYear());
+  const prevMonth = () => {
+    if (month === 1) {
+      setMonth(12);
+      setYear((y) => y - 1);
+    } else {
+      setMonth((m) => m - 1);
+    }
+  };
+  const nextMonth = () => {
+    if (month === 12) {
+      setMonth(1);
+      setYear((y) => y + 1);
+    } else {
+      setMonth((m) => m + 1);
+    }
+  };
+
   useEffect(() => {
     setAccounts(loadAccounts());
   }, []);
@@ -99,11 +120,16 @@ export default function Home() {
         <div className="balance-card">
           <div className="balance-display">
             <p className="balance-label">เงินรวม</p>
-            <p className="balance-label">
-              {new Date().getMonth() + 1}/{new Date().getFullYear()}
-            </p>
-            {/* ✅ ใช้ยอดรวมจริงแทนเลขฮาร์ดโค้ด */}
+            {/* ❌ เอาวันที่ออกจากกล่องสีเขียวอ่อน */}
+            {/* <p className="balance-label">{new Date().getMonth()+1}/{new Date().getFullYear()}</p> */}
             <p className="balance-amount">{formatTH(totalAmount)} บาท</p>
+          </div>
+
+          {/* ✅ ย้ายเดือน/ปีลงมาใต้กล่องสีเขียวอ่อน + ปุ่มเลื่อน */}
+          <div className="month-year-nav">
+            <button onClick={prevMonth} aria-label="Previous month">←</button>
+            <span>{month}/{year}</span>
+            <button onClick={nextMonth} aria-label="Next month">→</button>
           </div>
 
           {/* Action Buttons (ค่าเดโมตามเดิม) */}

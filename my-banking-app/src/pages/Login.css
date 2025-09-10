@@ -150,3 +150,23 @@ html, body, #root, .App {
   border-radius: 30px !important;  
   border: none;                    
 }
+/* เดิม */
+.login-page {
+  min-height: 100vh;
+  background: var(--su-bg);
+  display: flex;
+  align-items: flex-start;   /* ← ทำให้ลอยบนสุด */
+  justify-content: center;
+  padding: 24px;
+}
+
+/* ใหม่ */
+.login-page {
+  min-height: 100svh;        /* รับมือ mobile URL bar (fallback ด้านล่าง) */
+  min-height: 100vh;
+  background: var(--su-bg);
+  display: flex;
+  align-items: center;        /* ⬅️ จัดกึ่งกลางแนวตั้ง */
+  justify-content: center;    /* ⬅️ กึ่งกลางแนวนอน (เดิมมีอยู่แล้ว) */
+  padding: 24px;
+}

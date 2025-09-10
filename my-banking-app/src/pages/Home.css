@@ -674,4 +674,21 @@ body,
 .more-item.danger{ color:#ef4444 }
 .more-item.danger:hover{ background:#fee2e2 }
 
+/* เดือน/ปีใต้กล่องสีเขียวอ่อน */
+.month-year-nav{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:16px;
+  margin:10px 0 6px;   /* ชิดใต้ balance-display */
+  font-weight:700;
+  font-size:18px;
+}
+.month-year-nav button{
+  background:none;
+  border:none;
+  font-size:20px;
+  cursor:pointer;
+  line-height:1;
+}
 

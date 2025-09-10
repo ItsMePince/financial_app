@@ -1,5 +1,6 @@
 import React, { useState, ChangeEvent, FormEvent } from "react";
 import { UserRound } from "lucide-react";
+import { Link } from "react-router-dom";
 import "./SignUp.css";
 
 type SignUpValues = {
@@ -42,7 +43,7 @@ const SignUp: React.FC<SignUpProps> = ({ onSubmit, onSignUpSuccess, onSwitchToLo
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
+
     // Basic validation
     if (!form.email || !form.username || !form.password) {
       setError("กรุณากรอกข้อมูลให้ครบถ้วน");
@@ -80,11 +81,11 @@ const SignUp: React.FC<SignUpProps> = ({ onSubmit, onSignUpSuccess, onSwitchToLo
       });
 
       const data: SignUpResponse = await response.json();
-      
+
       if (data.success && data.user) {
         // Store user data
         localStorage.setItem('user', JSON.stringify(data.user));
-        
+
         // Call success callback
         if (onSignUpSuccess) {
           onSignUpSuccess(data.user);
@@ -161,9 +162,9 @@ const SignUp: React.FC<SignUpProps> = ({ onSubmit, onSignUpSuccess, onSwitchToLo
           />
 
           {error && (
-            <div style={{ 
-              color: '#ef4444', 
-              fontSize: '14px', 
+            <div style={{
+              color: '#ef4444',
+              fontSize: '14px',
               textAlign: 'center',
               margin: '8px 0',
               padding: '8px',
@@ -182,18 +183,9 @@ const SignUp: React.FC<SignUpProps> = ({ onSubmit, onSignUpSuccess, onSwitchToLo
 
         <p className="su-footer">
           Already have an account?{" "}
-          <a 
-            className="su-link" 
-            href="#" 
-            onClick={(e) => {
-              e.preventDefault();
-              if (onSwitchToLogin) {
-                onSwitchToLogin();
-              }
-            }}
-          >
+          <Link className="su-link" to="/login">
             Login
-          </a>
+          </Link>
         </p>
       </div>
     </div>
