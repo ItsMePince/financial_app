@@ -70,7 +70,7 @@ html, body, #root, .App {
 }
 .pill .icon{ width: 18px; height: 18px; }
 
-/* ===== Category Row (รายได้เท่านั้น) ===== */
+/* ===== Category Row ===== */
 .category-row{
   display: grid; grid-template-columns: repeat(4, 1fr);
   gap: 4px; margin-top: 8px; margin-bottom: 10px;
@@ -94,12 +94,23 @@ html, body, #root, .App {
 .cat.active .icon{ color: var(--brand-red); }
 
 /* ===== Amount ===== */
-.amount{ text-align: center; margin: 14px 0 8px; }
+.amount{
+  display: flex !important;
+  justify-content: center !important;
+  align-items: baseline !important;
+  gap: 6px !important;
+  width: 100% !important;
+}
+
 .amount .num{
   font-size: clamp(2.2rem, 1.6rem + 2.6vw, 3.2rem);
-  font-weight: 700; letter-spacing: .5px;
+  font-weight: 700;
+  letter-spacing: .5px;
 }
-.amount .currency{ font-size: var(--fs-30); margin-left: 6px; }
+
+.amount .currency{
+  font-size: var(--fs-30);
+}
 
 /* ===== Segments ===== */
 .segments{
@@ -165,8 +176,10 @@ html, body, #root, .App {
   place-items: center;
 }
 .ok-btn .icon{ width: 22px; height: 22px; }
+
 /* ===== Utilities ===== */
 .icon{ width: 1em; height: 1em; display: inline-block; }
+
 :root {
   --nav-bg: var(--bg-elev);
   --nav-border: rgba(0,0,0,.06);
@@ -192,7 +205,7 @@ html, body, #root, .App {
 .bottom-nav .nav-button {
   background: none;
   border: 0;
-  color: var(--nav-icon);     /* ✅ กำหนดสีไอคอนที่นี่ */
+  color: var(--nav-icon);
   display: flex;
   align-items: center;
   justify-content: center;
