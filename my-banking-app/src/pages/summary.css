@@ -13,7 +13,7 @@
   --shadow: 0 8px 20px rgba(0,0,0,.08);
   --radius: 18px;
   --chip: #d1fae5;           /* พื้นหลังวงกลมไอคอน */
-  --chip-icon: #0f766e; 
+  --chip-icon: #0f766e;
 }
 
 html, body { height: 100% }
@@ -63,7 +63,7 @@ html, body { height: 100% }
 .day-body { padding: 12px 12px 16px; }
 
 /* ===== แถวรายการ =====
-   ใช้ Grid 2 คอลัมน์: ซ้าย 1fr / ขวา 88px (ตัวเลขเท่ากันทุกแถว) */
+   ใช้ Grid 2 คอลัมน์: ซ้าย 1fr / ขวา 96px (ตัวเลขเท่ากันทุกแถว) */
 .row {
   display: grid !important;
   align-items: center;
@@ -74,8 +74,8 @@ html, body { height: 100% }
   border-radius: 18px;
   box-shadow: 0 4px 10px rgba(2,6,23,.05);
   box-sizing: border-box;
-  grid-template-columns: 1fr 96px !important; /* เดิม 88px → เผื่อระยะขวา */
-  padding: 10px 14px;    
+  grid-template-columns: 1fr 96px !important;
+  padding: 10px 14px;
 }
 
 /* ซ้าย: ไอคอน + ข้อความ */
@@ -92,10 +92,8 @@ html, body { height: 100% }
   border-radius: 999px;
   display: grid;
   place-items: center;
-  color: var(--muted);
-  box-shadow: var(--shadow);
-  background: var(--chip);   /* เขียวอ่อน */
-  color: var(--chip-icon);   /* สีเส้นไอคอน */
+  background: var(--chip);
+  color: var(--chip-icon);
   box-shadow: 0 2px 8px rgba(15,118,110,.15);
 }
 .row-avatar svg{
@@ -113,17 +111,17 @@ html, body { height: 100% }
 
 /* ขวา: คอลัมน์จำนวนเงิน (คงที่ + ชิดขวา) */
 .row-amt{
-  width: 88px;               /* ตัวเลขจริงอยู่กว้าง 88px */
-  padding-right: 8px;        /* เว้นจากขอบอีกนิดไม่ให้ชิดเกินไป */
+  width: 96px;
+  padding-right: 8px;
   text-align: right;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   letter-spacing: .2px;
 }
 .row-amt.neg { color: var(--neg); }
-.row-amt.pos { color: --pos; }
+.row-amt.pos { color: var(--pos); } /* ✅ แก้พิมพ์ผิด */
 
-/* เส้นคั่นเต็มแถว (พาดทั้ง 2 คอลัมน์) */
+/* เส้นคั่นเต็มแถว */
 .divider {
   grid-column: 1 / -1;
   height: 1px;
@@ -154,16 +152,50 @@ html, body { height: 100% }
   color: var(--text);
 }
 
+/* ปุ่มปิดอยู่ขวาบน แต่ไม่ทับปุ่มแก้ไข/ลบ */
 .detail-close {
-  position: absolute; top: 12px; right: 12px;
-  background: none; border: none; cursor: pointer; color: var(--text);
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text);
+  width: 32px; height: 32px;
+  display: grid; place-items: center;
 }
 
-.detail-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
-.detail-avatar { width: 36px; height: 36px; border-radius: 50%; background: #f1f5f9; }
+/* เผื่อพื้นที่ให้ปุ่มปิด -> ปุ่มแก้ไข/ลบจะไม่ถูกซ้อนทับ */
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding-right: 48px; /* ✅ เผื่อพื้นที่เท่าปุ่มปิด + ช่องว่าง */
+}
+
+.detail-avatar { width: 36px; height: 36px; border-radius: 50%; background: #f1f5f9; display: grid; place-items: center; }
 .detail-title { flex: 1; font-weight: 700; }
-.detail-actions { display: flex; gap: 6px; }
-.icon-btn { background: none; border: none; cursor: pointer; color: var(--text); }
+
+/* ปุ่มแก้ไข/ลบ เรียงในบรรทัดเดียว ชิดขวา */
+.detail-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;       /* ✅ ไม่ให้ขึ้นบรรทัดใหม่ */
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text);
+  width: 32px; height: 32px;
+  display: grid; place-items: center;
+  border-radius: 8px;
+}
+.icon-btn:hover { background: #f3f4f6; }
+
 .detail-body { font-size: 14px; line-height: 1.5; color: var(--text); }
 
 /* ยูทิลสีลบ/บวกทั่วไป */
@@ -172,33 +204,25 @@ html, body { height: 100% }
 
 /* ===== กว้างขึ้น + เว้นระยะมากขึ้น (override) ===== */
 
-/* ลด padding ซ้ายขวาของพื้นที่ภายใน day-card
-   เพื่อให้กล่อง (row) กว้างขึ้น */
+/* ลด padding ซ้ายขวาของพื้นที่ภายใน day-card เพื่อให้กล่องกว้างขึ้น */
 .day-body{
-  padding: 12px 8px 18px;            /* เดิม 12px 12px 16px */
+  padding: 12px 8px 18px;  /* เดิม 12px 12px 16px */
 }
 
 /* กล่องแต่ละรายการ: เพิ่มระยะห่างแนวตั้ง และขยาย padding ในกล่อง */
 .row{
-  grid-template-columns: 1fr 96px !important; /* เผื่อขวาอีกนิด เลขไม่อึดอัด */
-  padding: 12px 16px;                          /* กล่องโปร่งขึ้น */
-  margin: 14px 0;                              /* ระยะห่างกล่องต่อกล่องมากขึ้น */
+  grid-template-columns: 1fr 96px !important;
+  padding: 12px 16px;
+  margin: 14px 0;
 }
 
-/* คอลัมน์ตัวเลข: กว้างเท่ากับ grid ขวา + เว้นจากขอบอีกนิด */
-.row-amt{
-  width: 96px;           /* ต้องเท่ากับคอลัมน์ขวาของ .row */
-  padding-right: 6px;    /* ไม่ให้ชิดขอบเกินไป */
-  text-align: right;
-}
-
-/* เส้นคั่นกลางแถว ถ้าไม่อยากให้แน่น เก็บออกได้เลย */
+/* ไม่ใช้เส้นคั่นภายในรายการ */
 .divider{ display: none; }
 
 /* เว้นระยะระหว่าง day-card แต่ละวันมากขึ้น */
-.list-wrap{ gap: 24px; }                 /* เดิม 16px */
+.list-wrap{ gap: 24px; }
 
-/* ไอคอนในวงกลม — โทนเดียวกับหน้า Custom */
+/* ย้ำโทนไอคอนในวงกลม */
 :root{
   --chip: #d1fae5;
   --chip-icon: #0f766e;
