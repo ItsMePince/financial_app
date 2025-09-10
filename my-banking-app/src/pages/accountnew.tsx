@@ -99,7 +99,7 @@ export default function AccountNew() {
       list.push(nextItem);
     }
     saveAccounts(list);
-    navigate("/"); // กลับหน้าแรก
+    navigate("/Home"); // กลับหน้าแรก
   }
 
   return (

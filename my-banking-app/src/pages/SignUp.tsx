@@ -90,7 +90,7 @@ const SignUp: React.FC<SignUpProps> = ({ onSubmit, onSignUpSuccess, onSwitchToLo
           onSignUpSuccess(data.user);
         } else {
           // Or redirect to dashboard
-          window.location.href = '/dashboard';
+          window.location.href = '/Home';
         }
       } else {
         setError(data.message || 'การสมัครสมาชิกล้มเหลว');
