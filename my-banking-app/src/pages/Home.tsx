@@ -182,60 +182,60 @@ export default function Home() {
           <span className="transaction-amount">-200</span>
         </div>
 
-        {/* Account cards */}
-        <div className="category-grid">
-          {accounts.map((acc, idx) => {
-            const Icon = ICON_MAP[acc.iconKey || "bank"] || Building2;
-            const isOpen = openMenu === idx;
-            const amt =
-              typeof acc.amount === "string" ? parseFloat(acc.amount || "0") : Number(acc.amount || 0);
+       {/* Account cards */}
+<div className="category-grid">
+  {accounts.map((acc, idx) => {
+    const Icon = ICON_MAP[acc.iconKey || "bank"] || Building2;
+    const isOpen = openMenu === idx;
+    const amt =
+      typeof acc.amount === "string" ? parseFloat(acc.amount || "0") : Number(acc.amount || 0);
 
-            return (
-              <div className="category-card has-more" key={acc.name + idx}>
-                <button
-                  className="more-btn"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    setOpenMenu((cur) => (cur === idx ? null : idx));
-                  }}
-                  aria-label="More actions"
-                >
-                  <MoreVertical size={18} />
-                </button>
+    return (
+      <div className="category-card has-more" key={acc.name + idx}>
+        <button
+          className="more-btn"
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            setOpenMenu((cur) => (cur === idx ? null : idx));
+          }}
+          aria-label="More actions"
+        >
+          <MoreVertical size={18} />
+        </button>
 
-                {isOpen && (
-                  <div className="more-menu" onClick={(e) => e.stopPropagation()}>
-                    <button className="more-item" onClick={() => handleEdit(idx)}>
-                      <Edit2 size={16} />
-                      <span>แก้ไข</span>
-                    </button>
-                    <button className="more-item danger" onClick={() => handleDelete(idx)}>
-                      <Trash2 size={16} />
-                      <span>ลบ</span>
-                    </button>
-                  </div>
-                )}
+        {isOpen && (
+          <div className="more-menu" onClick={(e) => e.stopPropagation()}>
+            <button className="more-item" onClick={() => handleEdit(idx)}>
+              <Edit2 size={16} />
+              <span>แก้ไข</span>
+            </button>
+            <button className="more-item danger" onClick={() => handleDelete(idx)}>
+              <Trash2 size={16} />
+              <span>ลบ</span>
+            </button>
+          </div>
+        )}
 
-                <div className="category-icon">
-                  <Icon className="cat-icon" />
-                </div>
-                <p className="category-name">{acc.name}</p>
-                <p className="category-amount">{formatTH(amt)} บาท</p>
-              </div>
-            );
-          })}
-
-          {/* ปุ่ม + ไปหน้า accountnew */}
-          <Link to="/accountnew" className="category-card">
-            <div
-              className="category-icon"
-              style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
-            >
-              <span style={{ fontSize: "2rem", color: "#374151" }}>+</span>
-            </div>
-          </Link>
+        <div className="category-icon">
+          <Icon className="cat-icon" />
         </div>
+        <p className="category-name">{acc.name}</p>
+        <p className="category-amount">{formatTH(amt)} บาท</p>
+      </div>
+    );
+  })}
+
+  {/* ปุ่ม + ไปหน้า accountnew */}
+  <Link to="/accountnew" className="category-card">
+    <div
+      className="category-icon"
+      style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+    >
+      <span style={{ fontSize: "2rem", color: "#374151" }}>+</span>
+    </div>
+  </Link>
+</div>
       </div>
 
       <BottomNav />
