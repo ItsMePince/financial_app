@@ -1,78 +1,75 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom"; // เพิ่ม import นี้
+import { useNavigate } from "react-router-dom";
 import "./Login.css";
-
-// Types for API responses
-interface LoginResponse {
-  success: boolean;
-  message: string;
-  user?: {
-    username: string;
-    role: string;
-  };
-}
 
 interface LoginProps {
   onLoginSuccess?: (user: { username: string; role: string }) => void;
 }
 
+// เปลี่ยนพอร์ตที่นี่ถ้าจำเป็น
+const API_BASE = (import.meta as any)?.env?.VITE_API_BASE ?? "http://localhost:8081";
+
 const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const navigate = useNavigate(); // เพิ่ม hook นี้
+  const [loading, setLoading]   = useState(false);
+  const [error, setError]       = useState("");
+  const navigate = useNavigate();
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     setLoading(true);
     setError("");
-    
+
     try {
-      const response = await fetch('http://localhost:8081/api/auth/login', {
-        method: 'POST',
+      const res = await fetch(`${API_BASE}/api/auth/login`, {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
+          "Accept": "application/json", // ขอ JSON กลับมา
         },
-        credentials: 'include', // สำหรับ cookies/session
+        credentials: "include", // ให้ cookie JSESSIONID ติดไป-กลับ
         body: JSON.stringify({ username, password }),
       });
 
-      const data: LoginResponse = await response.json();
-      
-      if (data.success && data.user) {
-        // ⭐ สำคัญ: ตั้งค่า authentication status
-        localStorage.setItem('isAuthenticated', 'true');
-        
-        // เก็บข้อมูล user ใน localStorage สำหรับใช้ในหน้าอื่น
-        localStorage.setItem('user', JSON.stringify(data.user));
-        
-        // ⭐ แจ้งให้ App component รู้ว่า auth state เปลี่ยน
-        window.dispatchEvent(new Event("auth-changed"));
-        
-        // เรียก callback function ถ้ามี
-        if (onLoginSuccess) {
-          onLoginSuccess(data.user);
-        }
-        
-        // ใช้ navigate แทน window.location.href เพื่อให้ React Router ทำงาน
-        navigate('/home');
-        
-      } else {
-        setError(data.message || 'Login failed');
+      const ct = res.headers.get("content-type") || "";
+      const payload: any = ct.includes("application/json")
+        ? await res.json()
+        : await res.text(); // กันกรณี server ส่ง HTML error page
+
+      if (!res.ok) {
+        const msg =
+          typeof payload === "string"
+            ? (payload.slice(0, 200) || `${res.status} ${res.statusText}`)
+            : (payload?.message || `${res.status} ${res.statusText}`);
+        throw new Error(msg);
       }
-    } catch (error) {
-      console.error('Login error:', error);
-      setError('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กรุณาลองใหม่อีกครั้ง');
+
+      // รองรับทั้ง 2 รูปแบบตอบกลับ
+      const userObj =
+        (payload && payload.user) ||
+        (payload && payload.username
+          ? { username: payload.username, role: payload.role ?? "USER" }
+          : null);
+
+      if (!userObj?.username) throw new Error("Invalid response from server");
+
+      localStorage.setItem("isAuthenticated", "true");
+      localStorage.setItem("user", JSON.stringify(userObj));
+      window.dispatchEvent(new Event("auth-changed"));
+      onLoginSuccess?.(userObj);
+
+      navigate("/home");
+    } catch (err: any) {
+      console.error("Login error:", err);
+      setError(err?.message || "เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กรุณาลองใหม่อีกครั้ง");
     } finally {
       setLoading(false);
     }
   };
 
-  // ฟังก์ชันสำหรับไป signup page
-  const goToSignUp = () => {
-    navigate('/signup');
-  };
+  const goToSignUp = () => navigate("/signup");
 
   return (
     <div className="login-page">
@@ -116,40 +113,22 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
           </label>
 
           {error && (
-            <div style={{
-              color: '#ef4444',
-              fontSize: '14px',
-              textAlign: 'center',
-              margin: '8px 0'
-            }}>
+            <div style={{ color: "#ef4444", fontSize: 14, textAlign: "center", margin: "8px 0" }}>
               {error}
             </div>
           )}
 
           <button type="submit" className="btn" disabled={loading}>
-            {loading ? 'กำลังเข้าสู่ระบบ...' : 'login'}
+            {loading ? "กำลังเข้าสู่ระบบ..." : "login"}
           </button>
         </form>
 
-        <div style={{
-          fontSize: '12px',
-          color: '#6b7280',
-          marginTop: '12px',
-          textAlign: 'center'
-        }}>
-        </div>
-
         <p className="footnote">
           Don't have an account?
-          <button 
-            className="link" 
+          <button
+            className="link"
             onClick={goToSignUp}
-            style={{ 
-              background: 'none', 
-              border: 'none', 
-              cursor: 'pointer',
-              textDecoration: 'underline' 
-            }}
+            style={{ background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}
           >
             {" "}Sign Up
           </button>
