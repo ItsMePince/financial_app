@@ -213,6 +213,7 @@
   display: grid;
   place-items: center;
 }
+
 /* ==== FORCE OVERRIDE: ให้หัวตาราง/ทุกแถวใช้กริดเดียวกันแบบบังคับ ==== */
 .month-wrapper .grid-header,
 .month-wrapper .row,
@@ -248,4 +249,28 @@
 .month-wrapper .left-badge,
 .month-wrapper .left-icon {
   justify-self: start !important;
+}
+
+/* ===== Empty state row: จัดกลางสวย ๆ ===== */
+.month-wrapper .row.empty {
+  /* override grid เป็น flex */
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center;
+
+  /* ลบการตั้งค่า grid ที่ถูกบังคับไว้ */
+  grid-template-columns: none !important;
+  gap: 0 !important;
+
+  min-height: 84px;
+  padding: 16px;
+  margin: 12px 0;
+
+  background: #fff;
+  border: 1px solid var(--nav-border, rgba(0,0,0,.06));
+  border-radius: 14px;
+
+  color: #6b7280;          /* muted */
+  font-weight: 600;
 }

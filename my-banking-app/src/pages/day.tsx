@@ -8,7 +8,7 @@ import {
   Cell,
   Tooltip,
 } from "recharts";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import "./day.css";
 
 import type { LucideIcon } from "lucide-react";
@@ -20,39 +20,37 @@ import {
   Plus,
   Circle,
   CalendarDays,
-  ChevronLeft,
-  ChevronRight,
+  ArrowLeft,    // ⟵ ใช้ทำปุ่มกลับ
 } from "lucide-react";
 
 import BottomNav from "./buttomnav";
 
-/* ---------------- Types ---------------- */
+/* ---------------- Backend DTO ---------------- */
+type ExpenseDTO = {
+  id: number;
+  type: "EXPENSE" | "INCOME";
+  category: string;
+  amount: number;          // บวกจาก backend
+  note?: string | null;
+  place?: string | null;
+  date: string;            // "yyyy-MM-dd"
+  paymentMethod?: string | null;
+  iconKey?: string | null;
+};
+
+/* ---------------- View Types ---------------- */
 export type DayItem = {
-  id: string;
-  category: string;   // อาหาร / ค่าเดินทาง / ของขวัญ / อื่นๆ ...
-  amount: number;     // เป็นบวก (จำนวนเงิน)
-  color?: string;     // สีหมวด (optional)
-};
-export type ItemsByDate = Record<string, DayItem[]>;
-
-/* -------- DEMO DATA (แทนด้วย data จริงได้) -------- */
-const demoItemsByDate: ItemsByDate = {
-  "2025-08-15": [
-    { id: "b1", category: "ค่าเดินทาง", amount: 800, color: "#3B82F6" }, // ~50%
-    { id: "b2", category: "อาหาร", amount: 320, color: "#9CA3AF" },       // ~20%
-    { id: "b3", category: "ค่าอาหาร", amount: 200, color: "#06B6D4" },   // ~13%
-    { id: "b4", category: "ค่าของขวัญ", amount: 200, color: "#10B981" },   // ~13%
-    { id: "b5", category: "อื่นๆ", amount: 112, color: "#22C55E" },        // ~7%
-  ],
-  "2025-08-14": [
-    { id: "a1", category: "อาหาร", amount: 180, color: "#9CA3AF" },
-    { id: "a2", category: "ค่าเดินทาง", amount: 120, color: "#3B82F6" },
-    { id: "a3", category: "อื่นๆ", amount: 60,  color: "#22C55E" },
-  ],
+  id: string;               // key: type::category
+  category: string;
+  type: "EXPENSE" | "INCOME";
+  amount: number;           // เป็นบวก (รวม abs)
+  color: string;            // รายรับ=เขียว / รายจ่าย=แดง
 };
 
-const palette = ["#3B82F6","#06B6D4","#10B981","#F59E0B","#EF4444","#9CA3AF","#22C55E"];
+const COLOR_INCOME = "#10B981"; // เขียว
+const COLOR_EXPENSE = "#EF4444"; // แดง
 
+/* หมวด -> ไอคอน (fallback ถ้าไม่เจอ iconKey) */
 const iconMap: Record<string, LucideIcon> = {
   "ค่าเดินทาง": Bus,
   "อาหาร": Utensils,
@@ -61,6 +59,12 @@ const iconMap: Record<string, LucideIcon> = {
   "อื่นๆ": Plus,
 };
 
+const API_BASE =
+  (import.meta as any)?.env?.VITE_API_BASE ||
+  (import.meta as any)?.env?.REACT_APP_API_BASE ||
+  "http://localhost:8081";
+
+/* ---------------- Date helpers ---------------- */
 const iso = (d: Date) => {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -74,15 +78,16 @@ const thDate = (d: Date) => {
   return `${dd}/${mm}/${yy}`;
 };
 
-export default function Day({
-  itemsByDate = demoItemsByDate,   // ปลั๊กข้อมูลจริงเข้ามาแทน demo ได้ทันที
-}: {
-  itemsByDate?: ItemsByDate;
-}) {
+export default function Day() {
+  const navigate = useNavigate();
   const [sp, setSp] = useSearchParams();
   const urlDate = sp.get("date");
-  const init = urlDate ? new Date(urlDate) : new Date("2025-08-14");
+  const init = urlDate ? new Date(urlDate) : new Date();
   const [anchor, setAnchor] = useState<Date>(init);
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [raw, setRaw] = useState<ExpenseDTO[]>([]);
 
   // sync state -> URL ?date=
   useEffect(() => {
@@ -93,21 +98,65 @@ export default function Day({
     }, { replace: true });
   }, [anchor, setSp]);
 
-  // รายการของวันนั้น
+  // โหลดรายการของ "วันนั้น" จาก backend
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const dayISO = iso(anchor);
+        const res = await fetch(
+          `${API_BASE}/api/expenses/range?start=${dayISO}&end=${dayISO}`,
+          { headers: { Accept: "application/json" }, credentials: "include" }
+        );
+        if (!res.ok) throw new Error(`โหลดรายการไม่สำเร็จ (${res.status})`);
+        const data: ExpenseDTO[] = await res.json();
+        if (!alive) return;
+        setRaw(data);
+      } catch (e: any) {
+        if (!alive) return;
+        setError(e?.message || "เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์");
+      } finally {
+        if (alive) setLoading(false);
+      }
+    })();
+    return () => { alive = false; };
+  }, [anchor]);
+
+  // รวมเป็น (type::category) -> มูลค่า abs และใส่สีตามชนิด
   const items = useMemo<DayItem[]>(() => {
-    const list = itemsByDate[iso(anchor)] ?? [];
-    return [...list].sort((a, b) => b.amount - a.amount);
-  }, [itemsByDate, anchor]);
+    const map = new Map<string, { category: string; type: "EXPENSE" | "INCOME"; amount: number }>();
+    for (const e of raw) {
+      const type = e.type;
+      const absVal = Math.abs(Number(e.amount));
+      const category = e.category || "อื่นๆ";
+      const key = `${type}::${category}`;
+      const prev = map.get(key) || { category, type, amount: 0 };
+      map.set(key, { category, type, amount: prev.amount + absVal });
+    }
+    const arr: DayItem[] = Array.from(map.entries()).map(([key, v]) => ({
+      id: key,
+      category: v.category,
+      type: v.type,
+      amount: v.amount,
+      color: v.type === "INCOME" ? COLOR_INCOME : COLOR_EXPENSE,
+    }));
+    // เรียงลง: มาก → น้อย
+    arr.sort((a, b) => b.amount - a.amount);
+    return arr;
+  }, [raw]);
 
   // เตรียมข้อมูล donut + เปอร์เซ็นต์
   const { series, total } = useMemo(() => {
     const sum = items.reduce((s, v) => s + v.amount, 0);
     const safe = sum === 0 ? 1 : sum;
-    const s = items.map((v, i) => ({
+    const s = items.map((v) => ({
       id: v.id,
       name: v.category,
       value: v.amount,
-      color: v.color ?? palette[i % palette.length],
+      color: v.color,
       pct: Math.round((v.amount / safe) * 100),
     }));
     return { series: s, total: sum };
@@ -118,11 +167,17 @@ export default function Day({
   const nextDay = () =>
     setAnchor(new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate() + 1));
 
+  // กลับหน้า month (หรือย้อนหน้าเดิมถ้ามี history)
+  const goBackToMonth = () => {
+    if (window.history.length > 1) navigate(-1);
+    else navigate("/month");
+  };
+
   // วาด label บนวงโดนัท (ตำแหน่งกลาง ring)
   const RAD = Math.PI / 180;
   const donutLabel = (props: any) => {
     const { cx, cy, midAngle, innerRadius, outerRadius, percent } = props;
-    const r = innerRadius + (outerRadius - innerRadius) * 0.7; // ปรับความใกล้ขอบ: 0.7 → 0.75 ได้
+    const r = innerRadius + (outerRadius - innerRadius) * 0.7;
     const x = cx + r * Math.cos(-midAngle * RAD);
     const y = cy + r * Math.sin(-midAngle * RAD);
     const val = Math.round((percent || 0) * 100);
@@ -142,22 +197,52 @@ export default function Day({
     );
   };
 
+  if (loading) {
+    return (
+      <div className="day-wrap">
+        <section className="day-card"><div>กำลังโหลดข้อมูล…</div></section>
+        <BottomNav />
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="day-wrap">
+        <section className="day-card"><div className="error">{error}</div></section>
+        <BottomNav />
+      </div>
+    );
+  }
+
   return (
     <div className="day-wrap">
-      {/* Header */}
-      
-
       {/* Summary card */}
       <section className="day-card">
+        {/* แถวหัวการ์ด: ซ้าย=ปุ่มกลับ, กลาง=ชื่อหัวข้อ, ขวา=ช่องว่างเพื่อให้ศูนย์กลางจริง */}
         <div className="card-head">
-          <span className="card-title">สรุปรายวัน</span>
-          <div className="switcher">
-            <button className="nav-btn" onClick={prevDay} aria-label="ก่อนหน้า">‹</button>
-            <div className="date-chip">
-              <CalendarDays size={16} /> {thDate(anchor)}
-            </div>
-            <button className="nav-btn" onClick={nextDay} aria-label="ถัดไป">›</button>
+          <button
+            className="back-link"
+            onClick={goBackToMonth}
+            aria-label="กลับหน้าสรุปรายเดือน"
+            title="กลับหน้าสรุปรายเดือน"
+          >
+            <ArrowLeft size={22} />
+            <span>กลับ</span>
+          </button>
+
+          <h2 className="card-title">สรุปรายวัน</h2>
+
+          {/* ช่องว่างไว้บาลานซ์ grid ให้หัวข้ออยู่กึ่งกลางจริง */}
+          <div />
+        </div>
+
+        {/* ตัวสลับวัน + วันที่ */}
+        <div className="switcher">
+          <button className="nav-btn" onClick={prevDay} aria-label="ก่อนหน้า">‹</button>
+          <div className="date-chip">
+            <CalendarDays size={16} /> {thDate(anchor)}
           </div>
+          <button className="nav-btn" onClick={nextDay} aria-label="ถัดไป">›</button>
         </div>
 
         <div className="donut-box">
@@ -190,7 +275,7 @@ export default function Day({
         </div>
       </section>
 
-      {/* หัวแถวของลิสต์ */}
+      {/* Header of list */}
       <div className="list-head">
         <div />
         <div>ประเภท</div>
@@ -198,20 +283,26 @@ export default function Day({
         <div>จำนวนเงิน</div>
       </div>
 
-      {/* ลิสต์ */}
+      {/* List */}
       <section className="list">
         {items.length === 0 ? (
           <div className="empty">วันนี้ยังไม่มีรายการ</div>
         ) : (
-          items.map((it, i) => {
+          items.map((it) => {
             const Icon = iconMap[it.category] ?? Circle;
             return (
               <div className="item" key={it.id}>
-                <div className="icon-bubble" style={{ background: it.color ?? palette[i % palette.length] }}>
+                <div
+                  className="icon-bubble"
+                  style={{ background: it.color }}
+                  title={it.type === "INCOME" ? "รายรับ" : "รายจ่าย"}
+                >
                   <Icon size={18} color="#fff" strokeWidth={2} />
                 </div>
                 <div className="name">{it.category}</div>
-                <div className="percent">{total ? Math.round((it.amount / total) * 100) : 0} %</div>
+                <div className="percent">
+                  {total ? Math.round((it.amount / total) * 100) : 0} %
+                </div>
                 <div className="amount">{it.amount.toLocaleString()} ฿</div>
               </div>
             );
