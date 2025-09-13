@@ -255,17 +255,34 @@ export default function Summary() {
     setSelected(it);
   };
 
+  const removeFromState = (id: number) => {
+    setEntries((prev) =>
+      prev
+        .map((d) => ({ ...d, items: d.items.filter((x) => x.id !== id), total: d.items.filter((x) => x.id !== id).reduce((s, it) => s + it.amount, 0) }))
+        .filter((d) => d.items.length > 0)
+    );
+  };
+
+  const tryDeleteEndpoints = async (id: number) => {
+    const attempt = async (url: string, init: RequestInit) => {
+      const r = await fetch(url, init);
+      return r.ok;
+    };
+    if (await attempt(`${API_BASE}/api/expenses/${id}`, { method: "DELETE", credentials: "include", headers: { Accept: "application/json" } })) return true;
+    if (await attempt(`${API_BASE}/api/expenses/${id}?_method=DELETE`, { method: "POST", credentials: "include", headers: { Accept: "application/json" } })) return true;
+    if (await attempt(`${API_BASE}/api/expenses/delete/${id}`, { method: "POST", credentials: "include", headers: { Accept: "application/json" } })) return true;
+    if (await attempt(`${API_BASE}/api/expenses/${id}`, { method: "DELETE", credentials: "include" })) return true;
+    return false;
+  };
+
   const onDelete = async (it: Item) => {
     if (!window.confirm("ลบรายการนี้ใช่ไหม?")) return;
     try {
       setSaving(true);
-      const res = await fetch(`${API_BASE}/api/expenses/${it.id}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error(`ลบไม่สำเร็จ (${res.status})`);
+      const ok = await tryDeleteEndpoints(it.id);
+      if (!ok) throw new Error("ลบไม่สำเร็จ");
+      removeFromState(it.id);
       setSelected(null);
-      await loadExpenses();
     } catch (e: any) {
       alert(e?.message || "เกิดข้อผิดพลาดขณะลบ");
     } finally {
@@ -275,8 +292,10 @@ export default function Summary() {
 
   const submitEdit = async () => {
     if (!selected || !form) return;
+    const apiType: "EXPENSE" | "INCOME" = form.typeLabel === "รายได้" ? "INCOME" : "EXPENSE";
     const payload = {
-      type: form.typeLabel,
+      id: selected.id,
+      type: apiType,
       category: form.category,
       amount: Number(form.amount),
       note: form.note,
@@ -287,15 +306,32 @@ export default function Summary() {
     };
     try {
       setSaving(true);
-      const res = await fetch(`${API_BASE}/api/expenses`, {
-        method: "POST",
+      let res = await fetch(`${API_BASE}/api/expenses/${selected.id}`, {
+        method: "PUT",
         credentials: "include",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify(payload),
       });
       if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(`บันทึกไม่สำเร็จ (${res.status}) ${txt}`);
+        const createRes = await fetch(`${API_BASE}/api/expenses`, {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!createRes.ok) {
+          const txt = await createRes.text();
+          throw new Error(`บันทึกรายการใหม่ไม่สำเร็จ (${createRes.status}) ${txt}`);
+        }
+        const delRes = await fetch(`${API_BASE}/api/expenses/${selected.id}`, {
+          method: "DELETE",
+          credentials: "include",
+          headers: { Accept: "application/json" }
+        });
+        if (!delRes.ok) {
+          const txt = await delRes.text();
+          throw new Error(`ลบรายการเดิมไม่สำเร็จ (${delRes.status}) ${txt}`);
+        }
       }
       setEditMode(false);
       setSelected(null);
