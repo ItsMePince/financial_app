@@ -95,7 +95,7 @@ export default function Home() {
     }
   }, [openMenu]);
 
-  const totalAmount = useMemo(
+  const totalAccounts = useMemo(
     () =>
       accounts.reduce((sum, a) => {
         const num =
@@ -164,7 +164,11 @@ export default function Home() {
     return { monthIncome: income, monthExpense: expenseAbs, monthBalance: balance, recent: last1 };
   }, [data]);
 
-  const walletBalance = useMemo(() => totalAmount - monthExpense, [totalAmount, monthExpense]);
+  // ✅ แก้: รวม บัญชี + รายได้ − ค่าใช้จ่าย
+  const walletBalance = useMemo(
+    () => totalAccounts + monthIncome - monthExpense,
+    [totalAccounts, monthIncome, monthExpense]
+  );
 
   return (
     <div className="App">
