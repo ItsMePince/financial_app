@@ -1,9 +1,19 @@
 {
+  "name": "my-banking-app",
+  "version": "1.0.0",
+  "private": true,
   "dependencies": {
     "@types/react": "^19.1.12",
     "@types/react-dom": "^19.1.9",
     "lucide-react": "^0.542.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "test:ui": "vitest --ui"
   }
 }
