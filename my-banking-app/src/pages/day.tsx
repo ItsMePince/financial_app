@@ -11,7 +11,6 @@ import {
 import { useSearchParams, useNavigate } from "react-router-dom";
 import "./day.css";
 
-import type { LucideIcon } from "lucide-react";
 import {
   Bus,
   Utensils,
@@ -20,51 +19,145 @@ import {
   Plus,
   Circle,
   CalendarDays,
-  ArrowLeft,    // ⟵ ใช้ทำปุ่มกลับ
+  ArrowLeft,
+  Wallet,
+  CreditCard,
+  Train,
+  Bike,
+  Coffee,
+  ShoppingCart,
+  ShoppingBag,
+  Home,
+  HeartPulse,
+  Fuel,
+  MapPin,
+  Tag,
+  Activity,
 } from "lucide-react";
 
 import BottomNav from "./buttomnav";
 
-/* ---------------- Backend DTO ---------------- */
 type ExpenseDTO = {
   id: number;
   type: "EXPENSE" | "INCOME";
   category: string;
-  amount: number;          // บวกจาก backend
+  amount: number;
   note?: string | null;
   place?: string | null;
-  date: string;            // "yyyy-MM-dd"
+  date: string;
   paymentMethod?: string | null;
   iconKey?: string | null;
 };
 
-/* ---------------- View Types ---------------- */
 export type DayItem = {
-  id: string;               // key: type::category
+  id: string;
   category: string;
   type: "EXPENSE" | "INCOME";
-  amount: number;           // เป็นบวก (รวม abs)
-  color: string;            // รายรับ=เขียว / รายจ่าย=แดง
+  amount: number;
+  color: string;
+  iconKey: string;
 };
 
-const COLOR_INCOME = "#10B981"; // เขียว
-const COLOR_EXPENSE = "#EF4444"; // แดง
+const COLOR_INCOME = "#10B981";
+const COLOR_EXPENSE = "#EF4444";
 
-/* หมวด -> ไอคอน (fallback ถ้าไม่เจอ iconKey) */
-const iconMap: Record<string, LucideIcon> = {
-  "ค่าเดินทาง": Bus,
-  "อาหาร": Utensils,
-  "ของขวัญ": Gift,
-  "ค่าน้ำมัน": Car,
-  "อื่นๆ": Plus,
+const ICONS: Record<string, any> = {
+  Utensils,
+  Train,
+  Wallet,
+  CreditCard,
+  Car,
+  Bus,
+  Bike,
+  Coffee,
+  Gift,
+  Tag,
+  ShoppingBag,
+  ShoppingCart,
+  Home,
+  HeartPulse,
+  Activity,
+  Fuel,
+  MapPin,
 };
+
+const EN_ALIAS: Record<string, string> = {
+  gift: "Gift",
+  present: "Gift",
+  wallet: "Wallet",
+  cash: "Wallet",
+  credit: "CreditCard",
+  card: "CreditCard",
+  food: "Utensils",
+  restaurant: "Utensils",
+  home: "Home",
+  house: "Home",
+  health: "HeartPulse",
+  fuel: "Fuel",
+  shopping: "ShoppingCart",
+  bag: "ShoppingBag",
+  map: "MapPin",
+  train: "Train",
+  car: "Car",
+  bus: "Bus",
+  bike: "Bike",
+  coffee: "Coffee",
+  tag: "Tag",
+  activity: "Activity",
+  handcoins: "Wallet",
+};
+
+const TH_ALIAS: Record<string, string> = {
+  "ของขวัญ": "Gift",
+  "อาหาร": "Utensils",
+  "กาแฟ": "Coffee",
+  "เดินทาง": "Train",
+  "รถ": "Car",
+  "รถยนต์": "Car",
+  "รถเมล์": "Bus",
+  "จักรยาน": "Bike",
+  "บ้าน": "Home",
+  "สุขภาพ": "HeartPulse",
+  "น้ำมัน": "Fuel",
+  "ช้อปปิ้ง": "ShoppingCart",
+  "ซื้อของ": "ShoppingCart",
+  "กระเป๋า": "ShoppingBag",
+  "แผนที่": "MapPin",
+  "บัตรเครดิต": "CreditCard",
+  "เงินสด": "Wallet",
+  "ธนาคาร": "Wallet",
+  "ลงทุน": "Activity",
+};
+
+function normalizeIconKey(raw?: string | null, category?: string | null) {
+  const tryDirect = (k: string) =>
+    ICONS[k] ? k : Object.keys(ICONS).find((x) => x.toLowerCase() === k.toLowerCase());
+
+  if (raw && raw.trim() !== "") {
+    const k = raw.trim();
+    const d = tryDirect(k);
+    if (d) return d;
+    const alias = EN_ALIAS[k.toLowerCase()];
+    if (alias) return alias;
+  }
+
+  if (category && category.trim() !== "") {
+    const c = category.trim().toLowerCase();
+    for (const [th, val] of Object.entries(TH_ALIAS)) {
+      if (c.includes(th)) return val;
+    }
+    const d = tryDirect(category);
+    if (d) return d;
+  }
+
+  return "Utensils";
+}
 
 const API_BASE =
   (import.meta as any)?.env?.VITE_API_BASE ||
   (import.meta as any)?.env?.REACT_APP_API_BASE ||
   "http://localhost:8081";
 
-/* ---------------- Date helpers ---------------- */
 const iso = (d: Date) => {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -89,7 +182,6 @@ export default function Day() {
   const [error, setError] = useState<string | null>(null);
   const [raw, setRaw] = useState<ExpenseDTO[]>([]);
 
-  // sync state -> URL ?date=
   useEffect(() => {
     setSp((prev) => {
       const n = new URLSearchParams(prev);
@@ -98,7 +190,6 @@ export default function Day() {
     }, { replace: true });
   }, [anchor, setSp]);
 
-  // โหลดรายการของ "วันนั้น" จาก backend
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -125,16 +216,21 @@ export default function Day() {
     return () => { alive = false; };
   }, [anchor]);
 
-  // รวมเป็น (type::category) -> มูลค่า abs และใส่สีตามชนิด
   const items = useMemo<DayItem[]>(() => {
-    const map = new Map<string, { category: string; type: "EXPENSE" | "INCOME"; amount: number }>();
+    const map = new Map<
+      string,
+      { category: string; type: "EXPENSE" | "INCOME"; amount: number; iconKey: string }
+    >();
     for (const e of raw) {
       const type = e.type;
       const absVal = Math.abs(Number(e.amount));
       const category = e.category || "อื่นๆ";
       const key = `${type}::${category}`;
-      const prev = map.get(key) || { category, type, amount: 0 };
-      map.set(key, { category, type, amount: prev.amount + absVal });
+      const iconKey = normalizeIconKey(e.iconKey, e.category);
+      const prev = map.get(key) || { category, type, amount: 0, iconKey };
+      if (!prev.iconKey) prev.iconKey = iconKey;
+      prev.amount += absVal;
+      map.set(key, prev);
     }
     const arr: DayItem[] = Array.from(map.entries()).map(([key, v]) => ({
       id: key,
@@ -142,13 +238,12 @@ export default function Day() {
       type: v.type,
       amount: v.amount,
       color: v.type === "INCOME" ? COLOR_INCOME : COLOR_EXPENSE,
+      iconKey: v.iconKey || "Utensils",
     }));
-    // เรียงลง: มาก → น้อย
     arr.sort((a, b) => b.amount - a.amount);
     return arr;
   }, [raw]);
 
-  // เตรียมข้อมูล donut + เปอร์เซ็นต์
   const { series, total } = useMemo(() => {
     const sum = items.reduce((s, v) => s + v.amount, 0);
     const safe = sum === 0 ? 1 : sum;
@@ -167,13 +262,11 @@ export default function Day() {
   const nextDay = () =>
     setAnchor(new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate() + 1));
 
-  // กลับหน้า month (หรือย้อนหน้าเดิมถ้ามี history)
   const goBackToMonth = () => {
     if (window.history.length > 1) navigate(-1);
     else navigate("/month");
   };
 
-  // วาด label บนวงโดนัท (ตำแหน่งกลาง ring)
   const RAD = Math.PI / 180;
   const donutLabel = (props: any) => {
     const { cx, cy, midAngle, innerRadius, outerRadius, percent } = props;
@@ -216,9 +309,7 @@ export default function Day() {
 
   return (
     <div className="day-wrap">
-      {/* Summary card */}
       <section className="day-card">
-        {/* แถวหัวการ์ด: ซ้าย=ปุ่มกลับ, กลาง=ชื่อหัวข้อ, ขวา=ช่องว่างเพื่อให้ศูนย์กลางจริง */}
         <div className="card-head">
           <button
             className="back-link"
@@ -226,21 +317,18 @@ export default function Day() {
             aria-label="กลับหน้าสรุปรายเดือน"
             title="กลับหน้าสรุปรายเดือน"
           >
-            <ArrowLeft size={22} />
+            <ArrowLeft size={21} />
             <span>กลับ</span>
           </button>
 
           <h2 className="card-title">สรุปรายวัน</h2>
-
-          {/* ช่องว่างไว้บาลานซ์ grid ให้หัวข้ออยู่กึ่งกลางจริง */}
           <div />
         </div>
 
-        {/* ตัวสลับวัน + วันที่ */}
         <div className="switcher">
           <button className="nav-btn" onClick={prevDay} aria-label="ก่อนหน้า">‹</button>
           <div className="date-chip">
-            <CalendarDays size={16} /> {thDate(anchor)}
+            <CalendarDays size={15} /> {thDate(anchor)}
           </div>
           <button className="nav-btn" onClick={nextDay} aria-label="ถัดไป">›</button>
         </div>
@@ -275,7 +363,6 @@ export default function Day() {
         </div>
       </section>
 
-      {/* Header of list */}
       <div className="list-head">
         <div />
         <div>ประเภท</div>
@@ -283,13 +370,13 @@ export default function Day() {
         <div>จำนวนเงิน</div>
       </div>
 
-      {/* List */}
       <section className="list">
         {items.length === 0 ? (
           <div className="empty">วันนี้ยังไม่มีรายการ</div>
         ) : (
           items.map((it) => {
-            const Icon = iconMap[it.category] ?? Circle;
+            const IK = it.iconKey || "Utensils";
+            const Icon = ICONS[IK] || Circle;
             return (
               <div className="item" key={it.id}>
                 <div
@@ -297,7 +384,7 @@ export default function Day() {
                   style={{ background: it.color }}
                   title={it.type === "INCOME" ? "รายรับ" : "รายจ่าย"}
                 >
-                  <Icon size={18} color="#fff" strokeWidth={2} />
+                  <Icon size={17} color="#fff" strokeWidth={2} />
                 </div>
                 <div className="name">{it.category}</div>
                 <div className="percent">
