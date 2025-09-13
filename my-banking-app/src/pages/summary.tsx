@@ -10,15 +10,14 @@ import "./summary.css";
 import BottomNav from "./buttomnav";
 import "./buttomnav.css";
 
-/* ---------- Types (ตาม DTO ที่ backend ส่งมา) ---------- */
 type ExpenseDTO = {
   id: number;
   type: "EXPENSE" | "INCOME";
   category: string;
-  amount: number;          // บวกจาก backend
+  amount: number;
   note?: string | null;
   place?: string | null;
-  date: string;            // "yyyy-MM-dd"
+  date: string;
   paymentMethod?: string | null;
   iconKey?: string | null;
   userId?: number;
@@ -32,9 +31,9 @@ type Item = {
   iconKey?: string;
   title: string;
   tag: string;
-  amount: number;                 // signed (+/-)
-  date?: string;                  // dd/MM/yyyy (สำหรับแสดง)
-  isoDate: string;                // yyyy-MM-dd (สำหรับส่งกลับ)
+  amount: number;
+  date?: string;
+  isoDate: string;
   note?: string;
   account?: string;
   location?: string;
@@ -42,19 +41,17 @@ type Item = {
 };
 
 type DayEntry = {
-  isoKey: string;                 // yyyy-MM-dd
-  label: string;                  // เช่น "อ. 26/08"
-  total: number;                  // signed sum
+  isoKey: string;
+  label: string;
+  total: number;
   items: Item[];
 };
 
-/* ---------- Config / Helpers ---------- */
 const API_BASE =
   (import.meta as any)?.env?.VITE_API_BASE ||
   (import.meta as any)?.env?.REACT_APP_API_BASE ||
   "http://localhost:8081";
 
-// ชื่อไอคอนที่รองรับ (ตรงกับ iconKey ใน DB)
 const ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   Utensils, Train, Wallet, CreditCard, Car, Bus, Bike, Coffee, Gift, Tag,
   ShoppingBag, ShoppingCart, Home, HeartPulse, Activity, Fuel, MapPin
@@ -85,7 +82,6 @@ function signedAmountText(n: number) {
   return "0";
 }
 
-/* แปลง DTO → กลุ่มรายวัน (รายได้บวก/ค่าใช้จ่ายลบ) */
 function toDayEntries(list: ExpenseDTO[]): DayEntry[] {
   const groups = new Map<string, Item[]>();
 
@@ -122,18 +118,17 @@ function toDayEntries(list: ExpenseDTO[]): DayEntry[] {
     return { isoKey: key, label: dayLabel(dt), total, items };
   });
 
-  entries.sort((a, b) => (a.isoKey < b.isoKey ? 1 : -1)); // ล่าสุดก่อน
+  entries.sort((a, b) => (a.isoKey < b.isoKey ? 1 : -1));
   return entries;
 }
 
-/* ========== ฟอร์มแก้ไข ========== */
 type EditForm = {
   typeLabel: "ค่าใช้จ่าย" | "รายได้";
   category: string;
-  amount: number;       // ส่งบวกเสมอ
+  amount: number;
   note: string;
   place: string;
-  date: string;         // yyyy-MM-dd
+  date: string;
   paymentMethod: string;
   iconKey: string;
 };
@@ -151,7 +146,6 @@ function itemToForm(it: Item): EditForm {
   };
 }
 
-/* ---------- Component ---------- */
 export default function Summary() {
   const [selected, setSelected] = useState<Item | null>(null);
   const [entries, setEntries] = useState<DayEntry[]>([]);
@@ -181,10 +175,10 @@ export default function Summary() {
 
   useEffect(() => { loadExpenses(); }, []);
 
-  /* ========== Actions ========== */
   const onEdit = (it: Item) => {
     setForm(itemToForm(it));
     setEditMode(true);
+    setSelected(it);
   };
 
   const onDelete = async (it: Item) => {
@@ -207,22 +201,21 @@ export default function Summary() {
 
   const submitEdit = async () => {
     if (!selected || !form) return;
-    // สร้าง payload ให้ตรงกับ CreateExpenseRequest (ฝั่ง backend)
     const payload = {
-      type: form.typeLabel,           // "ค่าใช้จ่าย" | "รายได้"
+      type: form.typeLabel,
       category: form.category,
-      amount: Number(form.amount),    // ส่งบวก
+      amount: Number(form.amount),
       note: form.note,
       place: form.place,
-      date: form.date,                // yyyy-MM-dd
+      date: form.date,
       paymentMethod: form.paymentMethod || "",
       iconKey: form.iconKey || "Utensils",
     };
 
     try {
       setSaving(true);
-      const res = await fetch(`${API_BASE}/api/expenses/${selected.id}`, {
-        method: "PUT",
+      const res = await fetch(`${API_BASE}/api/expenses`, {
+        method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify(payload),
@@ -241,7 +234,6 @@ export default function Summary() {
     }
   };
 
-  /* ========== UI states ========== */
   if (loading) return (
     <div className="App summary-page">
       <div className="list-wrap"><div className="day-card">กำลังโหลดข้อมูล…</div></div>
@@ -257,7 +249,6 @@ export default function Summary() {
 
   return (
     <div className="App summary-page">
-      {/* รายการรายวัน */}
       <div className="list-wrap">
         {entries.length === 0 && (
           <section className="day-card">
@@ -313,7 +304,6 @@ export default function Summary() {
         ))}
       </div>
 
-      {/* Modal รายละเอียด / แก้ไข */}
       {selected && (
         <div className="detail-overlay" onClick={() => { setSelected(null); setEditMode(false); }}>
           <div className="detail-card" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
@@ -340,7 +330,6 @@ export default function Summary() {
               </div>
             </div>
 
-            {/* ------- โหมดแสดงผล ------- */}
             {!editMode && (
               <div className="detail-body">
                 {selected.date && <p>วันที่ : {selected.date}</p>}
@@ -356,7 +345,6 @@ export default function Summary() {
               </div>
             )}
 
-            {/* ------- โหมดแก้ไข ------- */}
             {editMode && form && (
               <div className="detail-body">
                 <div className="field">

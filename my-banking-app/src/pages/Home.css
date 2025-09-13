@@ -369,8 +369,7 @@ body,
 /* ≥640px – เพิ่มระยะห่างแต่ไม่เปลี่ยนเป็นหลายคอลัมน์หลัก */
 @media (min-width:640px) {
   .main-content {
-    gap: var(--s-4);
-    padding: var(--s-4)
+  gap: 0; /* ไม่ให้เว้นอัตโนมัติ */
   }
 
   .action-buttons {
