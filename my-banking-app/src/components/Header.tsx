@@ -35,14 +35,11 @@ export default function Header() {
   const initial = name.charAt(0).toUpperCase();
 
   const handleLogout = () => {
-    // ⭐ ลบข้อมูล authentication ทั้งหมด
     localStorage.removeItem("user");
-    localStorage.removeItem("isAuthenticated"); // เพิ่มบรรทัดนี้
+    localStorage.removeItem("isAuthenticated"); 
     
-    // แจ้ง components อื่นให้รีเฟรช
     window.dispatchEvent(new Event("auth-changed"));
     
-    // ไปหน้า login
     navigate("/login");
   };
 
@@ -52,7 +49,6 @@ export default function Header() {
         <div className="header__avatar">{initial}</div>
         <div className="header__username">{name}</div>
 
-        {/* ให้ปุ่มโชว์เสมอ แต่ disabled ถ้าไม่ login เพื่อไม่หลงดีบั๊ก */}
         <button
           className="header__logout"
           onClick={handleLogout}
