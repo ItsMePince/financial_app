@@ -1,5 +1,4 @@
 // src/pages/Home.tsx
-// @ts-nocheck
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import BottomNav from "./buttomnav";
@@ -159,10 +158,10 @@ export default function Home() {
     const income = signedList.filter((x) => x._signed > 0).reduce((s, x) => s + x._signed, 0);
     const expenseAbs = signedList.filter((x) => x._signed < 0).reduce((s, x) => s + Math.abs(x._signed), 0);
     const balance = income - expenseAbs;
-    const last5 = [...signedList]
+    const last1 = [...signedList]
       .sort((a, b) => (a._dateMs === b._dateMs ? b.id - a.id : b._dateMs - a._dateMs))
-      .slice(0, 5);
-    return { monthIncome: income, monthExpense: expenseAbs, monthBalance: balance, recent: last5 };
+      .slice(0, 1);
+    return { monthIncome: income, monthExpense: expenseAbs, monthBalance: balance, recent: last1 };
   }, [data]);
 
   const walletBalance = useMemo(() => totalAmount - monthExpense, [totalAmount, monthExpense]);
