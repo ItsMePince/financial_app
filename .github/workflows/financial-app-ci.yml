@@ -1,0 +1,56 @@
+name: Financial App CI
+
+on:
+  push:
+    branches: [main, dev]
+    paths:
+      - "**.json"
+      - "**.ts"
+      - "**.tsx"
+      - "src/**"
+      - "public/**"
+      - ".github/workflows/financial-app-ci.yml"
+  pull_request:
+    branches: [main, dev]
+    paths:
+      - "**.json"
+      - "**.ts"
+      - "**.tsx"
+      - "src/**"
+      - "public/**"
+      - ".github/workflows/financial-app-ci.yml"
+
+concurrency:
+  group: financial-app-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install deps
+        run: npm ci
+
+      # - name: Test
+      #   run: npm test -- --ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-build
+          path: |
+            dist
+            build
+          if-no-files-found: warn
