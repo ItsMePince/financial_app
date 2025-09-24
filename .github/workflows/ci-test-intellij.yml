@@ -1,13 +1,82 @@
-name: CI sandbox (test-intellij)
+name: Financial App CI (test-intellij)
 
 on:
   push:
     branches: [ test-intellij ]
-  workflow_dispatch:  # กด Run เองได้
+  workflow_dispatch:
+
+concurrency:
+  group: financial-app-ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  ping:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.filter.outputs.frontend }}
+      backend:  ${{ steps.filter.outputs.backend }}
+      compose:  ${{ steps.filter.outputs.compose }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            frontend:
+              - 'frontend/**'
+            backend:
+              - 'backend/**'
+            compose:
+              - 'compose/**'
+              - 'docker-compose.yml'
+
+  frontend:
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: echo "CI is wired ✅"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install
+        working-directory: frontend
+        run: npm ci
+      - name: Build
+        working-directory: frontend
+        run: npm run build --if-present
+      - name: Test
+        working-directory: frontend
+        run: npm test --if-present
+
+  backend:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+      - name: Make mvnw executable
+        working-directory: backend
+        run: chmod +x ./mvnw
+      - name: Test
+        working-directory: backend
+        run: ./mvnw -q -DskipTests=false test
+      - name: Package
+        working-directory: backend
+        run: ./mvnw -q package
+
+  compose:
+    needs: [changes, frontend, backend]
+    if: needs.changes.outputs.compose == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate docker compose
+        run: docker compose -f compose/docker-compose.yml config
