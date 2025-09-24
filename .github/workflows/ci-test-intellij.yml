@@ -1,0 +1,13 @@
+name: CI sandbox (test-intellij)
+
+on:
+  push:
+    branches: [ test-intellij ]
+  workflow_dispatch:  # กด Run เองได้
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "CI is wired ✅"
