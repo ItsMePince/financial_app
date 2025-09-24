@@ -1,4 +1,117 @@
 package my_financial_app.demo;
 
-public class ContentControllerIT {
+import my_financial_app.demo.Controller.ContentController;
+import my_financial_app.demo.Entity.Role;
+import my_financial_app.demo.Entity.User;
+import my_financial_app.demo.Repository.UserRepository;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+
+import java.lang.reflect.Field;
+import java.util.List;
+import java.util.Optional;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+/**
+ * Integration Test ของ ContentController
+ * - โหลด Spring context จริง (SpringBootTest)
+ * - ใช้ MockMvc ยิง HTTP request
+ * - ยัง mock UserRepository เพื่อไม่ต้องพึ่ง DB จริง
+ */
+@SpringBootTest
+@AutoConfigureMockMvc
+class ContentControllerIT {
+
+    @Autowired MockMvc mvc;
+
+    @MockBean UserRepository userRepository;
+
+    // helper: ตั้งค่า id/role ผ่าน reflection กัน NPE
+    private User mkUser(Long id, String username, String email) {
+        User u = new User();
+        try {
+            Field fid = User.class.getDeclaredField("id");
+            fid.setAccessible(true);
+            fid.set(u, id);
+        } catch (Exception ignore) {}
+        try {
+            Field frole = User.class.getDeclaredField("role");
+            frole.setAccessible(true);
+            frole.set(u, Role.USER);
+        } catch (Exception ignore) {}
+        u.setUsername(username);
+        u.setEmail(email);
+        u.setPassword("secret");
+        return u;
+    }
+
+    // ---------- /api/user/profile/{id} ----------
+    @Test
+    void getUserProfile_found_returnsOk() throws Exception {
+        var user = mkUser(5L, "alice", "alice@ex.com");
+        Mockito.when(userRepository.findById(5L)).thenReturn(Optional.of(user));
+
+        mvc.perform(get("/api/user/profile/5"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(5))
+                .andExpect(jsonPath("$.username").value("alice"))
+                .andExpect(jsonPath("$.email").value("alice@ex.com"));
+    }
+
+    @Test
+    void getUserProfile_notFound_returns404() throws Exception {
+        Mockito.when(userRepository.findById(999L)).thenReturn(Optional.empty());
+
+        mvc.perform(get("/api/user/profile/999"))
+                .andExpect(status().isNotFound());
+    }
+
+    // ---------- /api/dashboard/stats ----------
+    @Test
+    void getDashboardStats_ok_returnsStats() throws Exception {
+        Mockito.when(userRepository.count()).thenReturn(100L);
+        Mockito.when(userRepository.countActiveUsersToday()).thenReturn(7L);
+
+        mvc.perform(get("/api/dashboard/stats").accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalUsers").value(100))
+                .andExpect(jsonPath("$.activeUsers").value(7))
+                .andExpect(jsonPath("$.totalOrders").exists())
+                .andExpect(jsonPath("$.revenue").exists())
+                .andExpect(jsonPath("$.userGrowth").exists());
+    }
+
+    // ---------- /api/users/list ----------
+    @Test
+    void getUsersList_ok_returnsUsers() throws Exception {
+        var u1 = mkUser(1L, "bob", "bob@ex.com");
+        var u2 = mkUser(2L, "cate", "cate@ex.com");
+        Mockito.when(userRepository.findAll()).thenReturn(List.of(u1, u2));
+
+        mvc.perform(get("/api/users/list").param("page", "1").param("size", "5"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.total").value(2))
+                .andExpect(jsonPath("$.users[0].username").value("bob"))
+                .andExpect(jsonPath("$.users[1].username").value("cate"));
+    }
+
+    // ---------- /api/public/health ----------
+    @Test
+    void healthCheck_ok_returnsStatusAndUserCount() throws Exception {
+        Mockito.when(userRepository.count()).thenReturn(42L);
+
+        mvc.perform(get("/api/public/health"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("OK"))
+                .andExpect(jsonPath("$.userCount").value(42))
+                .andExpect(jsonPath("$.timestamp").exists());
+    }
 }
