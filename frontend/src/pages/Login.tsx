@@ -1,12 +1,12 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import "./Login.css";
 
 interface LoginProps {
   onLoginSuccess?: (user: { username: string; role: string }) => void;
 }
 
-// เปลี่ยนพอร์ตที่นี่ถ้าจำเป็น
+
 const API_BASE = (import.meta as any)?.env?.VITE_API_BASE ?? "http://localhost:8081";
 
 const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
@@ -15,6 +15,33 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const state = location.state as
+      | { from?: { pathname?: string; search?: string; hash?: string } }
+      | undefined;
+
+    const qs = new URLSearchParams(location.search);
+    const next =
+      qs.get("next") ||
+      qs.get("redirect") ||
+      (state?.from?.pathname
+        ? `${state.from.pathname}${state.from.search ?? ""}${state.from.hash ?? ""}`
+        : null);
+
+    if (next && !next.startsWith("/login")) {
+      sessionStorage.setItem("postLoginRedirect", next);
+    }
+  }, [location]);
+
+  useEffect(() => {
+    const authed = localStorage.getItem("isAuthenticated") === "true";
+    if (authed) {
+      const last = localStorage.getItem("lastVisitedPath") || "/home";
+      navigate(last, { replace: true });
+    }
+  }, [navigate]);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,7 +73,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
         throw new Error(msg);
       }
 
-      // รองรับทั้ง 2 รูปแบบตอบกลับ
+
       const userObj =
         (payload && payload.user) ||
         (payload && payload.username
@@ -60,7 +87,23 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       window.dispatchEvent(new Event("auth-changed"));
       onLoginSuccess?.(userObj);
 
-      navigate("/home");
+
+      const state = location.state as
+        | { from?: { pathname?: string; search?: string; hash?: string } }
+        | undefined;
+
+      const fromState = state?.from?.pathname
+        ? `${state.from.pathname}${state.from.search ?? ""}${state.from.hash ?? ""}`
+        : null;
+
+      const redirect =
+        sessionStorage.getItem("postLoginRedirect") ||
+        fromState ||
+        localStorage.getItem("lastVisitedPath") ||
+        "/home";
+
+      sessionStorage.removeItem("postLoginRedirect");
+      navigate(redirect, { replace: true });
     } catch (err: any) {
       console.error("Login error:", err);
       setError(err?.message || "เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กรุณาลองใหม่อีกครั้ง");
