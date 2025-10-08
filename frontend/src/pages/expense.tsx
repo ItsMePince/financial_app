@@ -21,7 +21,7 @@ import { useTempCategory } from "../TempCategoryContext";
 import { usePaymentMethod } from "../PaymentMethodContext";
 
 const API_BASE =
-  (process.env.REACT_APP_API_BASE as string) ?? "http://localhost:8081";
+  (import.meta.env.VITE_API_BASE as string) || "http://localhost:8081";
 
 const DRAFT_KEY = "expense_draft_v1";
 

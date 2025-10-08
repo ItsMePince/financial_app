@@ -20,7 +20,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { usePaymentMethod } from "../PaymentMethodContext";
 
 const API_BASE =
-  (process.env.REACT_APP_API_BASE as string) ?? "http://localhost:8081";
+  (import.meta.env.VITE_API_BASE as string) || "http://localhost:8081";
 
 /* inline icons */
 const ChevronDown = () => (
