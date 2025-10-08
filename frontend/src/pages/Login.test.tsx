@@ -5,14 +5,12 @@ import { MemoryRouter } from "react-router-dom";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import Login from "./Login";
 
-// --- mock useNavigate ---
 const mockNavigate = vi.fn();
 vi.mock("react-router-dom", async () => {
   const actual = await vi.importActual<any>("react-router-dom");
   return { ...actual, useNavigate: () => mockNavigate };
 });
 
-// --- helpers ---
 function mockFetchOnce(data: any, ok = true) {
   (globalThis.fetch as any) = vi.fn().mockResolvedValueOnce({
     ok,
@@ -29,6 +27,7 @@ describe("Login Frontend", () => {
     vi.restoreAllMocks();
     vi.spyOn(window.localStorage.__proto__, "setItem");
     vi.spyOn(window, "dispatchEvent");
+    mockNavigate.mockReset();
   });
 
   afterEach(() => {
@@ -36,13 +35,21 @@ describe("Login Frontend", () => {
   });
 
   it("แสดงปุ่ม login บนหน้าจอ", () => {
-    render(<MemoryRouter><Login /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <Login />
+      </MemoryRouter>
+    );
     expect(screen.getByRole("button", { name: /login/i })).toBeInTheDocument();
   });
 
   it("เปลี่ยนปุ่มเป็น loading ขณะ submit", async () => {
     mockFetchOnce({ success: false, message: "x" });
-    render(<MemoryRouter><Login /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <Login />
+      </MemoryRouter>
+    );
     fireEvent.change(screen.getByLabelText(/Username/i), { target: { value: "user" } });
     fireEvent.change(screen.getByLabelText(/Password/i), { target: { value: "pass" } });
     const btn = screen.getByRole("button", { name: /login/i });
@@ -55,20 +62,28 @@ describe("Login Frontend", () => {
   it("navigate ไป /home เมื่อ login สำเร็จ", async () => {
     const fakeUser = { username: "u", role: "member" };
     mockFetchOnce({ success: true, user: fakeUser });
-    render(<MemoryRouter><Login /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <Login />
+      </MemoryRouter>
+    );
     fireEvent.change(screen.getByLabelText(/Username/i), { target: { value: "u" } });
     fireEvent.change(screen.getByLabelText(/Password/i), { target: { value: "p" } });
     fireEvent.click(screen.getByRole("button", { name: /login/i }));
     await waitFor(() => {
       expect(localStorage.setItem).toHaveBeenCalledWith("isAuthenticated", "true");
       expect(localStorage.setItem).toHaveBeenCalledWith("user", JSON.stringify(fakeUser));
-      expect(mockNavigate).toHaveBeenCalledWith("/home");
+      expect(mockNavigate).toHaveBeenCalledWith("/home", expect.objectContaining({ replace: true }));
     });
   });
 
   it("แสดง error message จาก API", async () => {
     mockFetchOnce({ success: false, message: "Invalid credentials" });
-    render(<MemoryRouter><Login /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <Login />
+      </MemoryRouter>
+    );
     fireEvent.change(screen.getByLabelText(/Username/i), { target: { value: "wrong" } });
     fireEvent.change(screen.getByLabelText(/Password/i), { target: { value: "wrong" } });
     fireEvent.click(screen.getByRole("button", { name: /login/i }));
@@ -77,7 +92,11 @@ describe("Login Frontend", () => {
 
   it("แสดงข้อความ error ภาษาไทยเมื่อ network ล้มเหลว", async () => {
     (globalThis.fetch as any) = vi.fn().mockRejectedValueOnce(new Error("Network down"));
-    render(<MemoryRouter><Login /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <Login />
+      </MemoryRouter>
+    );
     fireEvent.change(screen.getByLabelText(/Username/i), { target: { value: "u" } });
     fireEvent.change(screen.getByLabelText(/Password/i), { target: { value: "p" } });
     fireEvent.click(screen.getByRole("button", { name: /login/i }));
@@ -85,7 +104,11 @@ describe("Login Frontend", () => {
   });
 
   it("กดปุ่ม Sign Up แล้ว navigate ไป /signup", () => {
-    render(<MemoryRouter><Login /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <Login />
+      </MemoryRouter>
+    );
     fireEvent.click(screen.getByRole("button", { name: /Sign Up/i }));
     expect(mockNavigate).toHaveBeenCalledWith("/signup");
   });
@@ -97,7 +120,11 @@ describe("Login Frontend", () => {
       json: async () => ({ success: true, user: fakeUser }),
       headers: { get: () => "application/json" },
     } as Response);
-    render(<MemoryRouter><Login /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <Login />
+      </MemoryRouter>
+    );
     fireEvent.change(screen.getByLabelText(/Username/i), { target: { value: "u" } });
     fireEvent.change(screen.getByLabelText(/Password/i), { target: { value: "p" } });
     fireEvent.click(screen.getByRole("button", { name: /login/i }));
@@ -117,7 +144,11 @@ describe("Login Frontend", () => {
       json: async () => ({ success: false, message: "x" }),
       headers: { get: () => "application/json" },
     } as Response);
-    render(<MemoryRouter><Login /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <Login />
+      </MemoryRouter>
+    );
     const userInput = screen.getByLabelText(/Username/i) as HTMLInputElement;
     const passInput = screen.getByLabelText(/Password/i) as HTMLInputElement;
     const btn = screen.getByRole("button", { name: /login/i });
@@ -131,37 +162,40 @@ describe("Login Frontend", () => {
 
   it("ล้าง error ก่อนส่งครั้งใหม่ (error เก่าหายไปเมื่อกดส่งอีกครั้ง)", async () => {
     mockFetchOnce({ success: false, message: "Invalid credentials" });
-    render(<MemoryRouter><Login /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <Login />
+      </MemoryRouter>
+    );
     fireEvent.change(screen.getByLabelText(/Username/i), { target: { value: "u" } });
     fireEvent.change(screen.getByLabelText(/Password/i), { target: { value: "x" } });
     fireEvent.click(screen.getByRole("button", { name: /login/i }));
     const firstErr = await screen.findByText((t) => isAnyLoginError(t));
     expect(firstErr).toBeInTheDocument();
-
     mockFetchOnce({ success: false, message: "Another error" });
     fireEvent.click(screen.getByRole("button", { name: /login/i }));
-
     await waitFor(() => {
       expect(screen.queryByText((t) => /invalid/i.test(t))).not.toBeInTheDocument();
     });
     expect(await screen.findByText((t) => isAnyLoginError(t))).toBeInTheDocument();
   });
 
-  // ✅ แก้ให้รองรับกรณีมีหลาย node ตรงกัน: ใช้ findAllByText แล้ว assert ว่ามี >= 1
   it("ใช้ fallback เมื่อ server ไม่ส่ง message (แสดงสถานะหรือข้อความ Invalid response)", async () => {
     (globalThis.fetch as any) = vi.fn().mockResolvedValueOnce({
       ok: false,
       status: 400,
       statusText: "Bad Request",
       headers: { get: () => "application/json" },
-      json: async () => ({ success: false }), // ไม่มี message
+      json: async () => ({ success: false }),
     } as Response);
-
-    render(<MemoryRouter><Login /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <Login />
+      </MemoryRouter>
+    );
     fireEvent.change(screen.getByLabelText(/Username/i), { target: { value: "u" } });
     fireEvent.change(screen.getByLabelText(/Password/i), { target: { value: "p" } });
     fireEvent.click(screen.getByRole("button", { name: /login/i }));
-
     const matches = await screen.findAllByText((_, node) => {
       const text = node?.textContent || "";
       return /400 Bad Request|Invalid response from server/i.test(text);
@@ -173,7 +207,11 @@ describe("Login Frontend", () => {
     const fakeUser = { username: "u", role: "member" };
     const onLoginSuccess = vi.fn();
     mockFetchOnce({ success: true, user: fakeUser });
-    render(<MemoryRouter><Login onLoginSuccess={onLoginSuccess} /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <Login onLoginSuccess={onLoginSuccess} />
+      </MemoryRouter>
+    );
     fireEvent.change(screen.getByLabelText(/Username/i), { target: { value: "u" } });
     fireEvent.change(screen.getByLabelText(/Password/i), { target: { value: "p" } });
     fireEvent.click(screen.getByRole("button", { name: /login/i }));
@@ -184,7 +222,11 @@ describe("Login Frontend", () => {
     const fakeUser = { username: "u", role: "member" };
     const dispatchSpy = vi.spyOn(window, "dispatchEvent");
     mockFetchOnce({ success: true, user: fakeUser });
-    render(<MemoryRouter><Login /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <Login />
+      </MemoryRouter>
+    );
     fireEvent.change(screen.getByLabelText(/Username/i), { target: { value: "u" } });
     fireEvent.change(screen.getByLabelText(/Password/i), { target: { value: "p" } });
     fireEvent.click(screen.getByRole("button", { name: /login/i }));
