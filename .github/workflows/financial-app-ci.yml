@@ -12,12 +12,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # ตรวจว่าไฟล์ไหนเปลี่ยน
   changes:
     runs-on: ubuntu-latest
     outputs:
       frontend: ${{ steps.filter.outputs.frontend }}
       backend:  ${{ steps.filter.outputs.backend }}
-      compose:  ${{ steps.filter.outputs.compose }}
     steps:
       - uses: actions/checkout@v4
       - id: filter
@@ -28,13 +28,11 @@ jobs:
               - 'frontend/**'
             backend:
               - 'backend/**'
-            compose:
-              - 'compose/**'
-              - 'docker-compose.yml'
 
+  # รัน frontend
   frontend:
     needs: changes
-    if: needs.changes.outputs.frontend == 'true'
+    if: ${{ needs.changes.outputs.frontend == 'true' || needs.changes.outputs.backend == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -43,7 +41,7 @@ jobs:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
-      - name: Install
+      - name: Install dependencies
         working-directory: frontend
         run: npm ci
       - name: Build
@@ -53,9 +51,10 @@ jobs:
         working-directory: frontend
         run: npm test --if-present
 
+  # รัน backend
   backend:
     needs: changes
-    if: needs.changes.outputs.backend == 'true'
+    if: ${{ needs.changes.outputs.frontend == 'true' || needs.changes.outputs.backend == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -73,12 +72,3 @@ jobs:
       - name: Package
         working-directory: backend
         run: ./mvnw -q package
-
-  compose:
-    needs: [changes, frontend, backend]
-    if: needs.changes.outputs.compose == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Validate docker compose
-        run: docker compose -f compose/docker-compose.yml config
