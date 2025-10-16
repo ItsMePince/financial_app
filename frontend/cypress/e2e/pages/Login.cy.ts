@@ -1,4 +1,3 @@
-// ✅ cypress/e2e/pages/Login.cy.ts
 describe('E2E Login & Auth Flow', () => {
   const sel = {
     username: 'input[placeholder*="user"], input[name="username"]',

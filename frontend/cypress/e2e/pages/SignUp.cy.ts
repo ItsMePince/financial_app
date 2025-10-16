@@ -1,116 +1,148 @@
-describe('E2E Login & Auth Flow', () => {
-  const sel = {
-    username: 'input[placeholder*="user"], input[name="username"], #username',
-    password: 'input[placeholder*="password"], input[name="password"], #password',
-    loginBtn: 'button, [role="button"]',
-  };
+// cypress/e2e/pages/signup.cy.ts
+// Flow: Login -> กด Sign Up -> สมัครด้วยข้อมูลสุ่ม -> (redirect ไป /login หรือถ้าซ้ำให้ข้าม) -> Login -> /home
 
-  beforeEach(() => {
-    cy.clearAllCookies();
-    cy.clearAllLocalStorage();
-    cy.clearAllSessionStorage();
-  });
+// ---------------- helpers ----------------
+function clickVisibleSignUp() {
+  cy.contains('button.link', /sign\s*up/i, { timeout: 10000 })
+    .filter(':visible')
+    .first()
+    .click();
+}
 
-  // 🟢 E2E-LOGIN-001 : Valid login → 200 OK, redirect /home (กัน 401 หน้า Home)
-  it('E2E-LOGIN-001 : Valid login → redirect Home', () => {
-    cy.intercept('POST', '**/api/auth/login', {
-      statusCode: 200,
-      body: { user: { username: 'john', role: 'USER' }, token: 'valid-jwt-token' },
-    }).as('loginOk');
+function fillSignupForm({
+  email,
+  username,
+  password,
+}: {
+  email: string;
+  username: string;
+  password: string;
+}) {
+  cy.get(
+    [
+      'input#email[name="email"]',
+      'input[name="email"][type="email"]',
+      'input.su-input[type="email"]',
+      'input[autocomplete="email"]',
+      'input[placeholder*="you@example.com"]',
+    ].join(', '),
+    { timeout: 10000 }
+  )
+    .filter(':visible')
+    .first()
+    .clear()
+    .type(email);
 
-    // กันหน้า home ยิง API ต่อแล้ว 401
-    cy.intercept('GET', '**/api/**', { statusCode: 200, body: [] }).as('anyGet');
+  cy.get(
+    [
+      'input#username[name="username"]',
+      'input[name="username"]',
+      'input.su-input[autocomplete="username"]',
+      'input[placeholder*="ชื่อผู้ใช้"]',
+      'input[placeholder*="user"]',
+    ].join(', ')
+  )
+    .filter(':visible')
+    .first()
+    .clear()
+    .type(username);
 
-    cy.visit('/'); // ถ้าหน้า login อยู่ /login ให้เปลี่ยนเป็น cy.visit('/login')
+  cy.get(
+    [
+      'input#password[name="password"][type="password"]',
+      'input.su-input[type="password"][autocomplete="new-password"]',
+      'input[placeholder*="รหัสผ่าน"]',
+    ].join(', ')
+  )
+    .filter(':visible')
+    .first()
+    .clear()
+    .type(password);
 
-    cy.get(sel.username).should('be.visible').and('not.be.disabled').type('john');
-    cy.get(sel.password).should('be.visible').and('not.be.disabled').type('pass123{enter}');
-    cy.wait('@loginOk');
+  cy.get('button.su-submit[type="submit"], button[type="submit"]')
+    .filter(':visible')
+    .first()
+    .click();
+}
 
-    // ถ้าแอปยังไม่ตั้ง storage ให้ตั้ง fallback กันล้ม
-    cy.window().then((w) => {
-      w.localStorage.setItem('token', 'valid-jwt-token');
-      w.localStorage.setItem('isAuthenticated', 'true');
-      w.localStorage.setItem('username', 'john');
+function fillLoginForm({
+  username,
+  password,
+}: {
+  username: string;
+  password: string;
+}) {
+  cy.get(
+    [
+      'input#username[name="username"]',
+      'input[name="username"]',
+      'input[autocomplete="username"]',
+      'input.input[placeholder*="user"]',
+    ].join(', '),
+    { timeout: 10000 }
+  )
+    .filter(':visible')
+    .first()
+    .clear()
+    .type(username);
+
+  cy.get(
+    [
+      'input.input[type="password"][autocomplete="current-password"]',
+      'input[type="password"][placeholder*="password"]',
+      'input[type="password"][placeholder*="admin"]',
+    ].join(', ')
+  )
+    .filter(':visible')
+    .first()
+    .clear()
+    .type(password);
+
+  cy.get('button.btn[type="submit"], button[type="submit"]')
+    .filter(':visible')
+    .first()
+    .click();
+}
+
+// ---------------- test ----------------
+describe('E2E-SIGNUP-LOGIN-001: Sign up (unique) -> Login -> Home', () => {
+  it('สมัครผู้ใช้ใหม่ด้วยข้อมูลสุ่ม กันซ้ำ แล้วล็อกอินเข้าหน้า /home สำเร็จ', () => {
+    // สร้างข้อมูลไม่ซ้ำทุกครั้ง
+    const uniq = Date.now();
+    const email = `a${uniq}@gmail.com`;
+    const username = `aa${uniq}`;
+    const password = '111111';
+
+    // ไปหน้า /login
+    cy.visit('http://localhost:3000/login');
+
+    // ไปหน้า Sign Up
+    clickVisibleSignUp();
+
+    // ดัก response สมัคร (เผื่อ assert หรือ handle 400 ได้)
+    cy.intercept('POST', '**/api/auth/signup').as('signup');
+
+    // กรอกสมัคร
+    fillSignupForm({ email, username, password });
+
+    // รอผลสมัคร
+    cy.wait('@signup', { timeout: 15000 }).then((interception) => {
+      const status = interception?.response?.statusCode ?? 0;
+
+      if (status >= 200 && status < 300) {
+        // สำเร็จ → ควร redirect ไป /login
+        cy.location('pathname', { timeout: 10000 }).should('include', '/login');
+      } else {
+        // ถ้า backend ตอบ 400 (เช่น ซ้ำ) หรืออย่างอื่น → ข้าม signup ไป login เลย
+        cy.log(`Signup not OK (status ${status}), continue to login page`);
+        cy.visit('http://localhost:3000/login');
+      }
     });
 
-    cy.url().should('include', '/home');
-    // เผื่อหน้าแรกยิงอย่างน้อย 1 API
-    cy.wait('@anyGet', { timeout: 1000 }).then(() => {});
-  });
+    // ล็อกอินด้วย creds ที่เพิ่งสมัคร (หรือที่ตั้งไว้)
+    fillLoginForm({ username, password });
 
-  // 🟡 E2E-LOGIN-002 : Invalid password → 401 Unauthorized
-  it('E2E-LOGIN-002 : Invalid password → show error', () => {
-    cy.intercept('POST', '**/api/auth/login', {
-      statusCode: 401,
-      body: { message: 'Invalid credentials' },
-    }).as('loginInvalid');
-
-    cy.visit('/');
-    cy.get(sel.username).should('be.visible').and('not.be.disabled').type('john');
-    cy.get(sel.password).should('be.visible').and('not.be.disabled').type('wrong{enter}');
-    cy.wait('@loginInvalid');
-
-    cy.contains(/invalid credentials|ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง/i).should('exist');
-    cy.location('pathname').should('match', /^\/($|login$)/);
-  });
-
-  // 🟠 E2E-LOGIN-003 : Username not found → 401/404
-  it('E2E-LOGIN-003 : Username not found → show error', () => {
-    cy.intercept('POST', '**/api/auth/login', {
-      statusCode: 401, // หรือ 404 แล้วแต่ระบบจริง
-      body: { message: 'User not found' },
-    }).as('userNotFound');
-
-    cy.visit('/');
-    cy.get(sel.username).should('be.visible').and('not.be.disabled').type('nouser');
-    cy.get(sel.password).should('be.visible').and('not.be.disabled').type('whatever{enter}');
-    cy.wait('@userNotFound');
-
-    cy.contains(/user not found|invalid credentials|ไม่พบผู้ใช้/i).should('exist');
-  });
-
-  // 🔒 E2E-AUTH-001 : เข้า /home โดยไม่ล็อกอิน → redirect /login
-  it('E2E-AUTH-001 : Visit protected without login → redirect login', () => {
-    cy.clearAllLocalStorage();
-    cy.visit('/home');
-    cy.url().should('include', '/login');
-  });
-
-  // ⏰ E2E-AUTH-002 : Token expired → 401 แล้วกลับ /login
-  it('E2E-AUTH-002 : Expired token → redirect login', () => {
-    cy.window().then((w) => {
-      w.localStorage.setItem('token', 'expired-token');
-      w.localStorage.setItem('isAuthenticated', 'true');
-    });
-
-    cy.intercept('GET', '**/api/**', { statusCode: 401 }).as('expired');
-
-    cy.visit('/home');
-    cy.wait('@expired');
-
-    // เคลียร์สถานะแล้วรีโหลดให้ route guard ทำงาน
-    cy.window().then((w) => {
-      w.localStorage.removeItem('token');
-      w.localStorage.removeItem('isAuthenticated');
-    });
-    cy.reload();
-    cy.url().should('include', '/login');
-  });
-
-  // 🚪 E2E-AUTH-003 : Logout → Back แล้วยังเข้าหน้า protected ไม่ได้
-  it('E2E-AUTH-003 : Logout then Back → still blocked', () => {
-    cy.window().then((w) => {
-      w.localStorage.setItem('isAuthenticated', 'true');
-      w.localStorage.setItem('token', 'valid-jwt-token');
-    });
-
-    cy.visit('/home');
-
-    // จำลอง logout
-    cy.window().then((w) => w.localStorage.clear());
-
-    cy.go('back');
-    cy.url().should('include', '/login');
+    // ต้องไปหน้า /home
+    cy.location('pathname', { timeout: 10000 }).should('include', '/home');
   });
 });
