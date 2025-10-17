@@ -28,7 +28,7 @@ jobs:
             backend:
               - 'backend/**'
 
-  # ---------- FRONTEND (Cypress only) ----------
+  # ---------- FRONTEND (Cypress auto-detect) ----------
   frontend-e2e:
     name: Frontend E2E Test (Cypress)
     needs: changes
@@ -47,7 +47,48 @@ jobs:
         working-directory: frontend
         run: npm ci
 
-      # ✅ รัน Cypress โดยไม่ต้อง start server
+      # Cache Cypress binary ให้เร็วขึ้น
+      - name: Cache Cypress
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/Cypress
+          key: cypress-${{ runner.os }}-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: cypress-${{ runner.os }}-
+
+      # 🔎 ตรวจ scripts แล้วตัดสินใจว่าจะ start/build หรือข้าม
+      - name: Detect app scripts and maybe start server
+        id: detect
+        working-directory: frontend
+        run: |
+          set -e
+          HAS_START=$(jq -r 'has("scripts") and (.scripts|has("start"))' package.json)
+          HAS_BUILD=$(jq -r 'has("scripts") and (.scripts|has("build"))' package.json)
+
+          if [ "$HAS_BUILD" = "true" ]; then
+            echo "==> Found build script. Building and serving static files..."
+            npm run build
+            npx http-server ./build -p 3000 --silent &
+            echo "CYPRESS_baseUrl=http://localhost:3000" >> $GITHUB_ENV
+            echo "SERVER=started" >> $GITHUB_ENV
+          elif [ "$HAS_START" = "true" ]; then
+            echo "==> Found start script. Starting dev server..."
+            npm run start &
+            echo "WAIT_ON=http://localhost:3000" >> $GITHUB_ENV
+            echo "CYPRESS_baseUrl=http://localhost:3000" >> $GITHUB_ENV
+            echo "SERVER=started" >> $GITHUB_ENV
+          else
+            echo "==> No start/build script. Will run Cypress WITHOUT baseUrl."
+            echo "SERVER=none" >> $GITHUB_ENV
+          fi
+
+      - name: Wait for server (if started)
+        if: env.SERVER == 'started'
+        run: |
+          URL="${{ env.WAIT_ON || 'http://localhost:3000' }}"
+          echo "Waiting for $URL ..."
+          npx wait-on "$URL" --timeout 120000
+
+      # ✅ ถ้าไม่มี server ก็จะไม่ตั้ง baseUrl (เพราะกำหนดผ่าน ENV เท่านั้น)
       - name: Run Cypress tests (headless)
         uses: cypress-io/github-action@v6
         with:
@@ -58,6 +99,8 @@ jobs:
           config: video=false
         env:
           CI: true
+          # ถ้า step ก่อนหน้าเจอ server จะตั้งค่านี้ไว้แล้ว:
+          # CYPRESS_baseUrl: http://localhost:3000
 
       - name: Upload Cypress screenshots (if any)
         if: always()
