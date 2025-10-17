@@ -1,4 +1,4 @@
-name: Financial App CI (Frontend + Backend build only)
+name: Financial App CI (Frontend build + Backend package)
 
 on:
   push:
@@ -28,9 +28,10 @@ jobs:
             backend:
               - 'backend/**'
 
-  frontend:
+  frontend-build:
     name: Frontend Build (no tests)
     needs: changes
+    # PR/dispatch รันทันที, push จะรันเมื่อมีไฟล์ใน frontend/** เปลี่ยน
     if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.frontend == 'true' }}
     runs-on: ubuntu-latest
     steps:
@@ -40,24 +41,28 @@ jobs:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
+
       - name: Install deps
         working-directory: frontend
         run: npm ci
+
       - name: Build (if present)
         working-directory: frontend
         run: npm run build --if-present
+
       - name: Upload build artifact (if exists)
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: frontend-build
+          name: frontend-build-${{ github.run_id }}
           path: frontend/build
           if-no-files-found: ignore
 
-  # รัน backend
   backend:
+    name: Backend Build (with tests)
     needs: changes
-    if: ${{ needs.changes.outputs.frontend == 'true' || needs.changes.outputs.backend == 'true' }}
+    # PR/dispatch รันทันที, push จะรันเมื่อมีไฟล์ใน backend/** เปลี่ยน
+    if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.backend == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -66,12 +71,23 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
           cache: 'maven'
+          cache-dependency-path: backend/pom.xml
+
       - name: Make mvnw executable
         working-directory: backend
         run: chmod +x ./mvnw
-      - name: Test
-        working-directory: backend
-        run: ./mvnw -q -DskipTests=false test
-      - name: Package
+
+      # package จะรัน tests โดยอัตโนมัติ (ไม่ skip)
+      - name: Build & Test
         working-directory: backend
         run: ./mvnw -q package
+
+      - name: Upload backend artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-artifacts-${{ github.run_id }}
+          path: |
+            backend/target/*.jar
+            backend/target/surefire-reports/**
+          if-no-files-found: warn
