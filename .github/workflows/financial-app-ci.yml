@@ -1,4 +1,4 @@
-name: Financial App CI (Prod-style: Quality Gates, Build, Fullstack E2E)
+name: Financial App CI (Prod)
 
 on:
   push:
@@ -12,12 +12,11 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # ---------- Detect changed paths (optimize push) ----------
   changes:
     runs-on: ubuntu-latest
     outputs:
       frontend: ${{ steps.filter.outputs.frontend }}
-      backend:  ${{ steps.filter.outputs.backend }}
+      backend: ${{ steps.filter.outputs.backend }}
     steps:
       - uses: actions/checkout@v4
       - id: filter
@@ -29,8 +28,6 @@ jobs:
             backend:
               - 'backend/**'
 
-  # ===================== STAGE 1: QUALITY GATES =====================
-  # Frontend Lint + Type Check (ถ้ามี config จะรัน, ไม่มีจะข้ามแบบไม่พัง)
   fe-quality:
     name: FE Lint & Type Check
     needs: changes
@@ -41,32 +38,28 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
+          cache: npm
           cache-dependency-path: frontend/package-lock.json
-
       - name: Install deps
         working-directory: frontend
         run: npm ci
-
-      - name: Lint (if eslint config exists)
+      - name: Lint if config exists
         working-directory: frontend
         run: |
           if ls .eslintrc* >/dev/null 2>&1; then
             npx eslint . --max-warnings=0
           else
-            echo "No ESLint config; skipping lint."
+            echo "No ESLint config; skip."
           fi
-
-      - name: Type Check (if tsconfig exists)
+      - name: Type check if tsconfig exists
         working-directory: frontend
         run: |
           if [ -f tsconfig.json ]; then
             npx tsc --noEmit
           else
-            echo "No tsconfig.json; skipping type-check."
+            echo "No tsconfig.json; skip."
           fi
 
-  # Backend Unit Tests (ควรรันจริงในสเตจคุณภาพ)
   be-unit:
     name: BE Unit Tests
     needs: changes
@@ -76,21 +69,18 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: temurin
           java-version: '21'
-          cache: 'maven'
-
+          cache: maven
       - name: Make mvnw executable
         working-directory: backend
         run: chmod +x ./mvnw
-
       - name: Test (unit)
         working-directory: backend
-        run: ./mvnw -q -DskipTests=false test
+        run: ./mvnw -q test
 
-  # ===================== STAGE 2: BUILD / PACKAGE =====================
   frontend-build:
-    name: Frontend Build (Artifact)
+    name: Frontend Build (artifact)
     needs: [changes, fe-quality]
     if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.frontend == 'true' }}
     runs-on: ubuntu-latest
@@ -99,17 +89,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
+          cache: npm
           cache-dependency-path: frontend/package-lock.json
-
       - name: Install deps
         working-directory: frontend
         run: npm ci
-
       - name: Build (if present)
         working-directory: frontend
         run: npm run build --if-present
-
       - name: Upload FE artifact
         if: always()
         uses: actions/upload-artifact@v4
@@ -119,7 +106,7 @@ jobs:
           if-no-files-found: ignore
 
   backend-package:
-    name: Backend Package (Artifact)
+    name: Backend Package (artifact)
     needs: [changes, be-unit]
     if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.backend == 'true' }}
     runs-on: ubuntu-latest
@@ -127,19 +114,15 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: temurin
           java-version: '21'
-          cache: 'maven'
-
+          cache: maven
       - name: Make mvnw executable
         working-directory: backend
         run: chmod +x ./mvnw
-
-      # รัน package โดยปล่อยให้ unit test ผ่านมาก่อนใน be-unit แล้วค่อย skip ที่นี่เพื่อความไว
       - name: Package (skip here for speed)
         working-directory: backend
         run: ./mvnw -q -DskipTests package
-
       - name: Upload BE artifact
         if: always()
         uses: actions/upload-artifact@v4
@@ -148,29 +131,23 @@ jobs:
           path: backend/target/*.jar
           if-no-files-found: ignore
 
-  # ===================== STAGE 3: FULLSTACK E2E (ไม่บังคับมี server) =====================
   fullstack-e2e:
     name: Fullstack E2E (Cypress)
     needs: [frontend-build, backend-package]
-    # บน PR/dispatch รันแน่นอน; บน push จะรันถ้า front/back เปลี่ยน
     if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.frontend == 'true' || needs.changes.outputs.backend == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
-      # ---------- Setup FE ----------
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
+          cache: npm
           cache-dependency-path: frontend/package-lock.json
-
       - name: Install FE deps
         working-directory: frontend
         run: npm ci
-
-      # Cache Cypress binary
       - name: Cache Cypress
         uses: actions/cache@v4
         with:
@@ -178,55 +155,49 @@ jobs:
           key: cypress-${{ runner.os }}-${{ hashFiles('frontend/package-lock.json') }}
           restore-keys: cypress-${{ runner.os }}-
 
-      # เสิร์ฟ FE build แบบ static ที่พอร์ต 3000 (ถ้าไม่มี build จะข้าม)
-      - name: Serve FE build (static) if exists
+      - name: Serve FE build if exists
+        id: servefe
         working-directory: frontend
         run: |
           if [ -d build ]; then
             npx http-server ./build -p 3000 --silent &
-            echo "FE_URL=http://localhost:3000" >> $GITHUB_ENV
+            echo "FE_URL=http://localhost:3000" >> "$GITHUB_ENV"
+            echo "served=true" >> "$GITHUB_OUTPUT"
           else
-            echo "No build folder; will run Cypress without baseUrl."
+            echo "served=false" >> "$GITHUB_OUTPUT"
           fi
+      - name: Wait FE
+        if: ${{ steps.servefe.outputs.served == 'true' }}
+        run: npx wait-on http://localhost:3000 --timeout 120000
 
-      - name: Wait FE (if served)
-        if: env.FE_URL
-        run: npx wait-on ${{ env.FE_URL }} --timeout 120000
-
-      # ---------- Setup BE ----------
       - uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: temurin
           java-version: '21'
-          cache: 'maven'
-
+          cache: maven
       - name: Run BE (spring-boot:run, profile=test)
         working-directory: backend
         env:
           SPRING_PROFILES_ACTIVE: test
         run: |
           ./mvnw -q -DskipTests spring-boot:run &
-          echo "API_URL=http://localhost:8080" >> $GITHUB_ENV
-
-      - name: Wait BE (8080)
+          echo "API_URL=http://localhost:8080" >> "$GITHUB_ENV"
+      - name: Wait BE
         run: npx wait-on tcp:localhost:8080 --timeout 120000
 
-      # ---------- Run Cypress ----------
-      - name: Run Cypress Fullstack
+      - name: Run Cypress
         uses: cypress-io/github-action@v6
         with:
           working-directory: frontend
           install: false
           browser: electron
           headless: true
-          # baseUrl จะถูกตั้งผ่าน ENV ถ้ามี FE_URL; ถ้าไม่มีจะรันโดยไม่กำหนด
           config: video=false
         env:
           CI: true
           CYPRESS_baseUrl: ${{ env.FE_URL }}
           CYPRESS_API_URL: ${{ env.API_URL }}
-
-      - name: Upload Cypress screenshots (if any)
+      - name: Upload screenshots (if any)
         if: always()
         uses: actions/upload-artifact@v4
         with:
