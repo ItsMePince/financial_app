@@ -17,10 +17,6 @@ concurrency:
   group: financial-app-ci-${{ github.ref }}
   cancel-in-progress: true
 
-# เปิด/ปิด E2E: ปิดเป็นค่าเริ่มต้น (ไม่มี localhost)
-env:
-  RUN_E2E: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_e2e == true) || (github.event_name == 'pull_request' && contains(join(github.event.pull_request.labels.*.name, ','), 'run-e2e')) }}
-
 jobs:
   changes:
     runs-on: ubuntu-latest
@@ -141,11 +137,13 @@ jobs:
           path: backend/target/*.jar
           if-no-files-found: ignore
 
-  # เปิดเฉพาะเมื่อ RUN_E2E = true เท่านั้น (ถึงจะมี localhost)
+  # เปิด E2E เมื่อ:
+  #  - workflow_dispatch แล้วตั้ง run_e2e=true หรือ
+  #  - เป็น PR และมี label run-e2e
   fullstack-e2e:
     name: Fullstack E2E (Cypress)
     needs: [frontend-build, backend-package]
-    if: ${{ env.RUN_E2E == 'true' && (github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request') && (needs.changes.outputs.frontend == 'true' || needs.changes.outputs.backend == 'true') }}
+    if: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.run_e2e == 'true') || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'run-e2e')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
