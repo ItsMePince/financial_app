@@ -2,9 +2,9 @@ name: Financial App CI (Frontend build + Backend package)
 
 on:
   push:
-    branches: [ main, dev ]
+    branches: [ main, dev, testy ]
   pull_request:
-    branches: [ main, dev ]
+    branches: [ main, dev, testy ]
   workflow_dispatch:
 
 concurrency:
@@ -31,7 +31,6 @@ jobs:
   frontend-build:
     name: Frontend Build (no tests)
     needs: changes
-    # บน PR/dispatch ให้รันทันที, บน push จะรันเมื่อมีไฟล์ฝั่ง frontend เปลี่ยน
     if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.frontend == 'true' }}
     runs-on: ubuntu-latest
     steps:
@@ -41,27 +40,22 @@ jobs:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
-
       - name: Install deps
         working-directory: frontend
         run: npm ci
-
-      # ถ้ามีสคริปต์ build จะรัน, ถ้าไม่มีจะข้าม (ไม่ error)
       - name: Build (if present)
         working-directory: frontend
         run: npm run build --if-present
-
-      # เก็บผล build (ถ้ามี)
-      - name: Upload build artifact (if exists)
+      - name: Upload frontend build
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: frontend-build
+          name: frontend-build-${{ github.run_id }}
           path: frontend/build
           if-no-files-found: ignore
 
-  backend-package:
-    name: Backend Package (skip tests)
+  backend:
+    name: Backend Test & Package (no repackage)
     needs: changes
     if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.backend == 'true' }}
     runs-on: ubuntu-latest
@@ -77,14 +71,22 @@ jobs:
         working-directory: backend
         run: chmod +x ./mvnw
 
-      - name: Package (skip tests)
+      # รันเทสต์จริง
+      - name: Test
         working-directory: backend
-        run: ./mvnw -q -DskipTests package
+        run: ./mvnw -B -ntp clean test
 
-      - name: Upload jar (if exists)
+      # สร้างแพ็กเกจ แต่ "ข้าม repackage" เพื่อไม่ให้ error หา main class
+      - name: Package (skip spring-boot repackage)
+        working-directory: backend
+        run: ./mvnw -B -ntp -Dspring-boot.repackage.skip=true package
+
+      - name: Upload backend artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: backend-jar
-          path: backend/target/*.jar
-          if-no-files-found: ignore
+          name: backend-artifacts-${{ github.run_id }}
+          path: |
+            backend/target/*.jar
+            backend/target/surefire-reports/**
+          if-no-files-found: warn
