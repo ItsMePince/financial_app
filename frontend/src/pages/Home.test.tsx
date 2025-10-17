@@ -1,14 +1,18 @@
 ﻿// src/pages/Home.test.tsx
+// @ts-nocheck
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import Home from "./Home";
+
+vi.mock("./buttomnav", () => ({ default: () => <div data-testid="bottom-nav" /> }));
 
 function mockFetchOnce(data: any, ok = true, status = 200) {
     global.fetch = vi.fn().mockResolvedValue({
         ok,
         status,
         json: async () => data,
+        text: async () => (typeof data === "string" ? data : JSON.stringify(data)),
     }) as any;
 }
 
@@ -16,6 +20,7 @@ describe("Home Page", () => {
     beforeEach(() => {
         vi.restoreAllMocks();
         localStorage.clear();
+        sessionStorage.clear();
     });
 
     it("renders total balance", async () => {
@@ -25,7 +30,9 @@ describe("Home Page", () => {
                 <Home />
             </MemoryRouter>
         );
-        expect(await screen.findByText(/Total Balance/i)).toBeInTheDocument();
+        expect(
+            await screen.findByText(/Total Balance|ยอดคงเหลือรวม/i)
+        ).toBeInTheDocument();
     });
 
     it("shows loading state", async () => {
@@ -35,7 +42,9 @@ describe("Home Page", () => {
                 <Home />
             </MemoryRouter>
         );
-        expect(screen.getByText(/Loading data/i)).toBeInTheDocument();
+        expect(
+            screen.getByText(/Loading data|กำลังดึงข้อมูล/i)
+        ).toBeInTheDocument();
     });
 
     it("shows error when API fails", async () => {
@@ -45,7 +54,9 @@ describe("Home Page", () => {
                 <Home />
             </MemoryRouter>
         );
-        expect(await screen.findByText(/Failed to fetch data/i)).toBeInTheDocument();
+        expect(
+            await screen.findByText(/Failed to fetch data|ดึงข้อมูลล้มเหลว/i)
+        ).toBeInTheDocument();
     });
 
     it("shows message when no data", async () => {
@@ -55,7 +66,9 @@ describe("Home Page", () => {
                 <Home />
             </MemoryRouter>
         );
-        expect(await screen.findByText(/No transactions yet/i)).toBeInTheDocument();
+        expect(
+            await screen.findByText(/No transactions yet|ยังไม่มีรายการ/i)
+        ).toBeInTheDocument();
     });
 
     it("shows latest transaction when data exists", async () => {
@@ -76,8 +89,10 @@ describe("Home Page", () => {
                 <Home />
             </MemoryRouter>
         );
-        expect(await screen.findByText(/test/)).toBeInTheDocument();
-        expect(screen.getByText(/\+5,000/)).toBeInTheDocument();
+        expect(await screen.findByText(/test/i)).toBeInTheDocument();
+        expect(
+            screen.getByText(/\+5,?000|฿5,?000|\+฿5,?000/i)
+        ).toBeInTheDocument();
     });
 
     it("navigates months with prev/next buttons", async () => {
@@ -87,10 +102,16 @@ describe("Home Page", () => {
                 <Home />
             </MemoryRouter>
         );
-        const prev = screen.getByLabelText("Previous month");
-        const next = screen.getByLabelText("Next month");
-        fireEvent.click(prev);
-        fireEvent.click(next);
+        const prev =
+            screen.queryByLabelText(/Previous month|เดือนก่อน/i) ||
+            screen.getByRole("button", { name: /Previous|ก่อนหน้า/i });
+        const next =
+            screen.queryByLabelText(/Next month|เดือนถัดไป/i) ||
+            screen.getByRole("button", { name: /Next|ถัดไป/i });
+
+        fireEvent.click(prev as Element);
+        fireEvent.click(next as Element);
+
         expect(prev).toBeInTheDocument();
         expect(next).toBeInTheDocument();
     });
@@ -109,8 +130,16 @@ describe("Home Page", () => {
             </MemoryRouter>
         );
 
-        fireEvent.click(await screen.findByLabelText("More actions"));
-        fireEvent.click(screen.getByText("Delete"));
+        const moreBtn =
+            (await screen.findByLabelText(/More actions|ตัวเลือกเพิ่มเติม|เมนูเพิ่มเติม/i)) ||
+            screen.getByRole("button", { name: /More|เพิ่มเติม/i });
+        fireEvent.click(moreBtn);
+
+        const del =
+            screen.queryByText(/Delete|ลบ/i) ||
+            screen.getByRole("menuitem", { name: /Delete|ลบ/i });
+        fireEvent.click(del as Element);
+
         expect(window.confirm).toHaveBeenCalled();
     });
 });

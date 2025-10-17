@@ -8,6 +8,7 @@ import {
     Utensils, Train, Car, Bus, Bike, Coffee, Gift, Tag, ShoppingBag, ShoppingCart,
     Home as HomeIcon, HeartPulse, Activity, Fuel, MapPin
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { api } from "../api";
 
 /* ---------- Types ---------- */
@@ -18,7 +19,7 @@ type ExpenseDTO = {
     amount: number;
     note?: string | null;
     place?: string | null;
-    date: string;                    // YYYY-MM-DD
+    date: string; // YYYY-MM-DD
     paymentMethod?: string | null;
     iconKey?: string | null;
 };
@@ -26,7 +27,8 @@ type ExpenseDTO = {
 type Account = { name: string; amount: number | string; iconKey?: string };
 
 /* ---------- Icons ---------- */
-const ICON_MAP: Record<string, React.ComponentType<any>> = {
+
+const ICON_MAP: Record<string, LucideIcon> = {
     bank: Building2,
     banknote: Coins,
     landmark: Landmark,
@@ -36,12 +38,13 @@ const ICON_MAP: Record<string, React.ComponentType<any>> = {
     coins: Coins,
 };
 
-const TX_ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
+const TX_ICONS: Record<string, LucideIcon> = {
     Utensils, Train, Car, Bus, Bike, Coffee, Gift, Tag, ShoppingBag, ShoppingCart,
     Home: HomeIcon, HeartPulse, Activity, Fuel, MapPin, Wallet, CreditCard,
 };
 
-function IconByKey({ name, size = 18 }: { name?: string | null; size?: number }) {
+// ✅ อนุญาต size เป็น number | string ตาม LucideProps
+function IconByKey({ name, size = 18 }: { name?: string | null; size?: number | string }) {
     const Key = (name || "").trim();
     const Icon = (Key && TX_ICONS[Key]) || Utensils;
     return <Icon size={size} className="tx-icon" />;

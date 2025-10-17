@@ -21,10 +21,9 @@ spec:
     spec:
       containers:
         - name: backend
-          image: pinceme/my-financial-app:1.0.0   # <- เปลี่ยน tag ตามจริงได้
+          image: docker.io/pinceme/my-financial-app:1.0.0
           ports:
             - containerPort: 8081
-          # ใช้ tcpProbe เพื่อไม่ต้องพึ่ง actuator (ปรับเป็น HTTP ได้ถ้ามี)
           readinessProbe:
             tcpSocket: { port: 8081 }
             initialDelaySeconds: 10
@@ -69,7 +68,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: pinceme/financial-frontend:1.0.0  # <- เปลี่ยน tag ตามจริงได้
+          image: docker.io/pinceme/financial-frontend:1.0.0
           ports:
             - containerPort: 80
           readinessProbe:
@@ -97,29 +96,25 @@ spec:
   type: ClusterIP
 ---
 # ===== INGRESS =====
-# ต้องมี Ingress Controller (เช่น nginx-ingress) ติดตั้งในคลัสเตอร์ก่อน
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: app-ingress
   namespace: financial-app
-  annotations:
-    # ให้พาธ /api ไป backend ส่วนอื่น ๆ ไป frontend
-    nginx.ingress.kubernetes.io/rewrite-target: /$1
 spec:
+  ingressClassName: nginx
   rules:
-    - host: app.localtest.me   # ใช้ทดสอบบนเครื่อง (ชี้ 127.0.0.1 อัตโนมัติ)
+    - host: app.localtest.me
       http:
         paths:
-          # ใส่ /api ไว้บนสุดเพื่อให้ match ก่อน
-          - path: /api/?(.*)
+          - path: /api
             pathType: Prefix
             backend:
               service:
                 name: backend
                 port:
                   number: 8081
-          - path: /(.*)
+          - path: /
             pathType: Prefix
             backend:
               service:

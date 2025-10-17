@@ -1,0 +1,21 @@
+# ===== Ignore build outputs =====
+target/
+node_modules/
+
+# ===== Ignore IDE & configs =====
+.idea/
+*.iml
+*.class
+
+# ===== Ignore git & temp files =====
+.git/
+.gitignore
+.DS_Store
+*.log
+
+# ===== Ignore OS & system files =====
+Thumbs.db
+*.swp
+
+# ===== Ignore test artifacts =====
+*.jar.original

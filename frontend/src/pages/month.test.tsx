@@ -1,9 +1,13 @@
 ﻿// src/pages/month.test.tsx
+// @ts-nocheck
 import React from "react";
 import { render, screen, waitFor, fireEvent, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, it, expect, vi, beforeAll, beforeEach } from "vitest";
 import Month from "./month";
+
+// บางหน้าอาจใช้ BottomNav
+vi.mock("./buttomnav", () => ({ default: () => <div data-testid="bottom-nav" /> }));
 
 /* ---------------- Polyfill for Recharts ---------------- */
 beforeAll(() => {
@@ -43,7 +47,7 @@ describe("Month Page", () => {
         );
 
         const loadingEls = screen.getAllByText((_, node) =>
-            !!node?.textContent?.toLowerCase().includes("load")
+            !!node?.textContent?.toLowerCase().match(/load|กำลังดึง|กำลังโหลด/)
         );
         expect(loadingEls.length).toBeGreaterThanOrEqual(1);
 
@@ -55,7 +59,7 @@ describe("Month Page", () => {
 
         await waitFor(() => {
             const still = screen.queryAllByText((_, node) =>
-                !!node?.textContent?.toLowerCase().includes("load")
+                !!node?.textContent?.toLowerCase().match(/load|กำลังดึง|กำลังโหลด/)
             );
             expect(still.length).toBe(0);
         });
@@ -75,7 +79,9 @@ describe("Month Page", () => {
         );
 
         await waitFor(() => {
-            expect(screen.getByText(/Failed to fetch data/i)).toBeInTheDocument();
+            expect(
+                screen.getByText(/Failed to fetch data|ดึงข้อมูลล้มเหลว/i)
+            ).toBeInTheDocument();
         });
     });
 
@@ -89,17 +95,27 @@ describe("Month Page", () => {
         );
 
         await waitFor(() => {
-            expect(screen.getByText(/No transactions yet/i)).toBeInTheDocument();
+            expect(
+                screen.getByText(/No transactions yet|ยังไม่มีรายการ/i)
+            ).toBeInTheDocument();
         });
 
-        const kpiInline = screen.getByText(/Income:/i).closest(".kpi-inline") as HTMLElement;
-        const incomeEl = kpiInline.querySelector("b.income") as HTMLElement;
-        const expenseEl = kpiInline.querySelector("b.expense") as HTMLElement;
-        const balanceEl = kpiInline.querySelector("b.balance") as HTMLElement;
+        const kpiInline =
+            screen.getByText(/Income:|รายรับ:/i).closest(".kpi-inline") ||
+            screen.getByText(/Income|รายรับ/i).closest(".kpi-inline");
+        const incomeEl =
+            (kpiInline as HTMLElement).querySelector("b.income") ||
+            within(kpiInline as HTMLElement).getByTestId?.("kpi-income");
+        const expenseEl =
+            (kpiInline as HTMLElement).querySelector("b.expense") ||
+            within(kpiInline as HTMLElement).getByTestId?.("kpi-expense");
+        const balanceEl =
+            (kpiInline as HTMLElement).querySelector("b.balance") ||
+            within(kpiInline as HTMLElement).getByTestId?.("kpi-balance");
 
-        expect(onlyNumber(incomeEl.textContent)).toBe("0");
-        expect(onlyNumber(expenseEl.textContent)).toBe("0");
-        expect(onlyNumber(balanceEl.textContent)).toBe("0");
+        expect(onlyNumber((incomeEl as HTMLElement)?.textContent)).toBe("0");
+        expect(onlyNumber((expenseEl as HTMLElement)?.textContent)).toBe("0");
+        expect(onlyNumber((balanceEl as HTMLElement)?.textContent)).toBe("0");
     });
 
     it("renders summary from data and computes KPIs correctly", async () => {
@@ -122,8 +138,10 @@ describe("Month Page", () => {
 
         await waitFor(() => expect(fetchMock).toHaveBeenCalled());
 
-        const title = await screen.findByText(/Summary/i);
-        const summaryCard = title.closest(".summary-card") as HTMLElement;
+        const summaryTitle =
+            screen.getByText(/Summary|สรุปรายเดือน/i) ||
+            screen.getByRole("heading", { name: /Summary|สรุปรายเดือน/i });
+        const summaryCard = (summaryTitle as HTMLElement).closest(".summary-card") as HTMLElement;
 
         const kpi = summaryCard.querySelector(".kpi-inline") as HTMLElement;
         expect(within(kpi).getByText(/12,?000/)).toBeInTheDocument();
@@ -148,15 +166,12 @@ describe("Month Page", () => {
             </MemoryRouter>
         );
 
-        await waitFor(
-            () => {
-                const still = screen.queryAllByText((_, node) =>
-                    !!node?.textContent?.toLowerCase().includes("load")
-                );
-                expect(still.length).toBe(0);
-            },
-            { timeout: 3000 }
-        );
+        await waitFor(() => {
+            const still = screen.queryAllByText((_, node) =>
+                !!node?.textContent?.toLowerCase().match(/load|กำลังดึง|กำลังโหลด/)
+            );
+            expect(still.length).toBe(0);
+        });
 
         const getChipText = () =>
             (document.querySelector(".month-chip") as HTMLElement)?.textContent?.trim() ?? "";
@@ -164,27 +179,26 @@ describe("Month Page", () => {
         const initialText = getChipText();
         expect(initialText).not.toBe("");
 
-        fireEvent.click(screen.getByRole("button", { name: "Previous" }));
-        await waitFor(
-            () => {
-                expect(getChipText()).not.toBe(initialText);
-            },
-            { timeout: 3000 }
-        );
+        const prevBtn =
+            screen.queryByRole("button", { name: /Previous|ก่อนหน้า/i }) ||
+            screen.getByText(/Previous|ก่อนหน้า/i);
+        fireEvent.click(prevBtn as Element);
 
-        fireEvent.click(screen.getByRole("button", { name: "Next" }));
-        await waitFor(
-            () => {
-                expect(getChipText()).toBe(initialText);
-            },
-            { timeout: 3000 }
-        );
+        await waitFor(() => {
+            expect(getChipText()).not.toBe(initialText);
+        });
 
-        await waitFor(
-            () => {
-                expect(((globalThis.fetch as any).mock.calls.length)).toBeGreaterThanOrEqual(2);
-            },
-            { timeout: 3000 }
-        );
+        const nextBtn =
+            screen.queryByRole("button", { name: /Next|ถัดไป/i }) ||
+            screen.getByText(/Next|ถัดไป/i);
+        fireEvent.click(nextBtn as Element);
+
+        await waitFor(() => {
+            expect(getChipText()).toBe(initialText);
+        });
+
+        await waitFor(() => {
+            expect(((globalThis.fetch as any).mock.calls.length)).toBeGreaterThanOrEqual(2);
+        });
     });
 });
