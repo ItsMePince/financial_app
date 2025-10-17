@@ -6,12 +6,6 @@ on:
   pull_request:
     branches: [ main, dev ]
   workflow_dispatch:
-    inputs:
-      run_e2e:
-        description: "Run fullstack E2E (will start local servers)"
-        type: boolean
-        default: false
-        required: false
 
 concurrency:
   group: financial-app-ci-${{ github.ref }}
@@ -49,6 +43,13 @@ jobs:
       - name: Install deps
         working-directory: frontend
         run: npm ci
+      - name: Disable reportWebVitals in CI
+        working-directory: frontend
+        run: |
+          cat > src/reportWebVitals.ts <<'EOF'
+          const reportWebVitals = () => {};
+          export default reportWebVitals;
+          EOF
       - name: Lint if config exists
         working-directory: frontend
         run: |
@@ -57,22 +58,9 @@ jobs:
           else
             echo "No ESLint config; skip."
           fi
-      # ✅ แก้ FE: ทำไฟล์ reportWebVitals ให้เป็น no-op เฉพาะใน CI
-      - name: Disable reportWebVitals in CI
+      - name: Type check
         working-directory: frontend
-        run: |
-          cat > src/reportWebVitals.ts <<'EOF'
-          const reportWebVitals = () => {};
-          export default reportWebVitals;
-          EOF
-      - name: Type check if tsconfig exists
-        working-directory: frontend
-        run: |
-          if [ -f tsconfig.json ]; then
-            npx tsc --noEmit --skipLibCheck
-          else
-            echo "No tsconfig.json; skip."
-          fi
+        run: npx tsc --noEmit --skipLibCheck
 
   be-unit:
     name: BE Unit Tests
@@ -108,7 +96,7 @@ jobs:
       - name: Install deps
         working-directory: frontend
         run: npm ci
-      - name: Build (if present)
+      - name: Build
         working-directory: frontend
         run: npm run build --if-present
       - name: Upload FE artifact
@@ -134,8 +122,7 @@ jobs:
       - name: Make mvnw executable
         working-directory: backend
         run: chmod +x ./mvnw
-      # ✅ แก้ BE: ข้าม repackage (ไม่ต้องหา main class)
-      - name: Package (skip repackage for CI speed)
+      - name: Package (skip repackage)
         working-directory: backend
         run: ./mvnw -q -DskipTests -Dspring-boot.repackage.skip=true package
       - name: Upload BE artifact
@@ -148,7 +135,7 @@ jobs:
 
   fullstack-e2e:
     name: Fullstack E2E (Cypress)
-    needs: [ frontend-build, backend-package ]
+    needs: [frontend-build, backend-package]
     if: ${{ needs.changes.outputs.frontend == 'true' || needs.changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
     timeout-minutes: 25
@@ -177,45 +164,26 @@ jobs:
           key: cypress-${{ runner.os }}-${{ hashFiles('frontend/package-lock.json') }}
           restore-keys: cypress-${{ runner.os }}-
 
-      - name: Serve FE build if exists
-        id: servefe
-        working-directory: frontend
-        run: |
-          if [ -d build ]; then
-            npx http-server ./build -p 3000 --silent &
-            echo "FE_URL=http://localhost:3000" >> "$GITHUB_ENV"
-            echo "served=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "served=false" >> "$GITHUB_OUTPUT"
-          fi
-      - name: Wait FE
-        if: ${{ steps.servefe.outputs.served == 'true' }}
-        run: npx wait-on http://localhost:3000 --timeout 120000
-
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '21'
-          cache: maven
-
+      # ✅ start backend (fix permission)
       - name: Run BE (spring-boot:run, profile=test)
         working-directory: backend
         env:
           SPRING_PROFILES_ACTIVE: test
         run: |
+          chmod +x ./mvnw
           ./mvnw -q -DskipTests spring-boot:run > backend.log 2>&1 &
           echo "API_URL=http://localhost:8080" >> "$GITHUB_ENV"
           sleep 10
           tail -n 20 backend.log || true
 
-      - name: Wait BE
+      - name: Serve FE build
+        id: servefe
+        working-directory: frontend
         run: |
-          echo "Waiting for backend on port 8080 ..."
-          npx wait-on tcp:localhost:8080 --timeout 240000 || (
-            echo "Backend did not start in time. Printing last logs:" && \
-            tail -n 80 backend.log && exit 1
-          )
+          npx http-server ./build -p 3000 --silent &
+          echo "FE_URL=http://localhost:3000" >> "$GITHUB_ENV"
 
+      # ✅ Cypress จะรอ FE/BE เองด้วย wait-on
       - name: Run Cypress
         uses: cypress-io/github-action@v6
         with:
@@ -224,6 +192,10 @@ jobs:
           browser: electron
           headless: true
           config: video=false
+          wait-on: |
+            http://localhost:3000
+            tcp:localhost:8080
+          wait-on-timeout: 240000
         env:
           CI: true
           CYPRESS_baseUrl: ${{ env.FE_URL }}
