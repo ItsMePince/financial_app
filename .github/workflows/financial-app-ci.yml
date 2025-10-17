@@ -1,82 +1,215 @@
-fullstack-e2e:
-  name: Fullstack E2E (Cypress)
-  needs: [frontend-build, backend-package]
-  if: ${{ needs.changes.outputs.frontend == 'true' || needs.changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' }}
-  runs-on: ubuntu-latest
-  timeout-minutes: 25
-  steps:
-    - uses: actions/checkout@v4
+name: Financial App CI (Prod)
 
-    - name: Download FE build artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: frontend-build
-        path: frontend/build
-      continue-on-error: true
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+  workflow_dispatch:
 
-    - uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: npm
-        cache-dependency-path: frontend/package-lock.json
+concurrency:
+  group: financial-app-ci-${{ github.ref }}
+  cancel-in-progress: true
 
-    - name: Install FE deps
-      working-directory: frontend
-      run: npm ci
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.filter.outputs.frontend }}
+      backend:  ${{ steps.filter.outputs.backend }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            frontend:
+              - 'frontend/**'
+            backend:
+              - 'backend/**'
 
-    - name: Cache Cypress
-      uses: actions/cache@v4
-      with:
-        path: ~/.cache/Cypress
-        key: cypress-${{ runner.os }}-${{ hashFiles('frontend/package-lock.json') }}
-        restore-keys: cypress-${{ runner.os }}-
-
-    # ✅ Backend ใช้พอร์ต 8081 ให้ตรงกับ Spring Boot
-    - name: Run BE (spring-boot:run, profile=test)
-      working-directory: backend
-      env:
-        SPRING_PROFILES_ACTIVE: test
-      run: |
-        chmod +x ./mvnw
-        ./mvnw -q -DskipTests spring-boot:run > backend.log 2>&1 &
-        echo "API_URL=http://localhost:8081" >> "$GITHUB_ENV"
-        sleep 10
-        tail -n 20 backend.log || true
-
-    - name: Serve FE build
-      id: servefe
-      working-directory: frontend
-      run: |
-        npx http-server ./build -p 3000 --silent &
-        echo "FE_URL=http://localhost:3000" >> "$GITHUB_ENV"
-
-    # ✅ Cypress รอ FE/BE (8081)
-    - name: Run Cypress
-      uses: cypress-io/github-action@v6
-      with:
+  fe-quality:
+    name: FE Lint & Type Check
+    needs: changes
+    if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.frontend == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install deps
         working-directory: frontend
-        install: false
-        browser: electron
-        quiet: true
-        config: video=false
-        wait-on: "http://localhost:3000,tcp:localhost:8081"
-        wait-on-timeout: 240
-      env:
-        CI: true
-        CYPRESS_baseUrl: ${{ env.FE_URL }}
-        CYPRESS_API_URL: ${{ env.API_URL }}
+        run: npm ci
+      - name: Disable reportWebVitals in CI
+        working-directory: frontend
+        run: |
+          cat > src/reportWebVitals.ts <<'EOF'
+          const reportWebVitals = () => {};
+          export default reportWebVitals;
+          EOF
+      - name: Lint if config exists
+        working-directory: frontend
+        run: |
+          if ls .eslintrc* >/dev/null 2>&1; then
+            npx eslint . --max-warnings=0
+          else
+            echo "No ESLint config; skip."
+          fi
+      - name: Type check
+        working-directory: frontend
+        run: npx tsc --noEmit --skipLibCheck
 
-    - name: Print backend logs on failure
-      if: failure()
-      working-directory: backend
-      run: |
-        echo "---- tail backend.log ----"
-        tail -n 120 backend.log || true
+  be-unit:
+    name: BE Unit Tests
+    needs: changes
+    if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.backend == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Make mvnw executable
+        working-directory: backend
+        run: chmod +x ./mvnw
+      - name: Test (unit)
+        working-directory: backend
+        run: ./mvnw -q test
 
-    - name: Upload screenshots (if any)
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: fullstack-screenshots
-        path: frontend/cypress/screenshots/**
-        if-no-files-found: ignore
+  frontend-build:
+    name: Frontend Build (artifact)
+    needs: [changes, fe-quality]
+    if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.frontend == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install deps
+        working-directory: frontend
+        run: npm ci
+      - name: Build
+        working-directory: frontend
+        run: npm run build --if-present
+      - name: Upload FE artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/build
+          if-no-files-found: ignore
+
+  backend-package:
+    name: Backend Package (artifact)
+    needs: [changes, be-unit]
+    if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.backend == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Make mvnw executable
+        working-directory: backend
+        run: chmod +x ./mvnw
+      - name: Package (skip repackage)
+        working-directory: backend
+        run: ./mvnw -q -DskipTests -Dspring-boot.repackage.skip=true package
+      - name: Upload BE artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-jar
+          path: backend/target/*.jar
+          if-no-files-found: ignore
+
+  fullstack-e2e:
+    name: Fullstack E2E (Cypress)
+    needs: [frontend-build, backend-package]
+    if: ${{ needs.changes.outputs.frontend == 'true' || needs.changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download FE build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/build
+        continue-on-error: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install FE deps
+        working-directory: frontend
+        run: npm ci
+
+      - name: Cache Cypress
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/Cypress
+          key: cypress-${{ runner.os }}-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: cypress-${{ runner.os }}-
+
+      - name: Run BE (spring-boot:run, profile=test)
+        working-directory: backend
+        env:
+          SPRING_PROFILES_ACTIVE: test
+        run: |
+          chmod +x ./mvnw
+          ./mvnw -q -DskipTests spring-boot:run > backend.log 2>&1 &
+          echo "API_URL=http://localhost:8081" >> "$GITHUB_ENV"
+          sleep 10
+          tail -n 20 backend.log || true
+
+      - name: Serve FE build
+        id: servefe
+        working-directory: frontend
+        run: |
+          npx http-server ./build -p 3000 --silent &
+          echo "FE_URL=http://localhost:3000" >> "$GITHUB_ENV"
+
+      - name: Run Cypress
+        uses: cypress-io/github-action@v6
+        with:
+          working-directory: frontend
+          install: false
+          browser: electron
+          quiet: true
+          config: video=false
+          wait-on: "http://localhost:3000,tcp:localhost:8081"
+          wait-on-timeout: 240
+        env:
+          CI: true
+          CYPRESS_baseUrl: ${{ env.FE_URL }}
+          CYPRESS_API_URL: ${{ env.API_URL }}
+
+      - name: Print backend logs on failure
+        if: failure()
+        working-directory: backend
+        run: |
+          echo "---- tail backend.log ----"
+          tail -n 120 backend.log || true
+
+      - name: Upload screenshots (if any)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fullstack-screenshots
+          path: frontend/cypress/screenshots/**
+          if-no-files-found: ignore
