@@ -2,9 +2,9 @@ name: Financial App CI (Frontend build + Backend package)
 
 on:
   push:
-    branches: [ main, dev ]
+    branches: [ main, dev, testy ]
   pull_request:
-    branches: [ main, dev ]
+    branches: [ main, dev, testy ]
   workflow_dispatch:
 
 concurrency:
@@ -31,7 +31,6 @@ jobs:
   frontend-build:
     name: Frontend Build (no tests)
     needs: changes
-    # PR/dispatch รันทันที, push จะรันเมื่อมีไฟล์ใน frontend/** เปลี่ยน
     if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.frontend == 'true' }}
     runs-on: ubuntu-latest
     steps:
@@ -41,16 +40,13 @@ jobs:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
-
       - name: Install deps
         working-directory: frontend
         run: npm ci
-
       - name: Build (if present)
         working-directory: frontend
         run: npm run build --if-present
-
-      - name: Upload build artifact (if exists)
+      - name: Upload frontend build
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -59,9 +55,8 @@ jobs:
           if-no-files-found: ignore
 
   backend:
-    name: Backend Build (with tests)
+    name: Backend Test & Package (no repackage)
     needs: changes
-    # PR/dispatch รันทันที, push จะรันเมื่อมีไฟล์ใน backend/** เปลี่ยน
     if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.backend == 'true' }}
     runs-on: ubuntu-latest
     steps:
@@ -71,16 +66,20 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
           cache: 'maven'
-          cache-dependency-path: backend/pom.xml
 
       - name: Make mvnw executable
         working-directory: backend
         run: chmod +x ./mvnw
 
-      # package จะรัน tests โดยอัตโนมัติ (ไม่ skip)
-      - name: Build & Test
+      # รันเทสต์จริง
+      - name: Test
         working-directory: backend
-        run: ./mvnw -q package
+        run: ./mvnw -B -ntp clean test
+
+      # สร้างแพ็กเกจ แต่ "ข้าม repackage" เพื่อไม่ให้ error หา main class
+      - name: Package (skip spring-boot repackage)
+        working-directory: backend
+        run: ./mvnw -B -ntp -Dspring-boot.repackage.skip=true package
 
       - name: Upload backend artifacts
         if: always()
