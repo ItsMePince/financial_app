@@ -1,212 +1,190 @@
 ﻿// src/pages/month.test.tsx
 import React from "react";
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
-import Month from "./month";
 import { render, screen, waitFor, fireEvent, within } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+import { describe, it, expect, vi, beforeAll, beforeEach } from "vitest";
+import Month from "./month";
 
-declare global {
-  // eslint-disable-next-line no-var
-  var fetch: any;
-}
-
-/* ---------------- Polyfill for Recharts ---------------- */
 /* ---------------- Polyfill for Recharts ---------------- */
 beforeAll(() => {
-  // @ts-ignore
-  if (typeof global.ResizeObserver === "undefined") {
-    // @ts-ignore
-    global.ResizeObserver = class {
-      observe() {}
-      unobserve() {}
-      disconnect() {}
-    };
-  }
+    if (typeof (globalThis as any).ResizeObserver === "undefined") {
+        (globalThis as any).ResizeObserver = class {
+            observe() {}
+            unobserve() {}
+            disconnect() {}
+        };
+    }
 });
 
-const onlyNumber = (s: string | null | undefined) => (s ?? "").replace(/[^\d]/g, "");
+const onlyNumber = (s: string | null | undefined) => (s ?? "").replace(/\D/g, "");
 
-/** สร�?า�? mock fetch �?ี�? resolve �?�?�?�?�?�?า�?ี�?ระ�?ุ 1 �?รั�?�? */
 function mockFetchResolveOnce(data: any, ok = true) {
-  global.fetch = vi.fn().mockResolvedValue({
-    ok,
-    json: async () => data,
-    text: async () => (typeof data === "string" ? data : JSON.stringify(data)),
-  }) as any;
+    (globalThis.fetch as any) = vi.fn().mockResolvedValue({
+        ok,
+        json: async () => data,
+        text: async () => (typeof data === "string" ? data : JSON.stringify(data)),
+    }) as any;
 }
 
 describe("Month Page", () => {
-  beforeEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  it("แส�?�?ส�?า�?ะ loading �?อ�?แรก", async () => {
-    // �?ำ�?ห�? fetch �?�?า�?�?ว�?ก�?อ�? �?�?ื�?อ�?�?�?�?�?อ Loading
-    let resolveFn: (v: any) => void = () => {};
-    const pending = new Promise((res) => (resolveFn = res));
-    global.fetch = vi.fn().mockReturnValueOnce(pending);
-
-    render(
-      <MemoryRouter>
-        <Month />
-      </MemoryRouter>
-    );
-
-    // มี�?�?อ�?วาม 'กำลั�?�?หล�?' อย�?า�?�?�?อยห�?ึ�?�?�?ุ�?
-    const loadingEls = screen.getAllByText((_, node) =>
-      !!node?.textContent?.toLowerCase().includes("load") ||
-      !!node?.textContent?.includes("กำลั�?�?หล�?")
-    );
-    expect(loadingEls.length).toBeGreaterThanOrEqual(1);
-
-    // �?ล�?อย fetch �?ห�?�?สร�?�?
-    resolveFn({
-      ok: true,
-      json: async () => [],
-      text: async () => "[]",
+    beforeEach(() => {
+        vi.restoreAllMocks();
     });
 
-    // รอ�?ห�?�?�?อ�?วาม�?หล�?หาย�?�?�?ั�?�?หม�?
-    await waitFor(() => {
-      const still = screen.queryAllByText((_, node) =>
-        !!node?.textContent?.toLowerCase().includes("load") ||
-        !!node?.textContent?.includes("กำลั�?�?หล�?")
-      );
-      expect(still.length).toBe(0);
-    });
-  });
+    it("shows loading state at first render", async () => {
+        let resolveFn: (v: any) => void = () => {};
+        const pending = new Promise((res) => (resolveFn = res));
+        (globalThis.fetch as any) = vi.fn().mockReturnValueOnce(pending);
 
-  it("แส�?�?�?�?อ�?วาม error �?มื�?อ API ล�?ม�?หลว", async () => {
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: false,
-      status: 500,
-      text: async () => "�?กิ�?�?�?อ�?ิ�?�?ลา�?",
-    }) as any;
+        render(
+            <MemoryRouter>
+                <Month />
+            </MemoryRouter>
+        );
 
-    render(
-      <MemoryRouter>
-        <Month />
-      </MemoryRouter>
-    );
+        const loadingEls = screen.getAllByText((_, node) =>
+            !!node?.textContent?.toLowerCase().includes("load")
+        );
+        expect(loadingEls.length).toBeGreaterThanOrEqual(1);
 
-    // �?อม�?�?�?�?�?�?�?แส�?�?ว�?า "�?หล�?�?�?อมูล�?ม�?สำ�?ร�?�? (...)" อยู�?�?�? DOM
-    await waitFor(() => {
-      expect(screen.getByText(/�?หล�?�?�?อมูล�?ม�?สำ�?ร�?�?/i)).toBeInTheDocument();
-    });
-  });
+        resolveFn({
+            ok: true,
+            json: async () => [],
+            text: async () => "[]",
+        });
 
-  it("แส�?�? '�?ม�?มีรายการ�?�?�?�?ือ�?�?ี�?' �?มื�?อ API �?ื�? array ว�?า�?", async () => {
-    mockFetchResolveOnce([]);
-
-    render(
-      <MemoryRouter>
-        <Month />
-      </MemoryRouter>
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText(/�?ม�?มีรายการ�?�?�?�?ือ�?�?ี�?/i)).toBeInTheDocument();
+        await waitFor(() => {
+            const still = screen.queryAllByText((_, node) =>
+                !!node?.textContent?.toLowerCase().includes("load")
+            );
+            expect(still.length).toBe(0);
+        });
     });
 
-    // KPI �?วร�?�?�?�? 0 �?ั�?�?หม�? (อ�?า�?�?าก kpi-inline �?�?ื�?อ�?ลี�?ย�?�?�?กั�? cell �?�? grid)
-    const kpiInline = screen.getByText(/รายรั�?:/i).closest(".kpi-inline") as HTMLElement;
-    const incomeEl  = kpiInline.querySelector("b.income") as HTMLElement;
-    const expenseEl = kpiInline.querySelector("b.expense") as HTMLElement;
-    const balanceEl = kpiInline.querySelector("b.balance") as HTMLElement;
+    it("shows error message when API fails", async () => {
+        (globalThis.fetch as any) = vi.fn().mockResolvedValue({
+            ok: false,
+            status: 500,
+            text: async () => "Server error",
+        }) as any;
 
-    expect(onlyNumber(incomeEl.textContent)).toBe("0");
-    expect(onlyNumber(expenseEl.textContent)).toBe("0");
-    expect(onlyNumber(balanceEl.textContent)).toBe("0");
-  });
+        render(
+            <MemoryRouter>
+                <Month />
+            </MemoryRouter>
+        );
 
-  it("แส�?�?�?�?อมูล�?มื�?อ�?หล�?สำ�?ร�?�? และ�?ำ�?ว�? KPI �?ูก�?�?อ�?", async () => {
-    // �?ั�? mock �?�?�?าะ�?�?ส�?ี�?
-    const sample = [
-      { id: 1, date: "2025-09-01", type: "INCOME",  amount: 12000, category: "�?�?ิ�?�?�?ือ�?" },
-      { id: 2, date: "2025-09-01", type: "EXPENSE", amount: 3000,  category: "อาหาร"   },
-    ];
+        await waitFor(() => {
+            expect(screen.getByText(/Failed to fetch data/i)).toBeInTheDocument();
+        });
+    });
 
-    const fetchMock = vi
-      .spyOn(global as any, "fetch")
-      .mockResolvedValue({
-        ok: true,
-        json: async () => sample,
-        text: async () => JSON.stringify(sample),
-      } as any);
+    it("shows 'No transactions yet' when API returns empty array", async () => {
+        mockFetchResolveOnce([]);
 
-    render(
-      <MemoryRouter>
-        <Month />
-      </MemoryRouter>
-    );
+        render(
+            <MemoryRouter>
+                <Month />
+            </MemoryRouter>
+        );
 
-    // ยื�?ยั�?ว�?ามีการยิ�? fetch แล�?ว
-    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+        await waitFor(() => {
+            expect(screen.getByText(/No transactions yet/i)).toBeInTheDocument();
+        });
 
-    // รอ�?ห�?สลั�?�?าก loading �?�?�?�?การ�?�?สรุ�?
-    const title = await screen.findByText(/สรุ�?ราย�?�?ือ�?/i);
-    const summaryCard = title.closest(".summary-card") as HTMLElement;
+        const kpiInline = screen.getByText(/Income:/i).closest(".kpi-inline") as HTMLElement;
+        const incomeEl = kpiInline.querySelector("b.income") as HTMLElement;
+        const expenseEl = kpiInline.querySelector("b.expense") as HTMLElement;
+        const balanceEl = kpiInline.querySelector("b.balance") as HTMLElement;
 
-    // �?รว�? KPI �?�?�?าะ�?�?การ�?�?สรุ�? (กั�?�?�?กั�?�?ัว�?ล�?�?�? grid)
-    const kpi = summaryCard.querySelector(".kpi-inline") as HTMLElement;
-    expect(within(kpi).getByText(/12,?000/)).toBeInTheDocument(); // รายรั�?
-    expect(within(kpi).getByText(/3,?000/)).toBeInTheDocument();  // ราย�?�?าย
-    expect(within(kpi).getByText(/9,?000/)).toBeInTheDocument();  // �?�?�?หลือ
+        expect(onlyNumber(incomeEl.textContent)).toBe("0");
+        expect(onlyNumber(expenseEl.textContent)).toBe("0");
+        expect(onlyNumber(balanceEl.textContent)).toBe("0");
+    });
 
-    expect(await screen.findAllByText(/12,?000/)).not.toHaveLength(0);
-    expect(await screen.findAllByText(/3,?000/)).not.toHaveLength(0);
-    expect(await screen.findAllByText(/9,?000/)).not.toHaveLength(0);
+    it("renders summary from data and computes KPIs correctly", async () => {
+        const sample = [
+            { id: 1, date: "2025-09-01", type: "INCOME", amount: 12000, category: "Salary" },
+            { id: 2, date: "2025-09-01", type: "EXPENSE", amount: 3000, category: "Food" },
+        ];
 
-  });
+        const fetchMock = vi.spyOn(globalThis as any, "fetch").mockResolvedValue({
+            ok: true,
+            json: async () => sample,
+            text: async () => JSON.stringify(sample),
+        } as any);
 
-  it("�?�?ลี�?ย�?�?�?ือ�?�?มื�?อก�?�?ุ�?ม ก�?อ�?ห�?�?า/�?ั�?�?�? และ�?รียก fetch �?หม�?", async () => {
-    // initial + prev + next อย�?า�?�?�?อย 3 mock responses
-    global.fetch = vi
-      .fn()
-      .mockResolvedValueOnce({ ok: true, json: async () => [], text: async () => "[]" })
-      .mockResolvedValueOnce({ ok: true, json: async () => [], text: async () => "[]" })
-      .mockResolvedValueOnce({ ok: true, json: async () => [], text: async () => "[]" });
+        render(
+            <MemoryRouter>
+                <Month />
+            </MemoryRouter>
+        );
 
-    render(
-      <MemoryRouter>
-        <Month />
-      </MemoryRouter>
-    );
+        await waitFor(() => expect(fetchMock).toHaveBeenCalled());
 
-    // รอ�?ห�?�?หล�?รอ�?แรก�?�? (�?�?อ�?วามกำลั�?�?หล�?หาย)
-    await waitFor(() => {
-      const still = screen.queryAllByText((_, node) =>
-        !!node?.textContent?.toLowerCase().includes("load") ||
-        !!node?.textContent?.includes("กำลั�?�?หล�?")
-      );
-      expect(still.length).toBe(0);
-    }, { timeout: 3000 });
+        const title = await screen.findByText(/Summary/i);
+        const summaryCard = title.closest(".summary-card") as HTMLElement;
 
-    const getChipText = () =>
-      (document.querySelector(".month-chip") as HTMLElement)?.textContent?.trim() ?? "";
+        const kpi = summaryCard.querySelector(".kpi-inline") as HTMLElement;
+        expect(within(kpi).getByText(/12,?000/)).toBeInTheDocument();
+        expect(within(kpi).getByText(/3,?000/)).toBeInTheDocument();
+        expect(within(kpi).getByText(/9,?000/)).toBeInTheDocument();
 
-    const initialText = getChipText();
-    expect(initialText).not.toBe("");
+        expect(await screen.findAllByText(/12,?000/)).not.toHaveLength(0);
+        expect(await screen.findAllByText(/3,?000/)).not.toHaveLength(0);
+        expect(await screen.findAllByText(/9,?000/)).not.toHaveLength(0);
+    });
 
-    // previous
-    fireEvent.click(screen.getByRole("button", { name: "ก�?อ�?ห�?�?า" }));
-    await waitFor(() => {
-      expect(getChipText()).not.toBe(initialText);
-    }, { timeout: 3000 });
+    it("navigates months with previous/next and refetches", async () => {
+        (globalThis.fetch as any) = vi
+            .fn()
+            .mockResolvedValueOnce({ ok: true, json: async () => [], text: async () => "[]" })
+            .mockResolvedValueOnce({ ok: true, json: async () => [], text: async () => "[]" })
+            .mockResolvedValueOnce({ ok: true, json: async () => [], text: async () => "[]" });
 
-    // next (กลั�?มา�?�?�?า�?�?ิม)
-    fireEvent.click(screen.getByRole("button", { name: "�?ั�?�?�?" }));
-    await waitFor(() => {
-      expect(getChipText()).toBe(initialText);
-    }, { timeout: 3000 });
+        render(
+            <MemoryRouter>
+                <Month />
+            </MemoryRouter>
+        );
 
-    // �?ั�?�?ำ�?ว�?�?รียก fetch �?? ยอมรั�? >= 2 �?�?ื�?อกั�? timing
-    await waitFor(() => {
-      expect((global.fetch as any).mock.calls.length).toBeGreaterThanOrEqual(2);
-    }, { timeout: 3000 });
-  });
+        await waitFor(
+            () => {
+                const still = screen.queryAllByText((_, node) =>
+                    !!node?.textContent?.toLowerCase().includes("load")
+                );
+                expect(still.length).toBe(0);
+            },
+            { timeout: 3000 }
+        );
+
+        const getChipText = () =>
+            (document.querySelector(".month-chip") as HTMLElement)?.textContent?.trim() ?? "";
+
+        const initialText = getChipText();
+        expect(initialText).not.toBe("");
+
+        fireEvent.click(screen.getByRole("button", { name: "Previous" }));
+        await waitFor(
+            () => {
+                expect(getChipText()).not.toBe(initialText);
+            },
+            { timeout: 3000 }
+        );
+
+        fireEvent.click(screen.getByRole("button", { name: "Next" }));
+        await waitFor(
+            () => {
+                expect(getChipText()).toBe(initialText);
+            },
+            { timeout: 3000 }
+        );
+
+        await waitFor(
+            () => {
+                expect(((globalThis.fetch as any).mock.calls.length)).toBeGreaterThanOrEqual(2);
+            },
+            { timeout: 3000 }
+        );
+    });
 });
-
-
-
-
