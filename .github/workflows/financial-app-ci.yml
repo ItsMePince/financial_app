@@ -148,8 +148,8 @@ jobs:
 
   fullstack-e2e:
     name: Fullstack E2E (Cypress)
-    needs: [frontend-build, backend-package]
-    if: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.run_e2e == 'true') || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'run-e2e')) }}
+    needs: [ frontend-build, backend-package ]
+    if: ${{ needs.changes.outputs.frontend == 'true' || needs.changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
