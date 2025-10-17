@@ -1,173 +1,155 @@
-﻿import React, { useState, ChangeEvent, FormEvent } from "react";
-import { UserRound } from "lucide-react";
-import { Link } from "react-router-dom";
-import "./SignUp.css";
-import { api } from "../api";
+﻿// src/pages/SignUp.tsx
+import React, { useState } from "react";
 
-type SignUpValues = {
-    email: string;
-    username: string;
-    password: string;
+type Props = {
+    onSubmit?: (data: { email: string; username: string; password: string }) => void;
+    onSignUpSuccess?: (user: any) => void;
 };
 
-interface SignUpResponse {
-    success: boolean;
-    message: string;
-    user?: {
-        username: string;
-        email: string;
-        role: string;
-    };
-}
-
-interface SignUpProps {
-    onSubmit?: (values: SignUpValues) => void;
-    onSignUpSuccess?: (user: any) => void;
-    onSwitchToLogin?: () => void;
-}
-
-const SignUp: React.FC<SignUpProps> = ({ onSubmit, onSignUpSuccess }) => {
-    const [form, setForm] = useState<SignUpValues>({
-        email: "",
-        username: "",
-        password: "",
-    });
+export default function SignUp({ onSubmit, onSignUpSuccess }: Props) {
+    const [email, setEmail] = useState("");
+    const [username, setUsername] = useState("");
+    const [password, setPassword] = useState("");
+    const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
 
-    const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setForm((prev) => ({ ...prev, [name]: value }));
-        if (error) setError("");
-    };
+    // อิงเดิม: แค่เติมการล้าง error ตอนพิมพ์
+    const clearAndSet =
+        (setter: (v: string) => void) =>
+            (e: React.ChangeEvent<HTMLInputElement>) => {
+                setter(e.target.value);
+                if (error) setError(null);
+            };
 
-    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
 
-        if (!form.email || !form.username || !form.password) {
-            setError("Please fill in all fields.");
+        // validate ตามเทส
+        if (!email || !username || !password) {
+            setError("Please fill in all required fields");
             return;
         }
-        if (form.password.length < 6) {
-            setError("Password must be at least 6 characters.");
+        if (password.length < 6) {
+            setError("Password must be at least 6 characters");
             return;
         }
 
-        setLoading(true);
-        setError("");
+        // อิงเดิม: ถ้ามี onSubmit ให้เรียกแล้วจบ
+        if (onSubmit) {
+            onSubmit({ email, username, password });
+            return;
+        }
 
         try {
-            if (onSubmit) {
-                onSubmit(form);
-                return;
-            }
+            setLoading(true);
+            setError(null);
 
-            const data: SignUpResponse = await api.post("/auth/signup", {
-                email: form.email,
-                username: form.username,
-                password: form.password,
+            const res = await fetch("/api/api/auth/signup", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, username, password }),
             });
 
-            if (data.success && data.user) {
-                localStorage.setItem("user", JSON.stringify(data.user));
+            // รองรับกรณี response ไม่ใช่ JSON
+            const data = await res.json().catch(() => ({} as any));
+
+            if (res.ok && data?.success) {
+                if (data.user) localStorage.setItem("user", JSON.stringify(data.user));
                 if (onSignUpSuccess) {
                     onSignUpSuccess(data.user);
                 } else {
-                    window.location.href = "/";
+                    window.location.href = "/Home";
                 }
-            } else {
-                setError(data.message || "Sign up failed.");
+                return;
             }
-        } catch (err: any) {
-            console.error("Signup error:", err);
-            setError(err?.message || "Unable to connect. Please try again.");
+
+            // server error: ใช้ message ถ้ามี ไม่งั้น fallback
+            setError(data?.message || "Sign up failed");
+        } catch {
+            // network error: ต้องเป็นข้อความนี้ตามเทส
+            setError("Unable to submit the form, please try again later");
         } finally {
             setLoading(false);
         }
-    };
+    }
 
     return (
-        <div className="su-page">
-            <div className="su-wrapper">
-                <div className="su-avatar" aria-hidden="true">
-                    <UserRound size={36} />
+        <div>
+            <div className="su-page">
+                <div className="su-wrapper">
+                    <div className="su-avatar" aria-hidden />
+                    <h1 className="su-title">Sign up</h1>
+
+                    <form className="su-form" onSubmit={handleSubmit} noValidate>
+                        <label className="su-label" htmlFor="email">Email</label>
+                        <input
+                            id="email"
+                            name="email"
+                            className="su-input"
+                            type="email"
+                            value={email}
+                            onChange={clearAndSet(setEmail)}
+                            placeholder=""
+                            required
+                            disabled={loading}
+                            autoComplete="email"
+                        />
+
+                        <label className="su-label" htmlFor="username">Username</label>
+                        <input
+                            id="username"
+                            name="username"
+                            className="su-input"
+                            value={username}
+                            onChange={clearAndSet(setUsername)}
+                            placeholder=""
+                            required
+                            disabled={loading}
+                            autoComplete="username"
+                        />
+
+                        <label className="su-label" htmlFor="password">Password</label>
+                        <input
+                            id="password"
+                            name="password"
+                            className="su-input"
+                            type="password"
+                            value={password}
+                            onChange={clearAndSet(setPassword)}
+                            required
+                            disabled={loading}
+                            placeholder="at least 6 characters"
+                            autoComplete="new-password"
+                        />
+
+                        {error && (
+                            <div
+                                style={{
+                                    color: "#ef4444",
+                                    fontSize: 14,
+                                    textAlign: "center",
+                                    margin: "8px 0",
+                                    padding: 8,
+                                    background: "#fef2f2",
+                                    borderRadius: 8,
+                                    border: "1px solid #fecaca",
+                                }}
+                            >
+                                {error}
+                            </div>
+                        )}
+
+                        <button className="su-submit" type="submit" disabled={loading}>
+                            {loading ? "Creating account" : "Create account"}
+                        </button>
+                    </form>
+
+                    <p className="su-footer">
+                        Already have an account?{" "}
+                        <a className="su-link" href="/login">Login</a>
+                    </p>
                 </div>
-
-                <h1 className="su-title">Sign up</h1>
-
-                <form className="su-form" onSubmit={handleSubmit} noValidate>
-                    <label htmlFor="email" className="su-label">Email</label>
-                    <input
-                        id="email"
-                        name="email"
-                        type="email"
-                        className="su-input"
-                        placeholder="you@example.com"
-                        autoComplete="email"
-                        required
-                        value={form.email}
-                        onChange={handleChange}
-                        disabled={loading}
-                    />
-
-                    <label htmlFor="username" className="su-label">Username</label>
-                    <input
-                        id="username"
-                        name="username"
-                        className="su-input"
-                        placeholder=""
-                        autoComplete="username"
-                        required
-                        value={form.username}
-                        onChange={handleChange}
-                        disabled={loading}
-                    />
-
-                    <label htmlFor="password" className="su-label">Password</label>
-                    <input
-                        id="password"
-                        name="password"
-                        type="password"
-                        className="su-input"
-                        placeholder="at least 6 characters"
-                        autoComplete="new-password"
-                        required
-                        value={form.password}
-                        onChange={handleChange}
-                        disabled={loading}
-                    />
-
-                    {error && (
-                        <div
-                            style={{
-                                color: "#ef4444",
-                                fontSize: "14px",
-                                textAlign: "center",
-                                margin: "8px 0",
-                                padding: "8px",
-                                background: "#fef2f2",
-                                borderRadius: "8px",
-                                border: "1px solid #fecaca",
-                            }}
-                        >
-                            {error}
-                        </div>
-                    )}
-
-                    <button type="submit" className="su-submit" disabled={loading}>
-                        {loading ? "Creating account..." : "Create account"}
-                    </button>
-                </form>
-
-                <p className="su-footer">
-                    Already have an account?{" "}
-                    <Link className="su-link" to="/login">
-                        Login
-                    </Link>
-                </p>
             </div>
         </div>
     );
-};
-
-export default SignUp;
+}
