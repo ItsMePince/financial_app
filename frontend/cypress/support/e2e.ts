@@ -15,6 +15,9 @@
 
 // Import commands.js using ES2015 syntax:
 import './commands'
-
+if (Cypress.env('STUB')) {
+  cy.intercept('GET', '**/api/expenses*', { fixture: 'expenses.json' }).as('getExpenses');
+  cy.intercept('POST', '**/api/expenses', { statusCode: 200, body: { id: 999, message: 'created' } }).as('createExpense');
+}
 
 

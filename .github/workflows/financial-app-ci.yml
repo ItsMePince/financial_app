@@ -1,15 +1,25 @@
-name: Financial App CI (Fast FE Mode)
+name: Financial App CI (Prod)
 
 on:
   push:
-    branches: [ main, dev, testy ]
+    branches: [ main, dev ]
   pull_request:
-    branches: [ main, dev, testy ]
+    branches: [ main, dev ]
   workflow_dispatch:
+    inputs:
+      run_e2e:
+        description: "Run fullstack E2E (will start local servers)"
+        type: boolean
+        default: false
+        required: false
 
 concurrency:
   group: financial-app-ci-${{ github.ref }}
   cancel-in-progress: true
+
+# เปิด/ปิด E2E: ปิดเป็นค่าเริ่มต้น (ไม่มี localhost)
+env:
+  RUN_E2E: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_e2e == true) || (github.event_name == 'pull_request' && contains(join(github.event.pull_request.labels.*.name, ','), 'run-e2e')) }}
 
 jobs:
   changes:
@@ -60,6 +70,25 @@ jobs:
             echo "No tsconfig.json; skip."
           fi
 
+  be-unit:
+    name: BE Unit Tests
+    needs: changes
+    if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.backend == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Make mvnw executable
+        working-directory: backend
+        run: chmod +x ./mvnw
+      - name: Test (unit)
+        working-directory: backend
+        run: ./mvnw -q test
+
   frontend-build:
     name: Frontend Build (artifact)
     needs: [changes, fe-quality]
@@ -86,19 +115,48 @@ jobs:
           path: frontend/build
           if-no-files-found: ignore
 
-  fe-e2e-fast:
-    name: FE E2E (Stubbed, Fast)
-    needs: [frontend-build]
-    if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.frontend == 'true' }}
+  backend-package:
+    name: Backend Package (artifact)
+    needs: [changes, be-unit]
+    if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.backend == 'true' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Make mvnw executable
+        working-directory: backend
+        run: chmod +x ./mvnw
+      - name: Package (skip here for speed)
+        working-directory: backend
+        run: ./mvnw -q -DskipTests package
+      - name: Upload BE artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-jar
+          path: backend/target/*.jar
+          if-no-files-found: ignore
+
+  # เปิดเฉพาะเมื่อ RUN_E2E = true เท่านั้น (ถึงจะมี localhost)
+  fullstack-e2e:
+    name: Fullstack E2E (Cypress)
+    needs: [frontend-build, backend-package]
+    if: ${{ env.RUN_E2E == 'true' && (github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request') && (needs.changes.outputs.frontend == 'true' || needs.changes.outputs.backend == 'true') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
       - name: Download FE build artifact
         uses: actions/download-artifact@v4
         with:
           name: frontend-build
           path: frontend/build
+        continue-on-error: true
 
       - uses: actions/setup-node@v4
         with:
@@ -108,16 +166,53 @@ jobs:
       - name: Install FE deps
         working-directory: frontend
         run: npm ci
+      - name: Cache Cypress
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/Cypress
+          key: cypress-${{ runner.os }}-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: cypress-${{ runner.os }}-
 
-      - name: Serve FE build
+      - name: Serve FE build if exists
+        id: servefe
         working-directory: frontend
         run: |
-          npx http-server ./build -p 3000 --silent &
-          echo "FE_URL=http://localhost:3000" >> "$GITHUB_ENV"
+          if [ -d build ]; then
+            npx http-server ./build -p 3000 --silent &
+            echo "FE_URL=http://localhost:3000" >> "$GITHUB_ENV"
+            echo "served=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "served=false" >> "$GITHUB_OUTPUT"
+          fi
       - name: Wait FE
-        run: npx wait-on http://localhost:3000 --timeout 60000
+        if: ${{ steps.servefe.outputs.served == 'true' }}
+        run: npx wait-on http://localhost:3000 --timeout 120000
 
-      - name: Run Cypress (stubbed API)
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Run BE (spring-boot:run, profile=test)
+        working-directory: backend
+        env:
+          SPRING_PROFILES_ACTIVE: test
+        run: |
+          ./mvnw -q -DskipTests spring-boot:run > backend.log 2>&1 &
+          echo "API_URL=http://localhost:8080" >> "$GITHUB_ENV"
+          sleep 10
+          tail -n 20 backend.log || true
+
+      - name: Wait BE
+        run: |
+          echo "Waiting for backend on port 8080 ..."
+          npx wait-on tcp:localhost:8080 --timeout 240000 || (
+            echo "Backend did not start in time. Printing last logs:" && \
+            tail -n 80 backend.log && exit 1
+          )
+
+      - name: Run Cypress
         uses: cypress-io/github-action@v6
         with:
           working-directory: frontend
@@ -128,4 +223,12 @@ jobs:
         env:
           CI: true
           CYPRESS_baseUrl: ${{ env.FE_URL }}
-          CYPRESS_STUB: "1"   # << เปิดโหมด stub
+          CYPRESS_API_URL: ${{ env.API_URL }}
+
+      - name: Upload screenshots (if any)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fullstack-screenshots
+          path: frontend/cypress/screenshots/**
+          if-no-files-found: ignore
