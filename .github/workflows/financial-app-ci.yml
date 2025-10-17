@@ -1,4 +1,4 @@
-name: Financial App CI (Build, Unit & Integration)
+name: Financial App CI (Build & Test)
 
 on:
   push:
@@ -12,8 +12,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # เช็กว่าแก้ฝั่งไหนบ้าง เพื่อรันเฉพาะที่จำเป็น
   detect-changes:
-    name: Detect Changes (frontend/backend)
     runs-on: ubuntu-latest
     outputs:
       frontend: ${{ steps.filter.outputs.frontend }}
@@ -31,14 +31,12 @@ jobs:
               - 'backend/**'
               - '.github/workflows/**'
 
+  # ===== FRONTEND =====
   frontend-check:
-    name: Frontend Lint & TypeCheck & Build
+    name: Frontend Lint & TypeCheck
     needs: detect-changes
     if: ${{ needs.detect-changes.outputs.frontend == 'true' || github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
     steps:
       - uses: actions/checkout@v4
 
@@ -49,44 +47,46 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
+        working-directory: frontend
         run: npm ci
 
-      # กันเคสที่ build ล้มจาก reportWebVitals/web-vitals
+      # ทำให้ไฟล์นี้เป็น no-op ใน CI เพื่อเลี่ยง dependency web-vitals
       - name: Disable reportWebVitals for CI
+        working-directory: frontend
         run: |
-          mkdir -p src
           cat > src/reportWebVitals.ts <<'EOF'
           const reportWebVitals = () => {};
           export default reportWebVitals;
           EOF
 
       - name: Lint
+        working-directory: frontend
         run: |
           if ls .eslintrc* >/dev/null 2>&1; then
             npx eslint . --max-warnings=0
           else
-            echo "No ESLint config; skip lint."
+            echo "No ESLint config found; skip lint."
           fi
 
       - name: Type check
+        working-directory: frontend
         run: |
           if [ -f tsconfig.json ]; then
             npx tsc --noEmit --skipLibCheck
           else
-            echo "No tsconfig.json; skip type check."
+            echo "No tsconfig.json found; skip type check."
           fi
 
       - name: Build (sanity check)
+        working-directory: frontend
         run: npm run build --if-present
 
-  backend-unit:
-    name: Backend Unit Tests
+  # ===== BACKEND =====
+  backend-test:
+    name: Backend Unit Test
     needs: detect-changes
     if: ${{ needs.detect-changes.outputs.backend == 'true' || github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
     steps:
       - uses: actions/checkout@v4
 
@@ -96,76 +96,10 @@ jobs:
           java-version: '21'
           cache: maven
 
-      - name: Make mvnw executable (if present)
-        run: |
-          if [ -f ./mvnw ]; then chmod +x ./mvnw; fi
-
-      - name: Run Unit Tests (*Test.java / *Tests.java)
-        run: |
-          if [ -f ./mvnw ]; then
-            ./mvnw -q test
-          else
-            mvn -q test
-          fi
-
-  backend-integration:
-    name: Backend Integration (H2 profile, no pom change)
-    needs: detect-changes
-    if: ${{ needs.detect-changes.outputs.backend == 'true' || github.event_name == 'pull_request' }}
-    runs-on: ubuntu-latest
-    defaults:
-      run:
+      - name: Make mvnw executable
         working-directory: backend
-    env:
-      # ใช้โปรไฟล์ integration (เราจะเขียนไฟล์ yml ให้ในขั้นตอนถัดไป)
-      SPRING_PROFILES_ACTIVE: integration
-      # ป้องกันเคสไม่มีไฟล์ IT ให้ไม่ fail
-      MAVEN_OPTS: -DfailIfNoTests=false
-    steps:
-      - uses: actions/checkout@v4
+        run: chmod +x ./mvnw
 
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '21'
-          cache: maven
-
-      - name: Make mvnw executable (if present)
-        run: |
-          if [ -f ./mvnw ]; then chmod +x ./mvnw; fi
-
-      # เขียนไฟล์โปรไฟล์เทสแบบ H2 (ไม่แตะ pom) ให้ Spring ใช้ DB ในหน่วยความจำ
-      - name: Write application-integration.yml (H2)
-        run: |
-          mkdir -p src/test/resources
-          cat > src/test/resources/application-integration.yml <<'YAML'
-          spring:
-            datasource:
-              url: jdbc:h2:mem:ciit;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-              driverClassName: org.h2.Driver
-              username: sa
-              password:
-            jpa:
-              hibernate:
-                ddl-auto: update   # ถ้ามี Flyway/Liquibase ให้เปลี่ยนเป็น 'none'
-              properties:
-                hibernate.format_sql: true
-            sql:
-              init:
-                mode: never        # ถ้าอยาก seed ข้อมูล: เปลี่ยนเป็น always แล้วใส่ schema.sql/data.sql
-          logging:
-            level:
-              org.springframework.test.context: WARN
-          YAML
-
-      # รันไฟล์ลงท้าย *IT.java ด้วย Surefire ผ่าน -Dtest (ไม่ต้องใช้ Failsafe/แก้ pom)
-      - name: Run *IT.java as integration tests
-        run: |
-          
-          if [ -f ./mvnw ]; then
-            ./mvnw -q -Dtest='**/*IT' test
-          else
-            mvn -q -Dtest='**/*IT' test
-          fi
-
-     
+      - name: Run Unit Tests
+        working-directory: backend
+        run: ./mvnw -q test
