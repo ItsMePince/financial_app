@@ -28,7 +28,7 @@ jobs:
             backend:
               - 'backend/**'
 
-  frontend-build:
+  frontend:
     name: Frontend Build (no tests)
     needs: changes
     if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.frontend == 'true' }}
@@ -54,10 +54,10 @@ jobs:
           path: frontend/build
           if-no-files-found: ignore
 
-  backend-build:
-    name: Backend Build (no tests)
+  # รัน backend
+  backend:
     needs: changes
-    if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.backend == 'true' }}
+    if: ${{ needs.changes.outputs.frontend == 'true' || needs.changes.outputs.backend == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -66,23 +66,12 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
           cache: 'maven'
-
       - name: Make mvnw executable
         working-directory: backend
         run: chmod +x ./mvnw
-
-
-      - name: Build (compile/package fast)
+      - name: Test
         working-directory: backend
-        run: |
-          ./mvnw -B -ntp -DskipTests -Dspring-boot.repackage.skip=true clean package
-
-      - name: Upload backend artifact (if exists)
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: backend-build
-          path: |
-            backend/target/*.jar
-            backend/target/*.war
-          if-no-files-found: ignore
+        run: ./mvnw -q -DskipTests=false test
+      - name: Package
+        working-directory: backend
+        run: ./mvnw -q package
