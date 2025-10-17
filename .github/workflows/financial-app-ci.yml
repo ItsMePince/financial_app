@@ -1,4 +1,4 @@
-name: Financial App CI (test-intellij)
+name: Financial App CI (Cypress + Backend)
 
 on:
   push:
@@ -12,7 +12,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # ตรวจว่าไฟล์ไหนเปลี่ยน
+  # ตรวจ path ที่เปลี่ยน (optional)
   changes:
     runs-on: ubuntu-latest
     outputs:
@@ -29,11 +29,13 @@ jobs:
             backend:
               - 'backend/**'
 
-  # รัน frontend
-  frontend:
+  # Frontend - Cypress E2E
+  frontend-e2e:
+    name: Frontend E2E Test (Cypress)
     needs: changes
-    if: ${{ needs.changes.outputs.frontend == 'true' || needs.changes.outputs.backend == 'true' }}
+    if: ${{ needs.changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -41,21 +43,44 @@ jobs:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
+
       - name: Install dependencies
         working-directory: frontend
         run: npm ci
-      - name: Build
-        working-directory: frontend
-        run: npm run build --if-present
-      - name: Test
-        working-directory: frontend
-        run: npm test --if-present
 
-  # รัน backend
+      - name: Start app (React)
+        working-directory: frontend
+        run: |
+          npm run start &
+          npx wait-on http://localhost:3000
+        env:
+          CI: true
+
+      - name: Run Cypress tests
+        uses: cypress-io/github-action@v6
+        with:
+          working-directory: frontend
+          browser: chrome
+          config: baseUrl=http://localhost:3000
+        env:
+          CI: true
+
+      - name: Upload Cypress videos & screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-artifacts
+          path: |
+            frontend/cypress/videos/**
+            frontend/cypress/screenshots/**
+
+  # Backend - Maven test
   backend:
+    name: Backend Test (Spring Boot)
     needs: changes
-    if: ${{ needs.changes.outputs.frontend == 'true' || needs.changes.outputs.backend == 'true' }}
+    if: ${{ needs.changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -63,12 +88,15 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
           cache: 'maven'
+
       - name: Make mvnw executable
         working-directory: backend
         run: chmod +x ./mvnw
-      - name: Test
+
+      - name: Run tests
         working-directory: backend
         run: ./mvnw -q -DskipTests=false test
-      - name: Package
+
+      - name: Package app
         working-directory: backend
         run: ./mvnw -q package
