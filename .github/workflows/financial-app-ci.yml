@@ -12,7 +12,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # ตรวจ path ที่เปลี่ยน เพื่อ optimize ตอน 'push'
   changes:
     runs-on: ubuntu-latest
     outputs:
@@ -29,11 +28,10 @@ jobs:
             backend:
               - 'backend/**'
 
-  # FRONTEND — Cypress E2E (CRA, port 3000)
+  # ---------- FRONTEND (Cypress only) ----------
   frontend-e2e:
     name: Frontend E2E Test (Cypress)
     needs: changes
-    # บน PR/dispatch รันเสมอ; บน push รันเมื่อมีไฟล์ frontend เปลี่ยน
     if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.frontend == 'true' }}
     runs-on: ubuntu-latest
     steps:
@@ -49,37 +47,30 @@ jobs:
         working-directory: frontend
         run: npm ci
 
-      - name: Start app (CRA) & wait
-        working-directory: frontend
-        env:
-          CI: true
-        run: |
-          npm run start &
-          npx wait-on http://localhost:3000
-
-      - name: Run Cypress tests
+      # ✅ รัน Cypress โดยไม่ต้อง start server
+      - name: Run Cypress tests (headless)
         uses: cypress-io/github-action@v6
         with:
           working-directory: frontend
-          browser: chrome
-          config: baseUrl=http://localhost:3000
+          install: false
+          browser: electron
+          headless: true
+          config: video=false
         env:
           CI: true
 
-      - name: Upload Cypress videos & screenshots
+      - name: Upload Cypress screenshots (if any)
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: cypress-artifacts
-          path: |
-            frontend/cypress/videos/**
-            frontend/cypress/screenshots/**
+          name: cypress-screenshots
+          path: frontend/cypress/screenshots/**
+          if-no-files-found: ignore
 
-  # BACKEND — Maven tests
+  # ---------- BACKEND ----------
   backend:
     name: Backend Test (Spring Boot)
     needs: changes
-    # บน PR/dispatch รันเสมอ; บน push รันเมื่อมีไฟล์ backend เปลี่ยน
     if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.backend == 'true' }}
     runs-on: ubuntu-latest
     steps:
