@@ -1,0 +1,294 @@
+﻿// src/pages/AccountNew.tsx
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import "./accountnew.css";
+import {
+  Building2, Banknote, Landmark, CreditCard, Wallet, PiggyBank, Coins,
+} from "lucide-react";
+import BottomNav from "./buttomnav";
+
+type AccountType = "à¹€à¸‡à¸´à¸™à¸ªà¸”" | "à¸˜à¸™à¸²à¸„à¸²à¸£" | "à¸šà¸±à¸•à¸£à¹€à¸„à¸£à¸”à¸´à¸•";
+const ACCOUNT_TYPES: AccountType[] = ["à¹€à¸‡à¸´à¸™à¸ªà¸”", "à¸˜à¸™à¸²à¸„à¸²à¸£", "à¸šà¸±à¸•à¸£à¹€à¸„à¸£à¸”à¸´à¸•"];
+
+const ICONS = [
+  { key: "bank", label: "à¸˜à¸™à¸²à¸„à¸²à¸£", Icon: Building2 },
+  { key: "banknote", label: "à¸˜à¸™à¸šà¸±à¸•à¸£", Icon: Banknote },
+  { key: "landmark", label: "à¸­à¸­à¸¡à¸—à¸£à¸±à¸žà¸¢à¹Œ", Icon: Landmark },
+  { key: "credit", label: "à¸šà¸±à¸•à¸£à¹€à¸„à¸£à¸”à¸´à¸•", Icon: CreditCard },
+  { key: "wallet", label: "à¸à¸£à¸°à¹€à¸›à¹‹à¸²à¹€à¸‡à¸´à¸™", Icon: Wallet },
+  { key: "piggy", label: "à¸à¸£à¸°à¸›à¸¸à¸", Icon: PiggyBank },
+  { key: "coins", label: "à¹€à¸«à¸£à¸µà¸¢à¸", Icon: Coins },
+] as const;
+
+type Account = { name: string; amount: number; iconKey?: string; type?: AccountType };
+
+function loadAccounts(): Account[] {
+  try {
+    const raw = localStorage.getItem("accounts");
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch { return []; }
+}
+function saveAccounts(list: Account[]) {
+  localStorage.setItem("accounts", JSON.stringify(list));
+}
+
+/* ---------- helpers: amount + caret ---------- */
+const formatIntWithGrouping = (digitsOnly: string) =>
+  digitsOnly.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+const countDigitsBefore = (s: string, pos: number) =>
+  s.slice(0, pos).replace(/\D/g, "").length;
+
+const mapDigitsToCursorPos = (formatted: string, digitsBefore: number) => {
+  if (digitsBefore <= 0) return 0;
+  let seen = 0;
+  for (let i = 0; i < formatted.length; i++) {
+    if (/\d/.test(formatted[i])) {
+      seen++;
+      if (seen === digitsBefore) return i + 1;
+    }
+  }
+  return formatted.length;
+};
+
+const parseMoney = (s: string) => Number((s || "0").replace(/,/g, ""));
+/* -------------------------------------------- */
+
+export default function AccountNew() {
+  const navigate = useNavigate();
+  const { state } = useLocation();
+  const editState = state as | { mode: "edit"; index: number; account: Account } | undefined;
+
+  const [name, setName] = useState("");
+  const [type, setType] = useState<AccountType | "">("");
+  const [amount, setAmount] = useState<string>("");
+  const [iconKey, setIconKey] = useState<string>("bank");
+  const [openType, setOpenType] = useState(false);
+
+  const SelectedIcon = useMemo(
+    () => ICONS.find((i) => i.key === iconKey)?.Icon ?? Building2,
+    [iconKey]
+  );
+
+  // preload edit state
+  useEffect(() => {
+    if (editState?.mode === "edit" && editState.account) {
+      const a = editState.account;
+      setName(a.name ?? "");
+      setAmount(
+        typeof a.amount === "number" && !Number.isNaN(a.amount)
+          ? formatIntWithGrouping(String(a.amount))
+          : ""
+      );
+      setIconKey(a.iconKey ?? "bank");
+      setType(a.type ?? "");
+    }
+  }, [editState]);
+
+  // close type dropdown on outside click
+  const typeRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      if (!typeRef.current) return;
+      if (!typeRef.current.contains(e.target as Node)) setOpenType(false);
+    };
+    document.addEventListener("click", onClick);
+    return () => document.removeEventListener("click", onClick);
+  }, []);
+
+  /* ---------- Amount: caret + auto scroll-right ---------- */
+  const amountRef = useRef<HTMLInputElement | null>(null);
+
+  const onAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const el = e.currentTarget;
+    const raw = el.value;
+    const prevPos = el.selectionStart ?? raw.length;
+
+    // à¹€à¸à¹‡à¸šà¹€à¸‰à¸žà¸²à¸°à¸•à¸±à¸§à¹€à¸¥à¸‚ â†’ à¸Ÿà¸­à¸£à¹Œà¹à¸¡à¸•à¸«à¸¥à¸±à¸à¸žà¸±à¸™ (à¸¢à¸²à¸§à¹à¸„à¹ˆà¹„à¸«à¸™à¸à¹‡à¹„à¸”à¹‰)
+    const digits = raw.replace(/\D/g, "");
+    const formatted = digits ? formatIntWithGrouping(digits) : "";
+
+    // caret mapping
+    const digitsBefore = countDigitsBefore(raw, prevPos);
+    const nextPos = mapDigitsToCursorPos(formatted, digitsBefore);
+
+    setAmount(formatted);
+
+    // à¸•à¸±à¹‰à¸‡ caret à¸à¸¥à¸±à¸š + à¹€à¸¥à¸·à¹ˆà¸­à¸™à¹ƒà¸«à¹‰à¹€à¸«à¹‡à¸™à¸›à¸¥à¸²à¸¢à¸‚à¸§à¸²à¸—à¸±à¸™à¸—à¸µ
+   requestAnimationFrame(() => {
+  const inputEl = amountRef.current;
+  if (inputEl) {
+    // à¹€à¸à¹‡à¸šà¸•à¸³à¹à¸«à¸™à¹ˆà¸‡à¸ªà¸à¸­à¸¥à¸¥à¹Œà¹€à¸”à¸´à¸¡à¹„à¸§à¹‰ à¹€à¸žà¸·à¹ˆà¸­à¹„à¸¡à¹ˆà¹ƒà¸«à¹‰à¸à¸£à¸°à¹‚à¸”à¸”à¹„à¸›à¸—à¹‰à¸²à¸¢à¸‚à¸§à¸²
+    const prevScroll = inputEl.scrollLeft;
+    inputEl.selectionStart = inputEl.selectionEnd = nextPos;
+    inputEl.scrollLeft = prevScroll; // à¸„à¸·à¸™à¸„à¹ˆà¸²à¹€à¸”à¸´à¸¡
+  }
+});
+
+  };
+  /* ------------------------------------------------------- */
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const amt = parseMoney(amount);
+    if (!name.trim() || !type || Number.isNaN(amt)) {
+      alert("à¸à¸£à¸­à¸à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¹ƒà¸«à¹‰à¸„à¸£à¸šà¹à¸¥à¸°à¸ˆà¸³à¸™à¸§à¸™à¹€à¸‡à¸´à¸™à¹ƒà¸«à¹‰à¸–à¸¹à¸à¸•à¹‰à¸­à¸‡à¸à¹ˆà¸­à¸™à¸™à¹‰à¸²à¸²");
+      return;
+    }
+    const nextItem: Account = { name: name.trim(), amount: amt, iconKey, type: type as AccountType };
+    const list = loadAccounts();
+
+    if (editState?.mode === "edit" &&
+        Number.isInteger(editState.index) &&
+        editState.index >= 0 && editState.index < list.length) {
+      list[editState.index] = nextItem;
+    } else {
+      list.push(nextItem);
+    }
+    saveAccounts(list);
+    navigate("/home");
+  }
+
+  return (
+    <div className="accnew-wrap">
+      <h1 className="title">{editState?.mode === "edit" ? "à¹à¸à¹‰à¹„à¸‚à¸šà¸±à¸à¸Šà¸µ" : "à¸ªà¸£à¹‰à¸²à¸‡à¸šà¸±à¸à¸Šà¸µ"}</h1>
+
+      <form className="form" onSubmit={handleSubmit}>
+        {/* à¸Šà¸·à¹ˆà¸­à¸šà¸±à¸à¸Šà¸µ */}
+        <label className="row">
+          <span className="label">à¸Šà¸·à¹ˆà¸­à¸šà¸±à¸à¸Šà¸µ</span>
+          <input
+            className="input text"
+            placeholder="à¸Šà¸·à¹ˆà¸­à¸šà¸±à¸à¸Šà¸µ"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            maxLength={120}
+            autoFocus
+          />
+        </label>
+
+        {/* à¸›à¸£à¸°à¹€à¸ à¸—à¸šà¸±à¸à¸Šà¸µ */}
+        <div className="row" ref={typeRef}>
+          <span className="label">à¸›à¸£à¸°à¹€à¸ à¸—à¸šà¸±à¸à¸Šà¸µ</span>
+          <button
+            type="button"
+            className="select"
+            onClick={() => setOpenType((o) => !o)}
+            aria-haspopup="listbox"
+            aria-expanded={openType}
+          >
+            <span className={type ? "" : "placeholder"}>{type || "à¸›à¸£à¸°à¹€à¸ à¸—"}</span>
+            <span className="chev">â–¾</span>
+          </button>
+        </div>
+        {openType && (
+          <div className="dropdown" role="listbox" aria-label="à¹€à¸¥à¸·à¸­à¸à¸›à¸£à¸°à¹€à¸ à¸—à¸šà¸±à¸à¸Šà¸µ">
+            {ACCOUNT_TYPES.map((t) => (
+              <button
+                type="button"
+                key={t}
+                className={`opt ${type === t ? "active" : ""}`}
+                onClick={() => { setType(t); setOpenType(false); }}
+                role="option"
+                aria-selected={type === t}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* à¹„à¸­à¸„à¸­à¸™ */}
+        <div className="row">
+          <span className="label">à¹„à¸­à¸„à¸­à¸™</span>
+          <div className="icon-current" aria-label="à¹„à¸­à¸„à¸­à¸™à¸—à¸µà¹ˆà¹€à¸¥à¸·à¸­à¸">
+            <SelectedIcon className="icon" />
+          </div>
+        </div>
+        <div className="icon-grid" role="group" aria-label="à¹€à¸¥à¸·à¸­à¸à¹„à¸­à¸„à¸­à¸™">
+          {ICONS.map(({ key, Icon, label }) => (
+            <button
+              type="button"
+              key={key}
+              className={`icon-chip ${iconKey === key ? "active" : ""}`}
+              onClick={() => setIconKey(key)}
+              aria-pressed={iconKey === key}
+              aria-label={label}
+              title={label}
+            >
+              <Icon className="icon" />
+            </button>
+          ))}
+        </div>
+
+        {/* à¸ˆà¸³à¸™à¸§à¸™à¹€à¸‡à¸´à¸™ */}
+        <label className="row">
+          <span className="label">à¸ˆà¸³à¸™à¸§à¸™à¹€à¸‡à¸´à¸™</span>
+
+          {/* à¸à¸¥à¹ˆà¸­à¸‡à¸à¸¥à¸²à¸‡: à¸¢à¸·à¸”à¹€à¸•à¹‡à¸¡à¸ˆà¸£à¸´à¸‡à¸”à¹‰à¸§à¸¢ inline style */}
+          <div
+            className="amount-wrap"
+            style={{
+              flex: "1 1 0%",
+              minWidth: 0,
+              display: "grid",
+              gridTemplateColumns: "minmax(0, 1fr) auto", // [input 1fr][à¸šà¸²à¸— auto]
+              alignItems: "center",
+              gap: 8,
+              width: "100%",
+            }}
+          >
+            <input
+              ref={amountRef}
+              className="input number"
+              placeholder=""
+              inputMode="numeric"
+              value={amount}
+              onChange={onAmountChange}
+              aria-label="à¸ˆà¸³à¸™à¸§à¸™à¹€à¸‡à¸´à¸™"
+              // à¸­à¸´à¸™à¸žà¸¸à¸•à¸•à¹‰à¸­à¸‡à¸à¸´à¸™à¹€à¸•à¹‡à¸¡à¸„à¸­à¸¥à¸±à¸¡à¸™à¹Œ + à¸–à¹‰à¸²à¹€à¸¥à¸‚à¸¢à¸²à¸§ à¹€à¸¥à¸·à¹ˆà¸­à¸™à¸”à¸¹à¹„à¸”à¹‰
+              style={{
+                display: "block",
+                width: "100%",
+                minWidth: 0,
+                textAlign: "right",
+                whiteSpace: "nowrap",
+                overflowX: "auto",
+                overflowY: "hidden",
+                WebkitOverflowScrolling: "touch",
+                paddingRight: 0, // 'à¸šà¸²à¸—' à¸­à¸¢à¸¹à¹ˆà¸„à¸­à¸¥à¸±à¸¡à¸™à¹Œà¸‚à¸§à¸²à¹à¸¥à¹‰à¸§
+                fontVariantNumeric: "tabular-nums",
+              }}
+            />
+            <span
+              className="unit"
+              aria-hidden="true"
+              style={{
+                position: "static",
+                transform: "none",
+                whiteSpace: "nowrap",
+                color: "var(--muted)",
+                pointerEvents: "none",
+              }}
+            >
+              à¸šà¸²à¸—
+            </span>
+          </div>
+        </label>
+
+        <div className="actions">
+          <button className="primary" type="submit">
+            {editState?.mode === "edit" ? "à¸šà¸±à¸™à¸—à¸¶à¸à¸à¸²à¸£à¹à¸à¹‰à¹„à¸‚" : "à¸¢à¸·à¸™à¸¢à¸±à¸™"}
+          </button>
+        </div>
+      </form>
+
+      <BottomNav />
+    </div>
+  );
+}
+
+
+
+

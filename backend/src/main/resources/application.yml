@@ -3,6 +3,11 @@ server:
   error:
     include-message: always
     include-binding-errors: always
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
 
 spring:
   datasource:
@@ -13,12 +18,12 @@ spring:
   h2:
     console:
       enabled: true
-      path: /h2-console
+      path: /api/h2-console
       settings:
         web-allow-others: true
   jpa:
     hibernate:
-      ddl-auto: update   # dev = update, prod = validate
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
@@ -26,6 +31,9 @@ spring:
   autoconfigure:
     exclude:
       - org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
+  web:
+    locale-resolver: accept-header
+    locale: th_TH
 
 logging:
   level:

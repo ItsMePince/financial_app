@@ -1,4 +1,4 @@
-// src/PaymentMethodContext.tsx
+﻿// src/PaymentMethodContext.tsx
 // @ts-nocheck
 import React, { createContext, useContext, useState } from "react";
 
@@ -25,3 +25,7 @@ export function usePaymentMethod() {
   if (!ctx) throw new Error("usePaymentMethod must be used within PaymentMethodProvider");
   return ctx;
 }
+
+
+
+

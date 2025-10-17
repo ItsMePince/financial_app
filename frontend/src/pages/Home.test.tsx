@@ -1,4 +1,4 @@
-// src/pages/Home.test.tsx
+﻿// src/pages/Home.test.tsx
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import Home from "./Home";
@@ -18,54 +18,54 @@ describe("Home Page", () => {
     localStorage.clear();
   });
 
-  it("แสดงยอดเงินรวม", async () => {
-    mockFetchOnce([]); // ไม่มี transaction
+  it("แส�?�?ยอ�?�?�?ิ�?รวม", async () => {
+    mockFetchOnce([]); // �?ม�?มี transaction
     render(
       <MemoryRouter>
         <Home />
       </MemoryRouter>
     );
-    expect(await screen.findByText(/เงินรวม/)).toBeInTheDocument();
+    expect(await screen.findByText(/�?�?ิ�?รวม/)).toBeInTheDocument();
   });
 
-  it("แสดง state กำลังโหลด", async () => {
-    mockFetchOnce([]); // แต่เราจะตรวจ loading ก่อน
+  it("แส�?�? state กำลั�?�?หล�?", async () => {
+    mockFetchOnce([]); // แ�?�?�?รา�?ะ�?รว�? loading ก�?อ�?
     render(
       <MemoryRouter>
         <Home />
       </MemoryRouter>
     );
-    expect(screen.getByText(/กำลังโหลดข้อมูล/)).toBeInTheDocument();
+    expect(screen.getByText(/กำลั�?�?หล�?�?�?อมูล/)).toBeInTheDocument();
   });
 
-  it("แสดง error เมื่อ API ล้มเหลว", async () => {
+  it("แส�?�? error �?มื�?อ API ล�?ม�?หลว", async () => {
     mockFetchOnce({}, false, 500);
     render(
       <MemoryRouter>
         <Home />
       </MemoryRouter>
     );
-    expect(await screen.findByText(/โหลดข้อมูลไม่สำเร็จ/)).toBeInTheDocument();
+    expect(await screen.findByText(/�?หล�?�?�?อมูล�?ม�?สำ�?ร�?�?/)).toBeInTheDocument();
   });
 
-  it("แสดงข้อความเมื่อไม่มีข้อมูล", async () => {
-    mockFetchOnce([]); // ไม่มี transaction
+  it("แส�?�?�?�?อ�?วาม�?มื�?อ�?ม�?มี�?�?อมูล", async () => {
+    mockFetchOnce([]); // �?ม�?มี transaction
     render(
       <MemoryRouter>
         <Home />
       </MemoryRouter>
     );
     expect(
-      await screen.findByText(/ยังไม่มีรายการในเดือนนี้/)
+      await screen.findByText(/ยั�?�?ม�?มีรายการ�?�?�?�?ือ�?�?ี�?/)
     ).toBeInTheDocument();
   });
 
-  it("แสดง transaction ล่าสุดเมื่อมีข้อมูล", async () => {
+  it("แส�?�? transaction ล�?าสุ�?�?มื�?อมี�?�?อมูล", async () => {
     const fakeTx = [
       {
         id: 1,
         type: "INCOME",
-        category: "เงินเดือน",
+        category: "�?�?ิ�?�?�?ือ�?",
         amount: 5000,
         date: "2025-09-01",
         note: "test",
@@ -82,7 +82,7 @@ describe("Home Page", () => {
     expect(screen.getByText(/\+5,000/)).toBeInTheDocument();
   });
 
-  it("เปลี่ยนเดือนด้วยปุ่ม prev/next", async () => {
+  it("�?�?ลี�?ย�?�?�?ือ�?�?�?วย�?ุ�?ม prev/next", async () => {
     mockFetchOnce([]);
     render(
       <MemoryRouter>
@@ -97,13 +97,13 @@ describe("Home Page", () => {
     expect(next).toBeInTheDocument();
   });
 
-  it("กด More → Delete account เรียก confirm", async () => {
-    // เตรียม localStorage
+  it("ก�? More �?? Delete account �?รียก confirm", async () => {
+    // �?�?รียม localStorage
     localStorage.setItem(
       "accounts",
       JSON.stringify([{ name: "TestBank", amount: 1000, iconKey: "bank" }])
     );
-    mockFetchOnce([]); // ไม่มี tx
+    mockFetchOnce([]); // �?ม�?มี tx
     vi.spyOn(window, "confirm").mockReturnValue(true);
 
     render(
@@ -112,9 +112,12 @@ describe("Home Page", () => {
       </MemoryRouter>
     );
 
-    // เปิดเมนู more
+    // �?�?ิ�?�?ม�?ู more
     fireEvent.click(await screen.findByLabelText("More actions"));
-    fireEvent.click(screen.getByText("ลบ"));
+    fireEvent.click(screen.getByText("ล�?"));
     expect(window.confirm).toHaveBeenCalled();
   });
 });
+
+
+

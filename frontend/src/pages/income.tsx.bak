@@ -1,0 +1,309 @@
+﻿import { api } from "../api";
+// src/pages/income.tsx
+// @ts-nocheck
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import "./income.css";
+import BottomNav from "./buttomnav";
+import {
+  ClipboardList, MapPin, HandCoins, Banknote, Bitcoin, CalendarDays,
+  Gift, Coins, Wallet, Briefcase, Laptop, CreditCard, BarChart as BarChart, Clock, ShieldCheck,
+  UserCheck, BookOpen, Camera, Bike, Car, PenTool, Code,
+  PiggyBank, LineChart, FileText, Layers, TrendingUp,
+  Home as HomeIcon, Bed, Building, Truck, Package,
+  ShoppingBag, Store, Boxes, Tent, Ticket,
+  Video, Mic, Radio, Music, Film, Gamepad,
+  ClipboardCheck, Trophy, GraduationCap,
+  Coffee, Star, Gem,
+  CircuitBoard, Image, Cloud, Lock,
+  Link, Megaphone, FileBadge, Users,
+} from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { usePaymentMethod } from "../PaymentMethodContext";
+
+
+
+/* inline icons */
+const ChevronDown = () => (
+  <svg viewBox="0 0 24 24" className="icon">
+    <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+const IconEtc = ({ active = false }: { active?: boolean }) => (
+  <svg viewBox="0 0 24 24" className={`icon ${active ? "icon-active" : ""}`}>
+    <circle cx="5" cy="12" r="1.8" />
+    <circle cx="12" cy="12" r="1.8" />
+    <circle cx="19" cy="12" r="1.8" />
+  </svg>
+);
+const IconBackspace = () => (
+  <svg viewBox="0 0 24 24" className="icon">
+    <path d="M4 12 9 6h10a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H9L4 12Zm6-3 6 6m0-6-6 6"
+      stroke="currentColor" strokeWidth="1.7" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+const IconCheck = () => (
+  <svg viewBox="0 0 24 24" className="icon">
+    <path d="m5 12 4 4 10-10" stroke="currentColor" strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+/** à¸£à¸²à¸¢à¹„à¸”à¹‰à¹€à¸—à¹ˆà¸²à¸™à¸±à¹‰à¸™ */
+type Category = "à¸„à¹ˆà¸²à¸‚à¸™à¸¡" | "à¸—à¸³à¸‡à¸²à¸™" | "à¸¥à¸‡à¸—à¸¸à¸™" | "à¸­à¸·à¹ˆà¸™à¹†";
+
+const ICON_MAP: Record<string, React.FC<any>> = {
+  Briefcase, BarChart, Clock, Wallet, ShieldCheck,
+  Laptop, UserCheck, BookOpen, Camera, Bike, Car, PenTool, Code, Banknote,
+  Coins, PiggyBank, LineChart, FileText, Layers, TrendingUp,
+  Home: HomeIcon, Bed, Building, Truck, Package,
+  ShoppingBag, Store, Boxes, Tent, CreditCard, Ticket,
+  Video, Mic, Radio, Music, Film, Gamepad,
+  ClipboardList, ClipboardCheck, Trophy, GraduationCap,
+  Gift, Coffee, Star, Gem, HandCoins,
+  Bitcoin, CircuitBoard, Image, Cloud, Lock,
+  Link, Megaphone, FileBadge, Users,
+};
+
+const getTodayISO = () => {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
+};
+
+/** iconKey à¸¡à¸²à¸•à¸£à¸à¸²à¸™à¸ªà¸³à¸«à¸£à¸±à¸šà¸«à¸¡à¸§à¸”à¸£à¸²à¸¢à¹„à¸”à¹‰ */
+const defaultIconKeyByCategory: Record<Category, string> = {
+  "à¸„à¹ˆà¸²à¸‚à¸™à¸¡": "HandCoins",
+  "à¸—à¸³à¸‡à¸²à¸™": "Banknote",
+  "à¸¥à¸‡à¸—à¸¸à¸™": "Bitcoin",
+  "à¸­à¸·à¹ˆà¸™à¹†": "more",
+};
+
+const DRAFT_KEY = "incomeDraft_v1";
+
+export default function Income() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { payment, setPayment } = usePaymentMethod();
+
+  const [category, setCategory] = useState<Category>("à¸„à¹ˆà¸²à¸‚à¸™à¸¡");
+  const [customCat, setCustomCat] = useState<{ label: string; icon?: string } | null>(null);
+  const [amount, setAmount] = useState<string>("0");
+  const [note, setNote] = useState<string>("");
+  const [place, setPlace] = useState<string>("");
+  const [date, setDate] = useState<string>(() => getTodayISO());
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  // --- à¸à¸¹à¹‰à¸„à¸·à¸™ draft à¹€à¸¡à¸·à¹ˆà¸­à¹€à¸‚à¹‰à¸²à¸«à¸™à¹‰à¸² ---
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(DRAFT_KEY);
+      if (raw) {
+        const d = JSON.parse(raw);
+        if (d.category) setCategory(d.category);
+        if (d.customCat) setCustomCat(d.customCat);
+        if (typeof d.amount === "string") setAmount(d.amount);
+        if (typeof d.note === "string") setNote(d.note);
+        if (typeof d.place === "string") setPlace(d.place);
+        if (typeof d.date === "string") setDate(d.date);
+        if (d.payment) setPayment(d.payment);
+      }
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // --- à¸šà¸±à¸™à¸—à¸¶à¸ draft à¸—à¸¸à¸à¸„à¸£à¸±à¹‰à¸‡à¸—à¸µà¹ˆà¸¡à¸µà¸à¸²à¸£à¹à¸à¹‰à¹„à¸‚ ---
+  useEffect(() => {
+    const draft = { category, customCat, amount, note, place, date, payment };
+    sessionStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+  }, [category, customCat, amount, note, place, date, payment]);
+
+  // à¸£à¸±à¸šà¸„à¹ˆà¸²à¸ˆà¸²à¸à¸«à¸™à¹‰à¸² customincome
+  useEffect(() => {
+    const st = location.state as any;
+    if (st?.customIncome) {
+      setCategory("à¸­à¸·à¹ˆà¸™à¹†");
+      setCustomCat({ label: st.customIncome.label, icon: st.customIncome.icon });
+      navigate(location.pathname, { replace: true, state: null });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state]);
+
+  const pad = useMemo(() => ["1","2","3","4","5","6","7","8","9",".","0","âŒ«"], []);
+  const onTapKey = (k: string) => {
+    if (k === "âŒ«") return setAmount(a => (a.length <= 1 ? "0" : a.slice(0,-1)));
+    if (k === ".")  return setAmount(a => (a.includes(".") ? a : a + "."));
+    setAmount(a => (a === "0" ? k : a + k));
+  };
+
+  const resetAll = () => {
+    setCategory("à¸„à¹ˆà¸²à¸‚à¸™à¸¡"); setCustomCat(null); setPayment(null);
+    setAmount("0"); setNote(""); setPlace(""); setDate(getTodayISO()); setMenuOpen(false);
+    sessionStorage.removeItem(DRAFT_KEY);
+  };
+
+  const onConfirm = async () => {
+    if (!amount || amount === "0" || !note.trim() || !place.trim() || !date) {
+      alert("Required âŒ"); return;
+    }
+    const finalCategory = category === "à¸­à¸·à¹ˆà¸™à¹†" && customCat?.label ? customCat.label : category;
+
+    const iconKey =
+      category === "à¸­à¸·à¹ˆà¸™à¹†"
+        ? (customCat?.icon || "more")
+        : defaultIconKeyByCategory[category];
+
+    const payload = {
+      type: "à¸£à¸²à¸¢à¹„à¸”à¹‰",
+      category: finalCategory,
+      amount: parseFloat(amount || "0"),
+      note, place, date,
+      paymentMethod: payment?.name ?? null,
+      iconKey,
+    };
+
+    try {
+      const res = await fetch(`/api/expenses`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        credentials: "include", // ðŸ”— à¹ƒà¸«à¹‰ session cookie à¸•à¸´à¸”à¹„à¸›à¸”à¹‰à¸§à¸¢
+      });
+      if (!res.ok) throw new Error(await res.text());
+      alert("à¸šà¸±à¸™à¸—à¸¶à¸à¹€à¸£à¸µà¸¢à¸šà¸£à¹‰à¸­à¸¢ âœ…");
+      resetAll();
+    } catch (e:any) {
+      console.error(e);
+      alert("à¸šà¸±à¸™à¸—à¸¶à¸à¹„à¸¡à¹ˆà¸ªà¸³à¹€à¸£à¹‡à¸ˆ âŒ " + (e?.message ?? ""));
+    }
+  };
+
+  const formatDate = (iso: string) => {
+    try {
+      const d = new Date(iso);
+      return d.toLocaleDateString("th-TH",{day:"2-digit",month:"2-digit",year:"numeric"});
+    } catch { return "à¸§à¸±à¸™ / à¹€à¸”à¸·à¸­à¸™ / à¸›à¸µ"; }
+  };
+
+  const renderCustomIcon = () => {
+    if (!customCat?.icon) return <IconEtc active={category === "à¸­à¸·à¹ˆà¸™à¹†"} />;
+    const Cmp = ICON_MAP[customCat.icon];
+    if (!Cmp) return <IconEtc active={category === "à¸­à¸·à¹ˆà¸™à¹†"} />;
+    return <Cmp className={`icon ${category === "à¸­à¸·à¹ˆà¸™à¹†" ? "icon-active" : ""} lucide`} size={20} strokeWidth={2} />;
+  };
+
+  // à¹ƒà¸«à¹‰à¸›à¸¸à¹ˆà¸¡à¸§à¸±à¸™à¸—à¸µà¹ˆà¹€à¸›à¸´à¸” picker à¹„à¸”à¹‰à¹ƒà¸™à¸šà¸²à¸‡ browser
+  const dateBtnRef = useRef<HTMLInputElement>(null);
+  const openDatePicker = (e?: React.MouseEvent | React.KeyboardEvent) => {
+    e?.preventDefault();
+    const el = dateBtnRef.current;
+    if (!el) return;
+    if (typeof (el as any).showPicker === "function") {
+      (el as any).showPicker();
+    } else {
+      el.click();
+      el.focus();
+    }
+  };
+
+  return (
+    <div className="calc-wrap">
+      <header className="topbar"></header>
+
+      <div className="type-pill" style={{ position:"relative" }}>
+        <button className="pill" onClick={() => setMenuOpen(o=>!o)}>
+          <span>à¸£à¸²à¸¢à¹„à¸”à¹‰</span><ChevronDown/>
+        </button>
+        {menuOpen && (
+          <div onMouseLeave={() => setMenuOpen(false)}
+               style={{position:"absolute",top:"calc(100% + 8px)",left:"50%",transform:"translateX(-50%)",background:"#fff",
+                       border:"1px solid rgba(0,0,0,.06)",borderRadius:14,boxShadow:"0 10px 20px rgba(0,0,0,.08)",padding:6,minWidth:220,zIndex:20}}>
+            <button onClick={()=>navigate("/expense")}
+                    style={{width:"100%",textAlign:"center",padding:"10px 12px",border:0,background:"transparent",borderRadius:10,cursor:"pointer",fontWeight:600,color:"var(--ink)" as any}}
+                    onMouseEnter={e=>e.currentTarget.style.background="#f3fbf8"}
+                    onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+              à¸„à¹ˆà¸²à¹ƒà¸Šà¹‰à¸ˆà¹ˆà¸²à¸¢
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div className="category-row">
+        <button className={`cat ${category==="à¸„à¹ˆà¸²à¸‚à¸™à¸¡"?"active":""}`} onClick={()=>{ setCategory("à¸„à¹ˆà¸²à¸‚à¸™à¸¡"); setCustomCat(null); }}>
+          <HandCoins className={`icon ${category==="à¸„à¹ˆà¸²à¸‚à¸™à¸¡"?"icon-active":""} lucide`} size={20} strokeWidth={2} />
+          <span>à¸„à¹ˆà¸²à¸‚à¸™à¸¡</span>
+        </button>
+        <button className={`cat ${category==="à¸—à¸³à¸‡à¸²à¸™"?"active":""}`} onClick={()=>{ setCategory("à¸—à¸³à¸‡à¸²à¸™"); setCustomCat(null); }}>
+          <Banknote className={`icon ${category==="à¸—à¸³à¸‡à¸²à¸™"?"icon-active":""} lucide`} size={20} strokeWidth={2} />
+          <span>à¸—à¸³à¸‡à¸²à¸™</span>
+        </button>
+        <button className={`cat ${category==="à¸¥à¸‡à¸—à¸¸à¸™"?"active":""}`} onClick={()=>{ setCategory("à¸¥à¸‡à¸—à¸¸à¸™"); setCustomCat(null); }}>
+          <Bitcoin className={`icon ${category==="à¸¥à¸‡à¸—à¸¸à¸™"?"icon-active":""} lucide`} size={20} strokeWidth={2} />
+          <span>à¸¥à¸‡à¸—à¸¸à¸™</span>
+        </button>
+        <button className={`cat ${category==="à¸­à¸·à¹ˆà¸™à¹†"?"active":""}`} onClick={()=>{ setCategory("à¸­à¸·à¹ˆà¸™à¹†"); navigate("/customincome"); }}>
+          {renderCustomIcon()}
+          <span>{category==="à¸­à¸·à¹ˆà¸™à¹†" && customCat?.label ? customCat.label : "à¸­à¸·à¹ˆà¸™à¹†"}</span>
+        </button>
+      </div>
+
+      <div
+        className="amount"
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "baseline",
+          gap: 6,
+          width: "100%",
+        }}
+      >
+        <span className="num">{amount}</span>
+        <span className="currency">à¸¿</span>
+      </div>
+
+      <div className="segments" style={{ position:"relative" }}>
+        <button
+          type="button"
+          className="seg date-seg"
+          onClick={openDatePicker}
+          onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && openDatePicker(e)}
+          style={{ display:"inline-flex", alignItems:"center", gap:6, cursor:"pointer", position:"relative" }}
+        >
+          <CalendarDays className="icon" size={18} />
+          <span>{date ? formatDate(date) : "à¸§à¸±à¸™ / à¹€à¸”à¸·à¸­à¸™ / à¸›à¸µ"}</span>
+          <input
+            ref={dateBtnRef}
+            type="date"
+            value={date}
+            onChange={(e)=>setDate(e.target.value)}
+            style={{ position:"absolute", inset:0, opacity:0, pointerEvents:"none" }}
+            tabIndex={-1}
+            aria-hidden="true"
+          />
+        </button>
+
+        <button className="seg" onClick={()=>navigate("/accountselect",{ state:{ from:"/income" } })}>
+          {payment ? payment.name : "à¸›à¸£à¸°à¹€à¸ à¸—à¸à¸²à¸£à¸Šà¸³à¸£à¸°à¹€à¸‡à¸´à¸™"}
+        </button>
+      </div>
+
+      <div className="inputs">
+        <div className="input"><ClipboardList size={18} strokeWidth={2} className="icon"/><input value={note} onChange={e=>setNote(e.target.value)} placeholder="à¹‚à¸™à¹‰à¸•"/></div>
+        <div className="input"><MapPin size={18} strokeWidth={2} className="icon"/><input value={place} onChange={e=>setPlace(e.target.value)} placeholder="à¸ªà¸–à¸²à¸™à¸—à¸µà¹ˆ"/></div>
+      </div>
+
+      <div className="keypad">
+        {pad.map((k,i)=>(
+          <button key={i} className={`key ${k==="âŒ«"?"danger":""}`} onClick={()=> (k==="âŒ«"? onTapKey("âŒ«"): onTapKey(k))}>
+            {k==="âŒ«"? <IconBackspace/> : k}
+          </button>
+        ))}
+      </div>
+
+      <div className="confirm"><button className="ok-btn" onClick={onConfirm}><IconCheck/></button></div>
+      <BottomNav/>
+    </div>
+  );
+}
+
+
+
+
+

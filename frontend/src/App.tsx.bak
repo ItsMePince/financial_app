@@ -1,0 +1,231 @@
+﻿// src/App.tsx
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { useState, useEffect, useCallback } from "react";
+
+// Header + Navbar
+import Header from "./components/Header";
+import BottomNav from "./pages/buttomnav";
+
+// à¸«à¸™à¹‰à¸²à¸«à¸¥à¸±à¸
+import Home from "./pages/Home";
+import Day from "./pages/day";
+import Month from "./pages/month";
+import Income from "./pages/income";
+import Expense from "./pages/expense";
+import Summary from "./pages/summary";
+
+// Auth / Account
+import Login from "./pages/Login";
+import SignUp from "./pages/SignUp";
+import AccountSelect from "./pages/AccountSelect";
+import AccountNew from "./pages/accountnew";
+
+// Custom categories
+import CustomIncome from "./pages/customincome";
+import CustomOutcome from "./pages/customoutcome";
+
+function NotFound() {
+  return (
+    <div style={{ padding: 16 }}>
+      <h3>404 - Page not found</h3>
+      <a href="/">à¸à¸¥à¸±à¸šà¸«à¸™à¹‰à¸²à¹à¸£à¸</a>
+    </div>
+  );
+}
+
+// Component à¸ªà¸³à¸«à¸£à¸±à¸šà¸›à¹‰à¸­à¸‡à¸à¸±à¸™à¸«à¸™à¹‰à¸²à¸—à¸µà¹ˆà¸•à¹‰à¸­à¸‡ login
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  return <>{children}</>;
+}
+
+// Component à¸ªà¸³à¸«à¸£à¸±à¸š redirect à¸–à¹‰à¸² login à¹à¸¥à¹‰à¸§
+function AuthRoute({ children }: { children: React.ReactNode }) {
+  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+  
+  if (isAuthenticated) {
+    return <Navigate to="/home" replace />;
+  }
+  
+  return <>{children}</>;
+}
+
+export default function App() {
+  const location = useLocation();
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    () => localStorage.getItem('isAuthenticated') === 'true'
+  );
+  const [isLoading, setIsLoading] = useState(false);
+
+  // à¹ƒà¸Šà¹‰ useCallback à¹€à¸žà¸·à¹ˆà¸­à¸›à¹‰à¸­à¸‡à¸à¸±à¸™ re-render à¸—à¸µà¹ˆà¹„à¸¡à¹ˆà¸ˆà¸³à¹€à¸›à¹‡à¸™
+  const checkAuth = useCallback(() => {
+    const authStatus = localStorage.getItem('isAuthenticated') === 'true';
+    console.log('checkAuth called:', authStatus);
+    setIsAuthenticated(authStatus);
+  }, []);
+
+  useEffect(() => {
+    // à¹€à¸žà¸´à¹ˆà¸¡ event listener
+    window.addEventListener("auth-changed", checkAuth);
+    
+    return () => {
+      window.removeEventListener("auth-changed", checkAuth);
+    };
+  }, [checkAuth]);
+
+  const currentPath = location.pathname;
+  
+  // à¸à¸³à¸«à¸™à¸”à¸«à¸™à¹‰à¸²à¸—à¸µà¹ˆà¹„à¸¡à¹ˆà¸•à¹‰à¸­à¸‡à¹à¸ªà¸”à¸‡ nav (auth pages)
+  const authPages = ['/login', '/signup'];
+  const isAuthPage = authPages.includes(currentPath);
+
+  // Debug
+  console.log('Current path:', currentPath);
+  console.log('Is auth page:', isAuthPage);
+  console.log('Is authenticated:', isAuthenticated);
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh' 
+      }}>
+        <div>à¸à¸³à¸¥à¸±à¸‡à¹‚à¸«à¸¥à¸”...</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="App">
+      {/* à¹à¸ªà¸”à¸‡ Header à¹€à¸‰à¸žà¸²à¸°à¹€à¸¡à¸·à¹ˆà¸­ NOT auth page */}
+      {!isAuthPage && <Header />}
+
+      <Routes>
+        {/* à¸«à¸™à¹‰à¸²à¹à¸£à¸ - à¹€à¸›à¹‡à¸™ login à¹€à¸ªà¸¡à¸­ */}
+        <Route 
+          path="/" 
+          element={<Navigate to="/login" replace />}
+        />
+
+        {/* Auth Routes */}
+        <Route 
+          path="/login" 
+          element={<Login />}
+        />
+        <Route 
+          path="/signup" 
+          element={
+            <AuthRoute>
+              <SignUp />
+            </AuthRoute>
+          } 
+        />
+
+        {/* Protected Routes - à¸•à¹‰à¸­à¸‡ login à¸à¹ˆà¸­à¸™ */}
+        <Route 
+          path="/home" 
+          element={
+            <ProtectedRoute>
+              <Home />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/day" 
+          element={
+            <ProtectedRoute>
+              <Day />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/month" 
+          element={
+            <ProtectedRoute>
+              <Month />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/income" 
+          element={
+            <ProtectedRoute>
+              <Income />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/expense" 
+          element={
+            <ProtectedRoute>
+              <Expense />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/summary" 
+          element={
+            <ProtectedRoute>
+              <Summary />
+            </ProtectedRoute>
+          } 
+        />
+
+        {/* Account Routes - à¸•à¹‰à¸­à¸‡ login à¸à¹ˆà¸­à¸™ */}
+        <Route 
+          path="/accountselect" 
+          element={
+            <ProtectedRoute>
+              <AccountSelect />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/accountnew" 
+          element={
+            <ProtectedRoute>
+              <AccountNew />
+            </ProtectedRoute>
+          } 
+        />
+
+        {/* Custom category Routes - à¸•à¹‰à¸­à¸‡ login à¸à¹ˆà¸­à¸™ */}
+        <Route 
+          path="/customincome" 
+          element={
+            <ProtectedRoute>
+              <CustomIncome />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/customoutcome" 
+          element={
+            <ProtectedRoute>
+              <CustomOutcome />
+            </ProtectedRoute>
+          } 
+        />
+
+        {/* 404 */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+
+      {/* à¹à¸ªà¸”à¸‡ BottomNav à¹€à¸‰à¸žà¸²à¸°à¹€à¸¡à¸·à¹ˆà¸­ NOT auth page */}
+      {!isAuthPage && <BottomNav />}
+    </div>
+  );
+}
+// trigger CI test run
+
+
+
+

@@ -1,4 +1,4 @@
-// src/pages/AccountSelect.test.tsx
+﻿// src/pages/AccountSelect.test.tsx
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import AccountSelect from "./AccountSelect";
@@ -32,48 +32,52 @@ describe("AccountSelect Page", () => {
     vi.clearAllMocks();
   });
 
-  it("แสดง dropdown filter และรายการเริ่มต้น", () => {
+  it("แส�?�? dropdown filter และรายการ�?ริ�?ม�?�?�?", () => {
     renderPage();
-    // dropdown เริ่มต้น
-    expect(screen.getByRole("button", { name: /ทั้งหมด/i })).toBeInTheDocument();
-    // รายการเริ่มต้นใน UI
-    expect(screen.getByText("ธ.ไทยพาณิชย์")).toBeInTheDocument();
-    expect(screen.getByText("เงินสด")).toBeInTheDocument();
+    // dropdown �?ริ�?ม�?�?�?
+    expect(screen.getByRole("button", { name: /�?ั�?�?หม�?/i })).toBeInTheDocument();
+    // รายการ�?ริ�?ม�?�?�?�?�? UI
+    expect(screen.getByText("�?.�?�?ย�?า�?ิ�?ย�?")).toBeInTheDocument();
+    expect(screen.getByText("�?�?ิ�?ส�?")).toBeInTheDocument();
   });
 
-  it("สามารถเปิด dropdown และเลือก filter 'ธนาคาร' ได้", () => {
+  it("สามาร�?�?�?ิ�? dropdown และ�?ลือก filter '�?�?า�?าร' �?�?�?", () => {
     renderPage();
-    fireEvent.click(screen.getByRole("button", { name: /ทั้งหมด/i }));
-    fireEvent.click(screen.getByText("ธนาคาร"));
-    // เหลือเฉพาะของธนาคาร
-    expect(screen.getByText("ธ.ไทยพาณิชย์")).toBeInTheDocument();
-    expect(screen.queryByText("เงินสด")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /�?ั�?�?หม�?/i }));
+    fireEvent.click(screen.getByText("�?�?า�?าร"));
+    // �?หลือ�?�?�?าะ�?อ�?�?�?า�?าร
+    expect(screen.getByText("�?.�?�?ย�?า�?ิ�?ย�?")).toBeInTheDocument();
+    expect(screen.queryByText("�?�?ิ�?ส�?")).not.toBeInTheDocument();
   });
 
-  it("สามารถกด favorite/unfavorite ได้", () => {
+  it("สามาร�?ก�? favorite/unfavorite �?�?�?", () => {
     renderPage();
-    // สมมติปุ่มดาวมี aria-label ตามสถานะ
+    // สมม�?ิ�?ุ�?ม�?าวมี aria-label �?ามส�?า�?ะ
     const starBtn = screen.getAllByLabelText(/unfavorite/i)[0];
     fireEvent.click(starBtn);
-    // กดแล้วควรสลับ aria-label เป็น Favorite
+    // ก�?แล�?ว�?วรสลั�? aria-label �?�?�?�? Favorite
     expect(
       screen.getAllByLabelText(/favorite/i)[0]
     ).toBeInTheDocument();
   });
 
-  // หมายเหตุ: UI ปัจจุบันไม่มีวิธีทำให้รายการว่างจริง ๆ (แต่ละ filter มีอย่างน้อย 1 รายการ
-  // และการกดดาวไม่ได้ซ่อนรายการ) จึง skip เคสนี้ไว้ก่อน
-  it.skip("แสดงข้อความ 'ไม่มีรายการ' เมื่อ filter แล้วไม่เจอ", () => {
+  // หมาย�?ห�?ุ: UI �?ั�?�?ุ�?ั�?�?ม�?มีวิ�?ี�?ำ�?ห�?รายการว�?า�?�?ริ�? �? (แ�?�?ละ filter มีอย�?า�?�?�?อย 1 รายการ
+  // และการก�?�?าว�?ม�?�?�?�?�?�?อ�?รายการ) �?ึ�? skip �?�?ส�?ี�?�?ว�?ก�?อ�?
+  it.skip("แส�?�?�?�?อ�?วาม '�?ม�?มีรายการ' �?มื�?อ filter แล�?ว�?ม�?�?�?อ", () => {
     renderPage();
-    // ถ้าในอนาคตมี toggle 'เฉพาะรายการโปรด' หรือช่องค้นหา ค่อยมาเติมเทสตรงนี้ได้
-    // expect(screen.getByText("ไม่มีรายการ")).toBeInTheDocument();
+    // �?�?า�?�?อ�?า�?�?มี toggle '�?�?�?าะรายการ�?�?ร�?' หรือ�?�?อ�?�?�?�?หา �?�?อยมา�?�?ิม�?�?ส�?ร�?�?ี�?�?�?�?
+    // expect(screen.getByText("�?ม�?มีรายการ")).toBeInTheDocument();
   });
 
-  it("กดเลือก account แล้วเรียก navigate(-1)", async () => {
+  it("ก�?�?ลือก account แล�?ว�?รียก navigate(-1)", async () => {
     renderPage();
-    fireEvent.click(screen.getByText("เงินสด"));
+    fireEvent.click(screen.getByText("�?�?ิ�?ส�?"));
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith(-1);
     });
   });
 });
+
+
+
+

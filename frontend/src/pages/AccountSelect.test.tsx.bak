@@ -1,0 +1,83 @@
+﻿// src/pages/AccountSelect.test.tsx
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+import AccountSelect from "./AccountSelect";
+import { vi } from "vitest";
+
+// --- mock navigate ---
+const mockNavigate = vi.fn();
+vi.mock("react-router-dom", async () => {
+  const actual = await vi.importActual<any>("react-router-dom");
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
+
+// --- mock PaymentMethodContext ---
+vi.mock("../PaymentMethodContext", () => ({
+  usePaymentMethod: () => ({ setPayment: vi.fn() }),
+}));
+
+function renderPage() {
+  return render(
+    <MemoryRouter>
+      <AccountSelect />
+    </MemoryRouter>
+  );
+}
+
+describe("AccountSelect Page", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("à¹à¸ªà¸”à¸‡ dropdown filter à¹à¸¥à¸°à¸£à¸²à¸¢à¸à¸²à¸£à¹€à¸£à¸´à¹ˆà¸¡à¸•à¹‰à¸™", () => {
+    renderPage();
+    // dropdown à¹€à¸£à¸´à¹ˆà¸¡à¸•à¹‰à¸™
+    expect(screen.getByRole("button", { name: /à¸—à¸±à¹‰à¸‡à¸«à¸¡à¸”/i })).toBeInTheDocument();
+    // à¸£à¸²à¸¢à¸à¸²à¸£à¹€à¸£à¸´à¹ˆà¸¡à¸•à¹‰à¸™à¹ƒà¸™ UI
+    expect(screen.getByText("à¸˜.à¹„à¸—à¸¢à¸žà¸²à¸“à¸´à¸Šà¸¢à¹Œ")).toBeInTheDocument();
+    expect(screen.getByText("à¹€à¸‡à¸´à¸™à¸ªà¸”")).toBeInTheDocument();
+  });
+
+  it("à¸ªà¸²à¸¡à¸²à¸£à¸–à¹€à¸›à¸´à¸” dropdown à¹à¸¥à¸°à¹€à¸¥à¸·à¸­à¸ filter 'à¸˜à¸™à¸²à¸„à¸²à¸£' à¹„à¸”à¹‰", () => {
+    renderPage();
+    fireEvent.click(screen.getByRole("button", { name: /à¸—à¸±à¹‰à¸‡à¸«à¸¡à¸”/i }));
+    fireEvent.click(screen.getByText("à¸˜à¸™à¸²à¸„à¸²à¸£"));
+    // à¹€à¸«à¸¥à¸·à¸­à¹€à¸‰à¸žà¸²à¸°à¸‚à¸­à¸‡à¸˜à¸™à¸²à¸„à¸²à¸£
+    expect(screen.getByText("à¸˜.à¹„à¸—à¸¢à¸žà¸²à¸“à¸´à¸Šà¸¢à¹Œ")).toBeInTheDocument();
+    expect(screen.queryByText("à¹€à¸‡à¸´à¸™à¸ªà¸”")).not.toBeInTheDocument();
+  });
+
+  it("à¸ªà¸²à¸¡à¸²à¸£à¸–à¸à¸” favorite/unfavorite à¹„à¸”à¹‰", () => {
+    renderPage();
+    // à¸ªà¸¡à¸¡à¸•à¸´à¸›à¸¸à¹ˆà¸¡à¸”à¸²à¸§à¸¡à¸µ aria-label à¸•à¸²à¸¡à¸ªà¸–à¸²à¸™à¸°
+    const starBtn = screen.getAllByLabelText(/unfavorite/i)[0];
+    fireEvent.click(starBtn);
+    // à¸à¸”à¹à¸¥à¹‰à¸§à¸„à¸§à¸£à¸ªà¸¥à¸±à¸š aria-label à¹€à¸›à¹‡à¸™ Favorite
+    expect(
+      screen.getAllByLabelText(/favorite/i)[0]
+    ).toBeInTheDocument();
+  });
+
+  // à¸«à¸¡à¸²à¸¢à¹€à¸«à¸•à¸¸: UI à¸›à¸±à¸ˆà¸ˆà¸¸à¸šà¸±à¸™à¹„à¸¡à¹ˆà¸¡à¸µà¸§à¸´à¸˜à¸µà¸—à¸³à¹ƒà¸«à¹‰à¸£à¸²à¸¢à¸à¸²à¸£à¸§à¹ˆà¸²à¸‡à¸ˆà¸£à¸´à¸‡ à¹† (à¹à¸•à¹ˆà¸¥à¸° filter à¸¡à¸µà¸­à¸¢à¹ˆà¸²à¸‡à¸™à¹‰à¸­à¸¢ 1 à¸£à¸²à¸¢à¸à¸²à¸£
+  // à¹à¸¥à¸°à¸à¸²à¸£à¸à¸”à¸”à¸²à¸§à¹„à¸¡à¹ˆà¹„à¸”à¹‰à¸‹à¹ˆà¸­à¸™à¸£à¸²à¸¢à¸à¸²à¸£) à¸ˆà¸¶à¸‡ skip à¹€à¸„à¸ªà¸™à¸µà¹‰à¹„à¸§à¹‰à¸à¹ˆà¸­à¸™
+  it.skip("à¹à¸ªà¸”à¸‡à¸‚à¹‰à¸­à¸„à¸§à¸²à¸¡ 'à¹„à¸¡à¹ˆà¸¡à¸µà¸£à¸²à¸¢à¸à¸²à¸£' à¹€à¸¡à¸·à¹ˆà¸­ filter à¹à¸¥à¹‰à¸§à¹„à¸¡à¹ˆà¹€à¸ˆà¸­", () => {
+    renderPage();
+    // à¸–à¹‰à¸²à¹ƒà¸™à¸­à¸™à¸²à¸„à¸•à¸¡à¸µ toggle 'à¹€à¸‰à¸žà¸²à¸°à¸£à¸²à¸¢à¸à¸²à¸£à¹‚à¸›à¸£à¸”' à¸«à¸£à¸·à¸­à¸Šà¹ˆà¸­à¸‡à¸„à¹‰à¸™à¸«à¸² à¸„à¹ˆà¸­à¸¢à¸¡à¸²à¹€à¸•à¸´à¸¡à¹€à¸—à¸ªà¸•à¸£à¸‡à¸™à¸µà¹‰à¹„à¸”à¹‰
+    // expect(screen.getByText("à¹„à¸¡à¹ˆà¸¡à¸µà¸£à¸²à¸¢à¸à¸²à¸£")).toBeInTheDocument();
+  });
+
+  it("à¸à¸”à¹€à¸¥à¸·à¸­à¸ account à¹à¸¥à¹‰à¸§à¹€à¸£à¸µà¸¢à¸ navigate(-1)", async () => {
+    renderPage();
+    fireEvent.click(screen.getByText("à¹€à¸‡à¸´à¸™à¸ªà¸”"));
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith(-1);
+    });
+  });
+});
+
+
+
+

@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: financial-ingress
+  namespace: financial-app
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: app.localtest.me
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: backend      # service ของคุณ
+                port:
+                  number: 8081     # ตรงกับ Service backend (NodePort 8081 -> OK)
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend     # service ของคุณ
+                port:
+                  number: 80       # ตรงกับ Service frontend (NodePort 80 -> OK)

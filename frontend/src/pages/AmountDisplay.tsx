@@ -2,23 +2,23 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 type Props = {
-  value: number | string;     // รับเลขหรือสตริงที่ฟอร์แมตมาแล้วก็ได้
-  unit?: string;              // เช่น "บาท"
-  max?: number;               // font-size สูงสุด (px)
-  min?: number;               // font-size ต่ำสุด (px)
+  value: number | string;     // รั�?�?ล�?หรือส�?ริ�?�?ี�?�?อร�?แม�?มาแล�?วก�?�?�?�?
+  unit?: string;              // �?�?�?�? "�?า�?"
+  max?: number;               // font-size สู�?สุ�? (px)
+  min?: number;               // font-size �?�?ำสุ�? (px)
   className?: string;
 };
 
 const format = (v: number | string) => {
   const s = String(v);
-  // ถ้าเป็นเลขดิบ → ใส่ , หลักพัน
+  // �?�?า�?�?�?�?�?ล�?�?ิ�? �?? �?ส�? , หลัก�?ั�?
   if (/^\d+$/.test(s)) return s.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   return s;
 };
 
 export default function AmountDisplay({
   value,
-  unit = "บาท",
+  unit = "�?า�?",
   max = 28,
   min = 12,
   className = "",
@@ -32,7 +32,7 @@ export default function AmountDisplay({
     const num  = numRef.current;
     if (!wrap || !num) return;
 
-    // เริ่มจากขนาดใหญ่สุด แล้วค่อยๆ ลดลงจนกว่าจะพอดี (มี safety cap)
+    // �?ริ�?ม�?าก�?�?า�?�?หญ�?สุ�? แล�?ว�?�?อย�? ล�?ล�?�?�?กว�?า�?ะ�?อ�?ี (มี safety cap)
     let s = max;
     num.style.fontSize = `${s}px`;
     for (let i = 0; i < 40 && (num.scrollWidth > wrap.clientWidth) && s > min; i++) {
@@ -42,10 +42,10 @@ export default function AmountDisplay({
     setSize(s);
   };
 
-  // เรียกตอน mount และเมื่อ value เปลี่ยน
+  // �?รียก�?อ�? mount และ�?มื�?อ value �?�?ลี�?ย�?
   useLayoutEffect(() => { fit(); }, [value, max, min]);
 
-  // รองรับ resize/container เปลี่ยนขนาด
+  // รอ�?รั�? resize/container �?�?ลี�?ย�?�?�?า�?
   useEffect(() => {
     const ro = new ResizeObserver(() => fit());
     if (wrapRef.current) ro.observe(wrapRef.current);
@@ -61,3 +61,7 @@ export default function AmountDisplay({
     </div>
   );
 }
+
+
+
+

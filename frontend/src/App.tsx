@@ -6,7 +6,7 @@ import { useState, useEffect, useCallback } from "react";
 import Header from "./components/Header";
 import BottomNav from "./pages/buttomnav";
 
-// หน้าหลัก
+// ห�?�?าหลัก
 import Home from "./pages/Home";
 import Day from "./pages/day";
 import Month from "./pages/month";
@@ -28,12 +28,12 @@ function NotFound() {
   return (
     <div style={{ padding: 16 }}>
       <h3>404 - Page not found</h3>
-      <a href="/">กลับหน้าแรก</a>
+      <a href="/">กลั�?ห�?�?าแรก</a>
     </div>
   );
 }
 
-// Component สำหรับป้องกันหน้าที่ต้อง login
+// Component สำหรั�?�?�?อ�?กั�?ห�?�?า�?ี�?�?�?อ�? login
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
   
@@ -44,7 +44,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-// Component สำหรับ redirect ถ้า login แล้ว
+// Component สำหรั�? redirect �?�?า login แล�?ว
 function AuthRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
   
@@ -62,7 +62,7 @@ export default function App() {
   );
   const [isLoading, setIsLoading] = useState(false);
 
-  // ใช้ useCallback เพื่อป้องกัน re-render ที่ไม่จำเป็น
+  // �?�?�? useCallback �?�?ื�?อ�?�?อ�?กั�? re-render �?ี�?�?ม�?�?ำ�?�?�?�?
   const checkAuth = useCallback(() => {
     const authStatus = localStorage.getItem('isAuthenticated') === 'true';
     console.log('checkAuth called:', authStatus);
@@ -70,7 +70,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    // เพิ่ม event listener
+    // �?�?ิ�?ม event listener
     window.addEventListener("auth-changed", checkAuth);
     
     return () => {
@@ -80,7 +80,7 @@ export default function App() {
 
   const currentPath = location.pathname;
   
-  // กำหนดหน้าที่ไม่ต้องแสดง nav (auth pages)
+  // กำห�?�?ห�?�?า�?ี�?�?ม�?�?�?อ�?แส�?�? nav (auth pages)
   const authPages = ['/login', '/signup'];
   const isAuthPage = authPages.includes(currentPath);
 
@@ -98,18 +98,18 @@ export default function App() {
         alignItems: 'center', 
         height: '100vh' 
       }}>
-        <div>กำลังโหลด...</div>
+        <div>กำลั�?�?หล�?...</div>
       </div>
     );
   }
 
   return (
     <div className="App">
-      {/* แสดง Header เฉพาะเมื่อ NOT auth page */}
+      {/* แส�?�? Header �?�?�?าะ�?มื�?อ NOT auth page */}
       {!isAuthPage && <Header />}
 
       <Routes>
-        {/* หน้าแรก - เป็น login เสมอ */}
+        {/* ห�?�?าแรก - �?�?�?�? login �?สมอ */}
         <Route 
           path="/" 
           element={<Navigate to="/login" replace />}
@@ -129,7 +129,7 @@ export default function App() {
           } 
         />
 
-        {/* Protected Routes - ต้อง login ก่อน */}
+        {/* Protected Routes - �?�?อ�? login ก�?อ�? */}
         <Route 
           path="/home" 
           element={
@@ -179,7 +179,7 @@ export default function App() {
           } 
         />
 
-        {/* Account Routes - ต้อง login ก่อน */}
+        {/* Account Routes - �?�?อ�? login ก�?อ�? */}
         <Route 
           path="/accountselect" 
           element={
@@ -197,7 +197,7 @@ export default function App() {
           } 
         />
 
-        {/* Custom category Routes - ต้อง login ก่อน */}
+        {/* Custom category Routes - �?�?อ�? login ก�?อ�? */}
         <Route 
           path="/customincome" 
           element={
@@ -219,9 +219,13 @@ export default function App() {
         <Route path="*" element={<NotFound />} />
       </Routes>
 
-      {/* แสดง BottomNav เฉพาะเมื่อ NOT auth page */}
+      {/* แส�?�? BottomNav �?�?�?าะ�?มื�?อ NOT auth page */}
       {!isAuthPage && <BottomNav />}
     </div>
   );
 }
 // trigger CI test run
+
+
+
+

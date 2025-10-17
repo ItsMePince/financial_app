@@ -1,4 +1,4 @@
-// src/pages/accountnew.test.tsx
+﻿// src/pages/accountnew.test.tsx
 import React from "react";
 import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
@@ -17,80 +17,80 @@ beforeEach(() => {
   vi.spyOn(window, "alert").mockImplementation(() => {});
 });
 
-// ✅ helper: เลือก trigger ของ dropdown ให้ชัด (ไม่ปะทะกับ label)
+// �?? helper: �?ลือก trigger �?อ�? dropdown �?ห�?�?ั�? (�?ม�?�?ะ�?ะกั�? label)
 function getTypeDropdownTrigger(): HTMLElement {
-  // พยายามหา element ที่เป็น placeholder ก่อน
-  const all = screen.getAllByText(/ประเภท/i);
-  // เลือกตัวที่เป็น placeholder ถ้ามี
+  // �?ยายามหา element �?ี�?�?�?�?�? placeholder ก�?อ�?
+  const all = screen.getAllByText(/�?ระ�?ภ�?/i);
+  // �?ลือก�?ัว�?ี�?�?�?�?�? placeholder �?�?ามี
   const placeholderEl = all.find((el) =>
     el.classList?.contains("placeholder")
   );
   if (placeholderEl) return placeholderEl as HTMLElement;
 
-  // ถ้าไม่มี class ให้เลือกตัวถัดไป (โดยมากตัวแรกจะเป็น label, ตัวถัดไปคือ trigger)
+  // �?�?า�?ม�?มี class �?ห�?�?ลือก�?ัว�?ั�?�?�? (�?�?ยมาก�?ัวแรก�?ะ�?�?�?�? label, �?ัว�?ั�?�?�?�?ือ trigger)
   if (all.length > 1) return all[1] as HTMLElement;
 
-  // fallback อย่างสุภาพ
+  // fallback อย�?า�?สุภา�?
   return all[0] as HTMLElement;
 }
 
 describe("AccountNew Page", () => {
-  it("แสดงหัวข้อ 'สร้างบัญชี' และปุ่มยืนยัน", () => {
+  it("แส�?�?หัว�?�?อ 'สร�?า�?�?ัญ�?ี' และ�?ุ�?มยื�?ยั�?", () => {
     render(
       <MemoryRouter>
         <AccountNew />
       </MemoryRouter>
     );
-    expect(screen.getByText(/สร้างบัญชี/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /ยืนยัน/i })).toBeInTheDocument();
+    expect(screen.getByText(/สร�?า�?�?ัญ�?ี/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /ยื�?ยั�?/i })).toBeInTheDocument();
   });
 
-  it("กรอกไม่ครบ → alert error", () => {
+  it("กรอก�?ม�?�?ร�? �?? alert error", () => {
     render(
       <MemoryRouter>
         <AccountNew />
       </MemoryRouter>
     );
-    fireEvent.click(screen.getByRole("button", { name: /ยืนยัน/i }));
+    fireEvent.click(screen.getByRole("button", { name: /ยื�?ยั�?/i }));
     expect(window.alert).toHaveBeenCalledWith(
-      "กรอกข้อมูลให้ครบและจำนวนเงินให้ถูกต้องก่อนน้าา"
+      "กรอก�?�?อมูล�?ห�?�?ร�?และ�?ำ�?ว�?�?�?ิ�?�?ห�?�?ูก�?�?อ�?ก�?อ�?�?�?าา"
     );
   });
 
-  it("สามารถเลือกประเภทบัญชีและไอคอนได้", () => {
+  it("สามาร�?�?ลือก�?ระ�?ภ�?�?ัญ�?ีและ�?อ�?อ�?�?�?�?", () => {
     render(
       <MemoryRouter>
         <AccountNew />
       </MemoryRouter>
     );
 
-    // เปิด dropdown ประเภท (ใช้ helper เพื่อไม่ชน label)
+    // �?�?ิ�? dropdown �?ระ�?ภ�? (�?�?�? helper �?�?ื�?อ�?ม�?�?�? label)
     const trigger = getTypeDropdownTrigger();
     fireEvent.click(trigger);
 
-    // เลือก "ธนาคาร" จากรายการ
+    // �?ลือก "�?�?า�?าร" �?ากรายการ
     const dd = document.querySelector(".dropdown") as HTMLElement;
-    const bankOption = within(dd).getByText(/ธนาคาร/i);
+    const bankOption = within(dd).getByText(/�?�?า�?าร/i);
     fireEvent.click(bankOption);
 
-    // ข้อความที่เลือกต้องแสดงอยู่
-    expect(screen.getByText(/ธนาคาร/i)).toBeInTheDocument();
+    // �?�?อ�?วาม�?ี�?�?ลือก�?�?อ�?แส�?�?อยู�?
+    expect(screen.getByText(/�?�?า�?าร/i)).toBeInTheDocument();
 
-    // เลือกไอคอน "กระปุก"
-    const piggyBtn = screen.getByRole("button", { name: /กระปุก/i });
+    // �?ลือก�?อ�?อ�? "กระ�?ุก"
+    const piggyBtn = screen.getByRole("button", { name: /กระ�?ุก/i });
     fireEvent.click(piggyBtn);
     expect(piggyBtn).toHaveClass("active");
   });
 
-  // (ถ้าอยากเปิดเทสต์นี้อีกครั้ง ก็เอา .skip ออกได้เมื่อพร้อม)
-  it.skip("บันทึกบัญชีใหม่ลง localStorage และ navigate ไป /home (ไม่สนตัวพิมพ์)", async () => {
+  // (�?�?าอยาก�?�?ิ�?�?�?ส�?�?�?ี�?อีก�?รั�?�? ก�?�?อา .skip ออก�?�?�?�?มื�?อ�?ร�?อม)
+  it.skip("�?ั�?�?ึก�?ัญ�?ี�?หม�?ล�? localStorage และ navigate �?�? /home (�?ม�?ส�?�?ัว�?ิม�?�?)", async () => {
     render(
       <MemoryRouter>
         <AccountNew />
       </MemoryRouter>
     );
 
-    fireEvent.change(screen.getByPlaceholderText(/ชื่อบัญชี/i), {
+    fireEvent.change(screen.getByPlaceholderText(/�?ื�?อ�?ัญ�?ี/i), {
       target: { value: "MyCash" },
     });
 
@@ -98,13 +98,13 @@ describe("AccountNew Page", () => {
     fireEvent.click(trigger);
 
     const dd = document.querySelector(".dropdown") as HTMLElement;
-    fireEvent.click(within(dd).getByText(/เงินสด/i));
+    fireEvent.click(within(dd).getByText(/�?�?ิ�?ส�?/i));
 
-    fireEvent.change(screen.getByPlaceholderText(/บาท/i), {
+    fireEvent.change(screen.getByPlaceholderText(/�?า�?/i), {
       target: { value: "1000" },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /ยืนยัน/i }));
+    fireEvent.click(screen.getByRole("button", { name: /ยื�?ยั�?/i }));
 
     await waitFor(() => {
       const saved = JSON.parse(localStorage.getItem("accounts") || "[]");
@@ -114,8 +114,8 @@ describe("AccountNew Page", () => {
     });
   });
 
-  it.skip("โหมดแก้ไข: โหลดค่ามาแก้ไขและ submit แล้วบันทึก", async () => {
-    const initAcc = { name: "Old", amount: 50, iconKey: "wallet", type: "เงินสด" };
+  it.skip("�?หม�?แก�?�?�?: �?หล�?�?�?ามาแก�?�?�?และ submit แล�?ว�?ั�?�?ึก", async () => {
+    const initAcc = { name: "Old", amount: 50, iconKey: "wallet", type: "�?�?ิ�?ส�?" };
     localStorage.setItem("accounts", JSON.stringify([initAcc]));
 
     render(
@@ -131,10 +131,10 @@ describe("AccountNew Page", () => {
     expect(screen.getByDisplayValue("Old")).toBeInTheDocument();
     expect(screen.getByDisplayValue("50")).toBeInTheDocument();
 
-    fireEvent.change(screen.getByPlaceholderText(/ชื่อบัญชี/i), {
+    fireEvent.change(screen.getByPlaceholderText(/�?ื�?อ�?ัญ�?ี/i), {
       target: { value: "Updated" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /บันทึกการแก้ไข/i }));
+    fireEvent.click(screen.getByRole("button", { name: /�?ั�?�?ึกการแก�?�?�?/i }));
 
     await waitFor(() => {
       const saved = JSON.parse(localStorage.getItem("accounts") || "[]");
@@ -143,3 +143,7 @@ describe("AccountNew Page", () => {
     });
   });
 });
+
+
+
+

@@ -1,0 +1,251 @@
+﻿// src/pages/customincome.tsx
+// @ts-nocheck
+import { useMemo, useState } from "react";
+import "./customincome.css";
+import {
+  // UI
+  Check, Search,
+
+  // à¹€à¸‡à¸´à¸™à¹€à¸”à¸·à¸­à¸™ & à¸‡à¸²à¸™à¸›à¸£à¸°à¸ˆà¸³
+  Briefcase, BarChart, Clock, Wallet, ShieldCheck,
+
+  // à¸‡à¸²à¸™à¹€à¸ªà¸£à¸´à¸¡ & à¸Ÿà¸£à¸µà¹à¸¥à¸™à¸‹à¹Œ
+  Laptop, UserCheck, BookOpen, Camera, Bike, Car, PenTool, Code, Banknote,
+
+  // à¸à¸²à¸£à¸¥à¸‡à¸—à¸¸à¸™ & à¸”à¸­à¸à¸œà¸¥
+  Coins, PiggyBank, LineChart, FileText, Layers, TrendingUp,
+
+  // à¸„à¹ˆà¸²à¹€à¸Šà¹ˆà¸² & à¸—à¸£à¸±à¸žà¸¢à¹Œà¸ªà¸´à¸™
+  Home, Bed, Building, Truck, Package,
+
+  // à¸„à¹‰à¸²à¸‚à¸²à¸¢ & à¸­à¸­à¸™à¹„à¸¥à¸™à¹Œ
+  ShoppingBag, Store, Boxes, Tent, CreditCard, Ticket,
+
+  // à¸„à¸£à¸µà¹€à¸­à¹€à¸•à¸­à¸£à¹Œ & à¸¥à¸´à¸‚à¸ªà¸´à¸—à¸˜à¸´à¹Œ
+  Video, Mic, Radio, Music, Film, Gamepad,
+
+  // à¸—à¸¸à¸™/à¸ªà¸™à¸±à¸šà¸ªà¸™à¸¸à¸™
+  ClipboardList, ClipboardCheck, Trophy, GraduationCap,
+
+  // à¸‚à¸­à¸‡à¸‚à¸§à¸±à¸ & à¸­à¸·à¹ˆà¸™ à¹†
+  Gift, Coffee, Star, Gem, HandCoins,
+
+  // Crypto & Digital
+  Bitcoin, CircuitBoard, Image, Cloud, Lock,
+
+  // Passive
+  Link, Megaphone, FileBadge, Users,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import BottomNav from "./buttomnav";
+
+type LucideIcon = React.ComponentType<{ className?: string }>;
+type IconItem = { key: string; label: string; Icon: LucideIcon; iconName: string };
+
+// ====== à¸Šà¸¸à¸”à¹„à¸­à¸„à¸­à¸™à¸£à¸²à¸¢à¹„à¸”à¹‰ (à¹€à¸žà¸´à¹ˆà¸¡/à¸¥à¸šà¹„à¸”à¹‰à¸•à¸²à¸¡à¸•à¹‰à¸­à¸‡à¸à¸²à¸£) ======
+const ICON_SETS_INCOME: Record<string, IconItem[]> = {
+  "à¹€à¸‡à¸´à¸™à¹€à¸”à¸·à¸­à¸™ & à¸‡à¸²à¸™à¸›à¸£à¸°à¸ˆà¸³": [
+    { key: "salary",     label: "à¹€à¸‡à¸´à¸™à¹€à¸”à¸·à¸­à¸™",          Icon: Briefcase,   iconName: "Briefcase" },
+    { key: "bonus",      label: "à¹‚à¸šà¸™à¸±à¸ª",              Icon: BarChart,    iconName: "BarChart" },
+    { key: "overtime",   label: "OT",                 Icon: Clock,       iconName: "Clock" },
+    { key: "allowance",  label: "à¸ªà¸§à¸±à¸ªà¸”à¸´à¸à¸²à¸£",         Icon: Wallet,      iconName: "Wallet" },
+    { key: "insurance",  label: "à¸„à¹ˆà¸²à¸Šà¸”à¹€à¸Šà¸¢/à¸›à¸£à¸°à¸à¸±à¸™",   Icon: ShieldCheck, iconName: "ShieldCheck" },
+  ],
+  "à¸‡à¸²à¸™à¹€à¸ªà¸£à¸´à¸¡ & à¸Ÿà¸£à¸µà¹à¸¥à¸™à¸‹à¹Œ": [
+    { key: "freelance",  label: "à¸Ÿà¸£à¸µà¹à¸¥à¸™à¸‹à¹Œ",          Icon: Laptop,      iconName: "Laptop" },
+    { key: "consult",    label: "à¸—à¸µà¹ˆà¸›à¸£à¸¶à¸à¸©à¸²",         Icon: UserCheck,   iconName: "UserCheck" },
+    { key: "tutor",      label: "à¸•à¸´à¸§à¹€à¸•à¸­à¸£à¹Œ",          Icon: BookOpen,    iconName: "BookOpen" },
+    { key: "photo",      label: "à¸–à¹ˆà¸²à¸¢à¸ à¸²à¸ž",           Icon: Camera,      iconName: "Camera" },
+    { key: "delivery",   label: "à¹„à¸£à¹€à¸”à¸­à¸£à¹Œ",           Icon: Bike,        iconName: "Bike" },
+    { key: "driver",     label: "à¸‚à¸±à¸šà¸£à¸–",             Icon: Car,         iconName: "Car" },
+    { key: "design",     label: "à¸‡à¸²à¸™à¸”à¸µà¹„à¸‹à¸™à¹Œ",         Icon: PenTool,     iconName: "PenTool" },
+    { key: "dev",        label: "à¹‚à¸›à¸£à¹à¸à¸£à¸¡à¹€à¸¡à¸­à¸£à¹Œ",      Icon: Code,        iconName: "Code" },
+    { key: "work",       label: "à¸—à¸³à¸‡à¸²à¸™",             Icon: Banknote,    iconName: "Banknote" },
+  ],
+  "à¸à¸²à¸£à¸¥à¸‡à¸—à¸¸à¸™ & à¸”à¸­à¸à¸œà¸¥": [
+    { key: "interest",   label: "à¸”à¸­à¸à¹€à¸šà¸µà¹‰à¸¢",          Icon: Coins,       iconName: "Coins" },
+    { key: "dividend",   label: "à¹€à¸‡à¸´à¸™à¸›à¸±à¸™à¸œà¸¥",         Icon: PiggyBank,   iconName: "PiggyBank" },
+    { key: "stock",      label: "à¸«à¸¸à¹‰à¸™",               Icon: LineChart,   iconName: "LineChart" },
+    { key: "bond",       label: "à¸žà¸±à¸™à¸˜à¸šà¸±à¸•à¸£",          Icon: FileText,    iconName: "FileText" },
+    { key: "fund",       label: "à¸à¸­à¸‡à¸—à¸¸à¸™à¸£à¸§à¸¡",         Icon: Layers,      iconName: "Layers" },
+    { key: "profit",     label: "à¸à¸³à¹„à¸£à¸‹à¸·à¹‰à¸­à¸‚à¸²à¸¢",       Icon: TrendingUp,  iconName: "TrendingUp" },
+  ],
+  "à¸„à¹ˆà¸²à¹€à¸Šà¹ˆà¸² & à¸—à¸£à¸±à¸žà¸¢à¹Œà¸ªà¸´à¸™": [
+    { key: "rent_house", label: "à¸„à¹ˆà¸²à¹€à¸Šà¹ˆà¸²à¸šà¹‰à¸²à¸™",       Icon: Home,        iconName: "Home" },
+    { key: "rent_room",  label: "à¸„à¹ˆà¸²à¹€à¸Šà¹ˆà¸²à¸«à¹‰à¸­à¸‡",       Icon: Bed,         iconName: "Bed" },
+    { key: "rent_office",label: "à¸„à¹ˆà¸²à¹€à¸Šà¹ˆà¸²à¸ªà¸³à¸™à¸±à¸à¸‡à¸²à¸™",  Icon: Building,    iconName: "Building" },
+    { key: "rent_car",   label: "à¸„à¹ˆà¸²à¹€à¸Šà¹ˆà¸²à¸£à¸–",         Icon: Truck,       iconName: "Truck" },
+    { key: "rent_asset", label: "à¹€à¸Šà¹ˆà¸²à¸—à¸£à¸±à¸žà¸¢à¹Œà¸ªà¸´à¸™",     Icon: Package,     iconName: "Package" },
+  ],
+  "à¸„à¹‰à¸²à¸‚à¸²à¸¢ & à¸­à¸­à¸™à¹„à¸¥à¸™à¹Œ": [
+    { key: "online_sale",label: "à¸‚à¸²à¸¢à¸­à¸­à¸™à¹„à¸¥à¸™à¹Œ",        Icon: ShoppingBag, iconName: "ShoppingBag" },
+    { key: "retail",     label: "à¸„à¹‰à¸²à¸›à¸¥à¸µà¸",           Icon: Store,       iconName: "Store" },
+    { key: "wholesale",  label: "à¸„à¹‰à¸²à¸ªà¹ˆà¸‡",            Icon: Boxes,       iconName: "Boxes" },
+    { key: "market",     label: "à¸•à¸¥à¸²à¸”à¸™à¸±à¸”",           Icon: Tent,        iconName: "Tent" },
+    { key: "cashback",   label: "Cashback",          Icon: CreditCard,  iconName: "CreditCard" },
+    { key: "voucher",    label: "Voucher",           Icon: Ticket,      iconName: "Ticket" },
+  ],
+  "à¸„à¸£à¸µà¹€à¸­à¹€à¸•à¸­à¸£à¹Œ & à¸¥à¸´à¸‚à¸ªà¸´à¸—à¸˜à¸´à¹Œ": [
+    { key: "youtube",    label: "YouTube Ads",       Icon: Video,       iconName: "Video" },
+    { key: "twitch",     label: "Live Stream",       Icon: Mic,         iconName: "Mic" },
+    { key: "podcast",    label: "Podcast",           Icon: Radio,       iconName: "Radio" },
+    { key: "royalty_music", label: "à¹€à¸žà¸¥à¸‡",           Icon: Music,       iconName: "Music" },
+    { key: "royalty_film",  label: "à¸«à¸™à¸±à¸‡/à¸¥à¸°à¸„à¸£",      Icon: Film,        iconName: "Film" },
+    { key: "royalty_game",  label: "à¹€à¸à¸¡",            Icon: Gamepad,     iconName: "Gamepad" },
+  ],
+  "à¸—à¸¸à¸™à¸à¸²à¸£à¸¨à¸¶à¸à¸©à¸² & à¸ªà¸™à¸±à¸šà¸ªà¸™à¸¸à¸™": [
+    { key: "scholarship",label: "à¸—à¸¸à¸™à¸à¸²à¸£à¸¨à¸¶à¸à¸©à¸²",      Icon: GraduationCap, iconName: "GraduationCap" },
+    { key: "stipend",    label: "à¹€à¸šà¸µà¹‰à¸¢à¹€à¸¥à¸µà¹‰à¸¢à¸‡",      Icon: ClipboardList, iconName: "ClipboardList" },
+    { key: "grant",      label: "Grant/à¸—à¸¸à¸™à¸§à¸´à¸ˆà¸±à¸¢",   Icon: ClipboardCheck,iconName: "ClipboardCheck" },
+    { key: "competition",label: "à¸Šà¸™à¸°à¸›à¸£à¸°à¸à¸§à¸”",        Icon: Trophy,        iconName: "Trophy" },
+  ],
+  "à¸‚à¸­à¸‡à¸‚à¸§à¸±à¸ & à¸­à¸·à¹ˆà¸™ à¹†": [
+    { key: "gift_money", label: "à¸­à¸±à¹ˆà¸‡à¹€à¸›à¸²/à¸‚à¸­à¸‡à¸‚à¸§à¸±à¸",  Icon: Gift,        iconName: "Gift" },
+    { key: "tips",       label: "à¸—à¸´à¸›",               Icon: Coffee,      iconName: "Coffee" },
+    { key: "lottery",    label: "à¸¥à¸­à¸•à¹€à¸•à¸­à¸£à¸µà¹ˆ",         Icon: Star,        iconName: "Star" },
+    { key: "inheritance",label: "à¸¡à¸£à¸”à¸",             Icon: Gem,         iconName: "Gem" },
+    { key: "hand_coins", label: "à¸„à¹ˆà¸²à¸‚à¸™à¸¡",           Icon: HandCoins,   iconName: "HandCoins" },
+  ],
+  "Crypto & Digital Assets": [
+    { key: "btc",        label: "Bitcoin",           Icon: Bitcoin,     iconName: "Bitcoin" },
+    { key: "eth",        label: "Ethereum",          Icon: CircuitBoard,iconName: "CircuitBoard" },
+    { key: "nft",        label: "NFT",               Icon: Image,       iconName: "Image" },
+    { key: "airdrop",    label: "Airdrop",           Icon: Cloud,       iconName: "Cloud" },
+    { key: "staking",    label: "Staking",           Icon: Lock,        iconName: "Lock" },
+  ],
+  "Passive Income & Royalty": [
+    { key: "affiliate",  label: "Affiliate",         Icon: Link,        iconName: "Link" },
+    { key: "ads",        label: "à¹‚à¸†à¸©à¸“à¸²",            Icon: Megaphone,   iconName: "Megaphone" },
+    { key: "license",    label: "License",           Icon: FileBadge,   iconName: "FileBadge" },
+    { key: "membership", label: "à¸ªà¸¡à¸²à¸Šà¸´à¸/Subscription", Icon: Users,     iconName: "Users" },
+  ],
+};
+
+export default function IncomeCustom() {
+  const navigate = useNavigate();
+
+  const [picked, setPicked] = useState<IconItem | null>(null);
+  const [name, setName] = useState("");
+  const [query, setQuery] = useState("");
+
+  const filteredSets = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return ICON_SETS_INCOME;
+
+    const next: Record<string, IconItem[]> = {};
+    Object.entries(ICON_SETS_INCOME).forEach(([group, list]) => {
+      if (group.toLowerCase().includes(q)) {
+        next[group] = list;
+        return;
+      }
+      const hit = list.filter(
+        (it) =>
+          it.label.toLowerCase().includes(q) ||
+          it.key.toLowerCase().includes(q)
+      );
+      if (hit.length) next[group] = hit;
+    });
+    return next;
+  }, [query]);
+
+  function handleConfirm() {
+    if (!picked || !name.trim()) {
+      alert("à¸à¸£à¸¸à¸“à¸²à¹€à¸¥à¸·à¸­à¸à¹„à¸­à¸„à¸­à¸™à¹à¸¥à¸°à¸•à¸±à¹‰à¸‡à¸Šà¸·à¹ˆà¸­");
+      return;
+    }
+    // âœ… à¸ªà¹ˆà¸‡à¸à¸¥à¸±à¸šà¹„à¸›à¸«à¸™à¹‰à¸² Income à¸žà¸£à¹‰à¸­à¸¡ state
+    navigate("/income", {
+      state: {
+        customIncome: {
+          label: name.trim(),
+          icon: picked.iconName, // à¸•à¹‰à¸­à¸‡à¸•à¸£à¸‡à¸à¸±à¸š ICON_MAP à¹ƒà¸™à¸«à¸™à¹‰à¸² Income
+        },
+      },
+      replace: true,
+    });
+  }
+
+  return (
+    <div className="cc-wrap">
+      {/* Header */}
+      <header className="cc-header">
+        <h1 className="cc-title">Custom Income</h1>
+      </header>
+
+      {/* Search bar */}
+      <div className="cc-search">
+        <Search className="cc-search-icon" />
+        <input
+          className="cc-search-input"
+          placeholder="à¸„à¹‰à¸™à¸«à¸²à¹„à¸­à¸„à¸­à¸™à¸£à¸²à¸¢à¹„à¸”à¹‰â€¦ (à¹€à¸Šà¹ˆà¸™ à¹€à¸‡à¸´à¸™à¹€à¸”à¸·à¸­à¸™, à¸Ÿà¸£à¸µà¹à¸¥à¸™à¸‹à¹Œ, à¸›à¸±à¸™à¸œà¸¥)"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+        {query && (
+          <button
+            className="cc-search-clear"
+            onClick={() => setQuery("")}
+            aria-label="à¸¥à¹‰à¸²à¸‡à¸„à¸³à¸„à¹‰à¸™"
+          >
+            Ã—
+          </button>
+        )}
+      </div>
+
+      {/* Creator */}
+      <section className="cc-creator">
+        <div className="cc-picked">
+          {picked ? <picked.Icon className="cc-picked-icon" /> : <span>?</span>}
+        </div>
+
+        <div className="cc-namefield">
+          <input
+            className="cc-nameinput"
+            placeholder="à¸Šà¸·à¹ˆà¸­à¸«à¸¡à¸§à¸”à¸£à¸²à¸¢à¹„à¸”à¹‰"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            maxLength={32}
+          />
+          <div className="cc-underline" />
+        </div>
+
+        <button className="cc-confirm" onClick={handleConfirm} aria-label="à¸¢à¸·à¸™à¸¢à¸±à¸™">
+          <Check className="cc-checkicon" />
+        </button>
+      </section>
+
+      {/* Library */}
+      <section className="cc-library">
+        {Object.keys(filteredSets).length === 0 ? (
+          <p className="cc-noresult">à¹„à¸¡à¹ˆà¸žà¸šà¹„à¸­à¸„à¸­à¸™à¸—à¸µà¹ˆà¸•à¸£à¸‡à¸à¸±à¸š â€œ{query}â€</p>
+        ) : (
+          Object.entries(filteredSets).map(([group, list]) => (
+            <div key={group} className="cc-group">
+              <h3 className="cc-group-title">{group}</h3>
+              <div className="cc-grid">
+                {list.map((item) => (
+                  <button
+                    key={item.key}
+                    className={`cc-chip ${picked?.key === item.key ? "active" : ""}`}
+                    onClick={() => {
+                      setPicked(item);
+                    }}
+                    title={item.label}
+                  >
+                    <item.Icon className="cc-icon" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))
+        )}
+      </section>
+
+      <BottomNav />
+    </div>
+  );
+}
+
+
+
+

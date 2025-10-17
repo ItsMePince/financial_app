@@ -1,4 +1,4 @@
-// cypress/e2e/accountselect.cy.ts
+﻿// cypress/e2e/accountselect.cy.ts
 
 // ---------------- helpers ----------------
 function uiLogin() {
@@ -12,13 +12,13 @@ function uiLogin() {
     .type('john');
 
   cy.get(
-    'input[placeholder*="pass"], input[placeholder*="รหัส"], input[autocomplete="current-password"], input[name="password"], input#password'
+    'input[placeholder*="pass"], input[placeholder*="à¸£à¸«à¸±à¸ª"], input[autocomplete="current-password"], input[name="password"], input#password'
   )
     .first()
     .clear()
     .type('pass123');
 
-  cy.contains('button, [type="submit"]', /login|เข้าสู่ระบบ/i)
+  cy.contains('button, [type="submit"]', /login|à¹€à¸‚à¹‰à¸²à¸ªà¸¹à¹ˆà¸£à¸°à¸šà¸š/i)
     .first()
     .click();
 
@@ -30,13 +30,13 @@ function goToAccountSelect() {
   cy.location('pathname', { timeout: 10000 }).should('include', '/accountselect');
 }
 
-/** กดฟิลเตอร์ "ทั้งหมด" แบบ optional จริง ๆ (ไม่เจอ = ข้าม) */
+/** à¸à¸”à¸Ÿà¸´à¸¥à¹€à¸•à¸­à¸£à¹Œ "à¸—à¸±à¹‰à¸‡à¸«à¸¡à¸”" à¹à¸šà¸š optional à¸ˆà¸£à¸´à¸‡ à¹† (à¹„à¸¡à¹ˆà¹€à¸ˆà¸­ = à¸‚à¹‰à¸²à¸¡) */
 function clickFilterAllIfVisible() {
   cy.get('body').then(($body) => {
-    // หาองค์ประกอบที่ "มีข้อความ ทั้งหมด" และ "มองเห็น" ไม่บังคับว่าเป็น <button.seg>
+    // à¸«à¸²à¸­à¸‡à¸„à¹Œà¸›à¸£à¸°à¸à¸­à¸šà¸—à¸µà¹ˆ "à¸¡à¸µà¸‚à¹‰à¸­à¸„à¸§à¸²à¸¡ à¸—à¸±à¹‰à¸‡à¸«à¸¡à¸”" à¹à¸¥à¸° "à¸¡à¸­à¸‡à¹€à¸«à¹‡à¸™" à¹„à¸¡à¹ˆà¸šà¸±à¸‡à¸„à¸±à¸šà¸§à¹ˆà¸²à¹€à¸›à¹‡à¸™ <button.seg>
     const $cand = $body
-      .find('*:contains("ทั้งหมด"):visible')
-      .filter((_, el) => Cypress.$(el).text().trim() === 'ทั้งหมด')
+      .find('*:contains("à¸—à¸±à¹‰à¸‡à¸«à¸¡à¸”"):visible')
+      .filter((_, el) => Cypress.$(el).text().trim() === 'à¸—à¸±à¹‰à¸‡à¸«à¸¡à¸”')
       .first();
 
     if ($cand.length) {
@@ -45,7 +45,7 @@ function clickFilterAllIfVisible() {
   });
 }
 
-/** เคลียร์ดาวเหลืองทั้งหน้า (ถ้ามี) — ดูจาก path ที่มี fill="currentColor" */
+/** à¹€à¸„à¸¥à¸µà¸¢à¸£à¹Œà¸”à¸²à¸§à¹€à¸«à¸¥à¸·à¸­à¸‡à¸—à¸±à¹‰à¸‡à¸«à¸™à¹‰à¸² (à¸–à¹‰à¸²à¸¡à¸µ) â€” à¸”à¸¹à¸ˆà¸²à¸ path à¸—à¸µà¹ˆà¸¡à¸µ fill="currentColor" */
 function clearAllFavoritesIfAny() {
   cy.get('body').then(($body) => {
     const $filled = $body.find('svg path[fill="currentColor"]');
@@ -57,21 +57,21 @@ function clearAllFavoritesIfAny() {
   });
 }
 
-/** สลับดาวในแถวที่ระบุข้อความ */
+/** à¸ªà¸¥à¸±à¸šà¸”à¸²à¸§à¹ƒà¸™à¹à¸–à¸§à¸—à¸µà¹ˆà¸£à¸°à¸šà¸¸à¸‚à¹‰à¸­à¸„à¸§à¸²à¸¡ */
 function toggleStarInRowByText(rowText: string) {
-  // ใช้ตัวเลือกกว้าง ๆ เพื่อครอบคลุมหลายโครงสร้าง DOM
+  // à¹ƒà¸Šà¹‰à¸•à¸±à¸§à¹€à¸¥à¸·à¸­à¸à¸à¸§à¹‰à¸²à¸‡ à¹† à¹€à¸žà¸·à¹ˆà¸­à¸„à¸£à¸­à¸šà¸„à¸¥à¸¸à¸¡à¸«à¸¥à¸²à¸¢à¹‚à¸„à¸£à¸‡à¸ªà¸£à¹‰à¸²à¸‡ DOM
   cy.contains('button, .card, li, [role="listitem"], .item, .row, div', rowText)
     .filter(':visible')
     .first()
     .as('row');
 
   cy.get('@row').within(() => {
-    // เลือกไอคอนดาวตัวท้ายสุดในแถว (กรณีมีหลายตัว)
+    // à¹€à¸¥à¸·à¸­à¸à¹„à¸­à¸„à¸­à¸™à¸”à¸²à¸§à¸•à¸±à¸§à¸—à¹‰à¸²à¸¢à¸ªà¸¸à¸”à¹ƒà¸™à¹à¸–à¸§ (à¸à¸£à¸“à¸µà¸¡à¸µà¸«à¸¥à¸²à¸¢à¸•à¸±à¸§)
     cy.get('svg:has(path)').last().scrollIntoView().click({ force: true });
   });
 }
 
-/** ยืนยันว่าแถวมีดาว "ติด" (มี path ที่ fill="currentColor") */
+/** à¸¢à¸·à¸™à¸¢à¸±à¸™à¸§à¹ˆà¸²à¹à¸–à¸§à¸¡à¸µà¸”à¸²à¸§ "à¸•à¸´à¸”" (à¸¡à¸µ path à¸—à¸µà¹ˆ fill="currentColor") */
 function assertRowStarOn(rowText: string) {
   cy.contains('button, .card, li, [role="listitem"], .item, .row, div', rowText)
     .filter(':visible')
@@ -83,15 +83,15 @@ function assertRowStarOn(rowText: string) {
   });
 }
 
-/** ยืนยันว่า “ทั้งหน้า” มีดาวเหลืองติดอยู่แค่แถวเดียว และเป็นแถวที่เราระบุ */
+/** à¸¢à¸·à¸™à¸¢à¸±à¸™à¸§à¹ˆà¸² â€œà¸—à¸±à¹‰à¸‡à¸«à¸™à¹‰à¸²â€ à¸¡à¸µà¸”à¸²à¸§à¹€à¸«à¸¥à¸·à¸­à¸‡à¸•à¸´à¸”à¸­à¸¢à¸¹à¹ˆà¹à¸„à¹ˆà¹à¸–à¸§à¹€à¸”à¸µà¸¢à¸§ à¹à¸¥à¸°à¹€à¸›à¹‡à¸™à¹à¸–à¸§à¸—à¸µà¹ˆà¹€à¸£à¸²à¸£à¸°à¸šà¸¸ */
 function assertOnlyThisRowStarOn(rowText: string) {
-  // นับจำนวนดาวเหลืองทั้งหน้า
+  // à¸™à¸±à¸šà¸ˆà¸³à¸™à¸§à¸™à¸”à¸²à¸§à¹€à¸«à¸¥à¸·à¸­à¸‡à¸—à¸±à¹‰à¸‡à¸«à¸™à¹‰à¸²
   cy.get('svg path[fill="currentColor"]').then(($all) => {
-    // ถ้าแอปดีไซน์ให้ติดได้หลายอัน ให้คอมเมนต์บรรทัดนี้ออก
-    expect($all.length, 'ควรเหลือดาวเหลืองเพียง 1 ดวง').to.equal(1);
+    // à¸–à¹‰à¸²à¹à¸­à¸›à¸”à¸µà¹„à¸‹à¸™à¹Œà¹ƒà¸«à¹‰à¸•à¸´à¸”à¹„à¸”à¹‰à¸«à¸¥à¸²à¸¢à¸­à¸±à¸™ à¹ƒà¸«à¹‰à¸„à¸­à¸¡à¹€à¸¡à¸™à¸•à¹Œà¸šà¸£à¸£à¸—à¸±à¸”à¸™à¸µà¹‰à¸­à¸­à¸
+    expect($all.length, 'à¸„à¸§à¸£à¹€à¸«à¸¥à¸·à¸­à¸”à¸²à¸§à¹€à¸«à¸¥à¸·à¸­à¸‡à¹€à¸žà¸µà¸¢à¸‡ 1 à¸”à¸§à¸‡').to.equal(1);
   });
 
-  // ตรวจว่าอยู่ในแถวที่ระบุ
+  // à¸•à¸£à¸§à¸ˆà¸§à¹ˆà¸²à¸­à¸¢à¸¹à¹ˆà¹ƒà¸™à¹à¸–à¸§à¸—à¸µà¹ˆà¸£à¸°à¸šà¸¸
   cy.contains('button, .card, li, [role="listitem"], .item, .row, div', rowText)
     .filter(':visible')
     .first()
@@ -103,25 +103,28 @@ function assertOnlyThisRowStarOn(rowText: string) {
 }
 
 // ---------------- main test ----------------
-describe('E2E-ACCT-001 : ติดดาวบัญชีที่ใช้บ่อย (Account Select)', () => {
-  it('ล็อกอิน → ไป accountselect → (ถ้ามี)กดฟิลเตอร์ทั้งหมด → เคลียร์ดาว → ติดดาว "บัตรKTC" → ตรวจสอบ', () => {
+describe('E2E-ACCT-001 : à¸•à¸´à¸”à¸”à¸²à¸§à¸šà¸±à¸à¸Šà¸µà¸—à¸µà¹ˆà¹ƒà¸Šà¹‰à¸šà¹ˆà¸­à¸¢ (Account Select)', () => {
+  it('à¸¥à¹‡à¸­à¸à¸­à¸´à¸™ â†’ à¹„à¸› accountselect â†’ (à¸–à¹‰à¸²à¸¡à¸µ)à¸à¸”à¸Ÿà¸´à¸¥à¹€à¸•à¸­à¸£à¹Œà¸—à¸±à¹‰à¸‡à¸«à¸¡à¸” â†’ à¹€à¸„à¸¥à¸µà¸¢à¸£à¹Œà¸”à¸²à¸§ â†’ à¸•à¸´à¸”à¸”à¸²à¸§ "à¸šà¸±à¸•à¸£KTC" â†’ à¸•à¸£à¸§à¸ˆà¸ªà¸­à¸š', () => {
     uiLogin();
     goToAccountSelect();
 
-    // ปุ่ม/ตัวกรอง "ทั้งหมด" เป็น optional (ถ้าโผล่ค่อยกด)
+    // à¸›à¸¸à¹ˆà¸¡/à¸•à¸±à¸§à¸à¸£à¸­à¸‡ "à¸—à¸±à¹‰à¸‡à¸«à¸¡à¸”" à¹€à¸›à¹‡à¸™ optional (à¸–à¹‰à¸²à¹‚à¸œà¸¥à¹ˆà¸„à¹ˆà¸­à¸¢à¸à¸”)
     clickFilterAllIfVisible();
 
-    // เคลียร์ดาวเหลืองทั้งหมดก่อนเริ่ม (ถ้ามี)
+    // à¹€à¸„à¸¥à¸µà¸¢à¸£à¹Œà¸”à¸²à¸§à¹€à¸«à¸¥à¸·à¸­à¸‡à¸—à¸±à¹‰à¸‡à¸«à¸¡à¸”à¸à¹ˆà¸­à¸™à¹€à¸£à¸´à¹ˆà¸¡ (à¸–à¹‰à¸²à¸¡à¸µ)
     clearAllFavoritesIfAny();
 
-    // ติดดาวให้ "บัตรKTC"
-    toggleStarInRowByText('บัตรKTC');
+    // à¸•à¸´à¸”à¸”à¸²à¸§à¹ƒà¸«à¹‰ "à¸šà¸±à¸•à¸£KTC"
+    toggleStarInRowByText('à¸šà¸±à¸•à¸£KTC');
 
-    // แถว "บัตรKTC" ต้องมีดาวเหลืองแล้ว
-    assertRowStarOn('บัตรKTC');
+    // à¹à¸–à¸§ "à¸šà¸±à¸•à¸£KTC" à¸•à¹‰à¸­à¸‡à¸¡à¸µà¸”à¸²à¸§à¹€à¸«à¸¥à¸·à¸­à¸‡à¹à¸¥à¹‰à¸§
+    assertRowStarOn('à¸šà¸±à¸•à¸£KTC');
 
-    // (ถ้าต้องการ strict) ยืนยันว่ามีแค่แถวนี้ที่ดาวเหลือง
-    // ถ้าดีไซน์อนุญาตหลาย favorite ให้คอมเมนต์ทิ้ง
-    assertOnlyThisRowStarOn('บัตรKTC');
+    // (à¸–à¹‰à¸²à¸•à¹‰à¸­à¸‡à¸à¸²à¸£ strict) à¸¢à¸·à¸™à¸¢à¸±à¸™à¸§à¹ˆà¸²à¸¡à¸µà¹à¸„à¹ˆà¹à¸–à¸§à¸™à¸µà¹‰à¸—à¸µà¹ˆà¸”à¸²à¸§à¹€à¸«à¸¥à¸·à¸­à¸‡
+    // à¸–à¹‰à¸²à¸”à¸µà¹„à¸‹à¸™à¹Œà¸­à¸™à¸¸à¸à¸²à¸•à¸«à¸¥à¸²à¸¢ favorite à¹ƒà¸«à¹‰à¸„à¸­à¸¡à¹€à¸¡à¸™à¸•à¹Œà¸—à¸´à¹‰à¸‡
+    assertOnlyThisRowStarOn('à¸šà¸±à¸•à¸£KTC');
   });
 });
+
+
+

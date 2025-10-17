@@ -1,0 +1,134 @@
+﻿// src/pages/expense.test.tsx
+import React from "react";
+import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import Expense from "./expense";
+import { TempCategoryProvider } from "../TempCategoryContext";
+
+// âœ… mock BottomNav à¸à¸±à¸™ useLocation error
+vi.mock("./buttomnav", () => ({
+  default: () => <div data-testid="bottom-nav" />,
+}));
+
+// âœ… mock usePaymentMethod à¹€à¸žà¸·à¹ˆà¸­à¹„à¸¡à¹ˆà¸•à¹‰à¸­à¸‡à¹ƒà¸Šà¹‰ Provider à¸ˆà¸£à¸´à¸‡
+vi.mock("../PaymentMethodContext", () => ({
+  usePaymentMethod: () => ({
+    payment: { name: "à¹€à¸‡à¸´à¸™à¸ªà¸”" },
+    setPayment: vi.fn(),
+  }),
+}));
+
+// helper: à¹€à¸¥à¸·à¸­à¸à¸›à¸¸à¹ˆà¸¡à¸¢à¸·à¸™à¸¢à¸±à¸™à¸”à¹‰à¸§à¸¢ class
+function getConfirmBtn() {
+  const btn = document.querySelector<HTMLButtonElement>(".ok-btn");
+  if (!btn) throw new Error("à¹„à¸¡à¹ˆà¸žà¸šà¸›à¸¸à¹ˆà¸¡à¸¢à¸·à¸™à¸¢à¸±à¸™ (.ok-btn)");
+  return btn;
+}
+
+// helper: à¹€à¸¥à¸·à¸­à¸à¸›à¸¸à¹ˆà¸¡à¸¥à¸šà¹ƒà¸™ keypad à¸”à¹‰à¸§à¸¢ class
+function getBackspaceBtn() {
+  const btn = document.querySelector<HTMLButtonElement>(".keypad .key.danger");
+  if (!btn) throw new Error("à¹„à¸¡à¹ˆà¸žà¸šà¸›à¸¸à¹ˆà¸¡à¸¥à¸š (.keypad .key.danger)");
+  return btn;
+}
+
+// helper: render à¸žà¸£à¹‰à¸­à¸¡ TempCategoryProvider
+function renderWithProviders(ui: React.ReactNode) {
+  return render(
+    <MemoryRouter>
+      <TempCategoryProvider>{ui}</TempCategoryProvider>
+    </MemoryRouter>
+  );
+}
+
+// mock fetch à¸—à¸µà¸¥à¸°à¸„à¸£à¸±à¹‰à¸‡
+function mockFetchOnce(data: any, ok = true, status = 200) {
+  global.fetch = vi.fn().mockResolvedValue({
+    ok,
+    status,
+    json: async () => data,
+    text: async () => (typeof data === "string" ? data : JSON.stringify(data)),
+  }) as any;
+}
+
+describe("Expense Page", () => {
+  const originalAlert = window.alert;
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    window.alert = vi.fn();
+    sessionStorage.clear();
+  });
+  afterEach(() => {
+    window.alert = originalAlert;
+  });
+
+  it("à¹à¸ªà¸”à¸‡à¸«à¸±à¸§à¸‚à¹‰à¸­ 'à¸„à¹ˆà¸²à¹ƒà¸Šà¹‰à¸ˆà¹ˆà¸²à¸¢' à¹à¸¥à¸°à¸›à¸¸à¹ˆà¸¡ confirm", () => {
+    renderWithProviders(<Expense />);
+    expect(screen.getByText("à¸„à¹ˆà¸²à¹ƒà¸Šà¹‰à¸ˆà¹ˆà¸²à¸¢")).toBeInTheDocument();
+    expect(getConfirmBtn()).toBeInTheDocument();
+  });
+
+  it("à¸ªà¸²à¸¡à¸²à¸£à¸–à¹€à¸¥à¸·à¸­à¸à¸«à¸¡à¸§à¸”à¸«à¸¡à¸¹à¹ˆà¹„à¸”à¹‰", () => {
+    renderWithProviders(<Expense />);
+    const giftBtn = screen.getByText("à¸‚à¸­à¸‡à¸‚à¸§à¸±à¸");
+    fireEvent.click(giftBtn);
+    // à¹‚à¸„à¸£à¸‡à¸ªà¸£à¹‰à¸²à¸‡à¸›à¸¸à¹ˆà¸¡à¹€à¸›à¹‡à¸™ <button class="cat ..."><span>à¸‚à¸­à¸‡à¸‚à¸§à¸±à¸</span></button>
+    // à¸ˆà¸¶à¸‡à¹€à¸Šà¹‡à¸„ class à¸—à¸µà¹ˆ element à¸‚à¸­à¸‡ span (parent à¸„à¸·à¸­ button)
+    expect(giftBtn.parentElement).toHaveClass("cat");
+    expect(giftBtn.parentElement?.className).toMatch(/active/);
+  });
+
+  it("keypad: à¸žà¸´à¸¡à¸žà¹Œà¸•à¸±à¸§à¹€à¸¥à¸‚à¹à¸¥à¸°à¸¥à¸šà¹„à¸”à¹‰", () => {
+    renderWithProviders(<Expense />);
+
+    const keypad = document.querySelector(".keypad") as HTMLElement;
+    const amountEl = document.querySelector(".amount .num") as HTMLElement;
+
+    // à¸ˆà¸³à¸à¸±à¸”à¸à¸²à¸£à¸„à¹‰à¸™à¸«à¸²à¹ƒà¸™ keypad à¹€à¸žà¸·à¹ˆà¸­à¹„à¸¡à¹ˆà¸Šà¸™à¸à¸±à¸šà¸•à¸±à¸§à¹€à¸¥à¸‚à¹à¸ªà¸”à¸‡à¸œà¸¥
+    fireEvent.click(within(keypad).getByText("1"));
+    fireEvent.click(within(keypad).getByText("2"));
+
+    expect(amountEl).toHaveTextContent("12");
+
+    // à¸¥à¸š 1 à¸•à¸±à¸§
+    fireEvent.click(getBackspaceBtn());
+    expect(amountEl).toHaveTextContent("1");
+  });
+
+  it("à¹à¸ªà¸”à¸‡ alert à¸–à¹‰à¸² required field à¹„à¸¡à¹ˆà¸„à¸£à¸š", async () => {
+    renderWithProviders(<Expense />);
+    fireEvent.click(getConfirmBtn());
+    await waitFor(() => {
+      expect(window.alert).toHaveBeenCalledWith("Required âŒ");
+    });
+  });
+
+  it("à¹€à¸£à¸µà¸¢à¸ API à¹à¸¥à¸° reset à¹€à¸¡à¸·à¹ˆà¸­à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸„à¸£à¸šà¸–à¹‰à¸§à¸™", async () => {
+    mockFetchOnce({}, true);
+
+    renderWithProviders(<Expense />);
+
+    // à¸à¸£à¸­à¸à¸Ÿà¸´à¸¥à¸”à¹Œà¸—à¸µà¹ˆà¸ˆà¸³à¹€à¸›à¹‡à¸™
+    fireEvent.change(screen.getByPlaceholderText("à¹‚à¸™à¹‰à¸•"), {
+      target: { value: "test note" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("à¸ªà¸–à¸²à¸™à¸—à¸µà¹ˆ"), {
+      target: { value: "office" },
+    });
+
+    const keypad = document.querySelector(".keypad") as HTMLElement;
+    fireEvent.click(within(keypad).getByText("1"));
+    fireEvent.click(within(keypad).getByText("0"));
+
+    fireEvent.click(getConfirmBtn());
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalled();
+      expect(window.alert).toHaveBeenCalledWith("à¸šà¸±à¸™à¸—à¸¶à¸à¹€à¸£à¸µà¸¢à¸šà¸£à¹‰à¸­à¸¢ âœ…");
+    });
+  });
+});
+
+
+

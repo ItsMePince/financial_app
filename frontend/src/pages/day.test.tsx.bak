@@ -1,0 +1,183 @@
+﻿// src/pages/day.test.tsx
+import React from "react";
+import { render, screen, waitFor, fireEvent, within } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import Day from "./day";
+
+// ---------- Helpers ----------
+function mockFetchOk(data: any, delay = 0) {
+  const resp = {
+    ok: true,
+    json: async () => data,
+  } as Response;
+  if (delay > 0) {
+    return vi.fn().mockImplementation(
+      () => new Promise((r) => setTimeout(() => r(resp), delay))
+    );
+  }
+  return vi.fn().mockResolvedValue(resp);
+}
+
+function mockFetchErr(status = 500) {
+  const resp = {
+    ok: false,
+    status,
+    json: async () => {
+      throw new Error(`à¹‚à¸«à¸¥à¸”à¸£à¸²à¸¢à¸à¸²à¸£à¹„à¸¡à¹ˆà¸ªà¸³à¹€à¸£à¹‡à¸ˆ (${status})`);
+    },
+  } as any;
+  return vi.fn().mockResolvedValue(resp);
+}
+
+function renderWithRouter(
+  ui: React.ReactNode,
+  initialEntries = ["/day?date=2025-09-24"]
+) {
+  return render(
+    <MemoryRouter initialEntries={initialEntries}>{ui}</MemoryRouter>
+  );
+}
+
+beforeEach(() => {
+  // polyfill ResizeObserver
+  // @ts-ignore
+  global.ResizeObserver =
+    global.ResizeObserver ||
+    class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    };
+
+  vi.restoreAllMocks();
+});
+
+afterEach(() => {
+  vi.clearAllMocks();
+});
+
+describe("Day Page", () => {
+  it("à¹à¸ªà¸”à¸‡à¸ªà¸–à¸²à¸™à¸° loading à¸•à¸­à¸™à¹à¸£à¸", async () => {
+    global.fetch = mockFetchOk([], 80) as any;
+
+    renderWithRouter(<Day />);
+
+    expect(screen.getByText(/à¸à¸³à¸¥à¸±à¸‡à¹‚à¸«à¸¥à¸”à¸‚à¹‰à¸­à¸¡à¸¹à¸¥/i)).toBeInTheDocument();
+
+    await waitFor(() =>
+      expect(screen.queryByText(/à¸à¸³à¸¥à¸±à¸‡à¹‚à¸«à¸¥à¸”à¸‚à¹‰à¸­à¸¡à¸¹à¸¥/i)).not.toBeInTheDocument()
+    );
+  });
+
+  it("à¹à¸ªà¸”à¸‡à¸‚à¹‰à¸­à¸„à¸§à¸²à¸¡ error à¹€à¸¡à¸·à¹ˆà¸­ API à¸¥à¹‰à¸¡à¹€à¸«à¸¥à¸§", async () => {
+    global.fetch = mockFetchErr(500) as any;
+
+    renderWithRouter(<Day />);
+
+    await waitFor(() =>
+      expect(
+        screen.getByText(/à¹‚à¸«à¸¥à¸”à¸£à¸²à¸¢à¸à¸²à¸£à¹„à¸¡à¹ˆà¸ªà¸³à¹€à¸£à¹‡à¸ˆ \(500\)/)
+      ).toBeInTheDocument()
+    );
+  });
+
+  it("à¹à¸ªà¸”à¸‡à¸‚à¹‰à¸­à¸„à¸§à¸²à¸¡ 'à¸§à¸±à¸™à¸™à¸µà¹‰à¸¢à¸±à¸‡à¹„à¸¡à¹ˆà¸¡à¸µà¸£à¸²à¸¢à¸à¸²à¸£' à¸–à¹‰à¸² API à¸„à¸·à¸™ array à¸§à¹ˆà¸²à¸‡", async () => {
+    global.fetch = mockFetchOk([]) as any;
+
+    renderWithRouter(<Day />);
+
+    await waitFor(() =>
+      expect(screen.getByText(/à¸§à¸±à¸™à¸™à¸µà¹‰à¸¢à¸±à¸‡à¹„à¸¡à¹ˆà¸¡à¸µà¸£à¸²à¸¢à¸à¸²à¸£/i)).toBeInTheDocument()
+    );
+  });
+
+  it("à¹à¸ªà¸”à¸‡à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¹€à¸¡à¸·à¹ˆà¸­à¹‚à¸«à¸¥à¸”à¸ªà¸³à¹€à¸£à¹‡à¸ˆ", async () => {
+    const data = [
+      { category: "à¸­à¸²à¸«à¸²à¸£", type: "EXPENSE", amount: 120 },
+      { category: "à¹€à¸”à¸´à¸™à¸—à¸²à¸‡", type: "EXPENSE", amount: 80 },
+    ];
+    global.fetch = mockFetchOk(data) as any;
+
+    renderWithRouter(<Day />);
+
+    await waitFor(() => expect(screen.getByText("à¸›à¸£à¸°à¹€à¸ à¸—")).toBeInTheDocument());
+
+    expect(screen.getByText("à¸­à¸²à¸«à¸²à¸£")).toBeInTheDocument();
+    expect(screen.getByText("à¹€à¸”à¸´à¸™à¸—à¸²à¸‡")).toBeInTheDocument();
+
+    // à¸•à¸£à¸§à¸ˆà¹€à¸¥à¸‚à¸‹à¹‰à¸³ à¹ƒà¸Šà¹‰ getAllByText
+    expect(screen.getAllByText(/120/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/80/).length).toBeGreaterThan(0);
+  });
+
+  it("à¹€à¸›à¸¥à¸µà¹ˆà¸¢à¸™à¸§à¸±à¸™à¹€à¸¡à¸·à¹ˆà¸­à¸à¸”à¸›à¸¸à¹ˆà¸¡ à¸à¹ˆà¸­à¸™à¸«à¸™à¹‰à¸²/à¸–à¸±à¸”à¹„à¸›", async () => {
+    // à¸ªà¸£à¹‰à¸²à¸‡ resp à¸›à¸¥à¸­à¸¡à¹ƒà¸«à¹‰à¹€à¸£à¸µà¸¢à¸à¹„à¸”à¹‰à¸«à¸¥à¸²à¸¢à¸„à¸£à¸±à¹‰à¸‡ (initial, next, prev)
+    const makeResp = (data: any) =>
+      ({
+        ok: true,
+        json: async () => data,
+      } as Response);
+
+    // à¹ƒà¸Šà¹‰ vi.fn à¹à¸¥à¹‰à¸§ chain resolved value à¹à¸•à¹ˆà¸¥à¸°à¸„à¸£à¸±à¹‰à¸‡
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce(makeResp([])) // initial load
+      .mockResolvedValueOnce(makeResp([])) // after click next
+      .mockResolvedValueOnce(makeResp([])); // after click prev
+
+    renderWithRouter(<Day />, ["/day?date=2025-09-24"]);
+
+    // à¸«à¸² container à¸‚à¸­à¸‡à¸ªà¸§à¸´à¸•à¹€à¸Šà¸­à¸£à¹Œ
+    const switcher = (await screen.findByRole("button", { name: "à¸–à¸±à¸”à¹„à¸›" })).closest(
+      ".switcher"
+    ) as HTMLElement;
+
+    // helper: à¸­à¹ˆà¸²à¸™à¸§à¸±à¸™à¸—à¸µà¹ˆà¸ˆà¸²à¸ chip
+    const readDateText = () => {
+      const chip = Array.from(switcher.querySelectorAll("*")).find((n) =>
+        /\d{2}\/\d{2}\/\d{4}/.test(n.textContent ?? "")
+      ) as HTMLElement | undefined;
+      return chip?.textContent?.match(/\d{2}\/\d{2}\/\d{4}/)?.[0] ?? "";
+    };
+
+    // helper: format AD -> TH
+    const fmtTh = (d: Date) => {
+      const dd = String(d.getDate()).padStart(2, "0");
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const yyyy = d.getFullYear() + 543;
+      return `${dd}/${mm}/${yyyy}`;
+    };
+
+    // à¸£à¸­à¹ƒà¸«à¹‰ initial render à¹€à¸ªà¸£à¹‡à¸ˆà¹à¸¥à¹‰à¸§à¸­à¹ˆà¸²à¸™à¸§à¸±à¸™à¸—à¸µà¹ˆà¸•à¸±à¹‰à¸‡à¸•à¹‰à¸™
+    await waitFor(() => expect(readDateText()).toMatch(/\d{2}\/\d{2}\/\d{4}/));
+    const startStr = readDateText();
+    const [dd, mm, th] = startStr.split("/").map(Number);
+    const start = new Date(th - 543, mm - 1, dd);
+
+    // âž¡ï¸ à¸–à¸±à¸”à¹„à¸›
+    const nextBtn = within(switcher).getByRole("button", { name: "à¸–à¸±à¸”à¹„à¸›" });
+    nextBtn.click();
+
+    const next = new Date(start);
+    next.setDate(next.getDate() + 1);
+    await waitFor(() => {
+      // à¹ƒà¸Šà¹‰ includes à¹€à¸žà¸·à¹ˆà¸­à¸¥à¸”à¸„à¸§à¸²à¸¡à¹€à¸›à¸£à¸²à¸°à¸šà¸²à¸‡à¸‚à¸­à¸‡ space/newline
+      expect(readDateText()).toContain(fmtTh(next));
+    });
+
+    // â¬…ï¸ à¸à¹ˆà¸­à¸™à¸«à¸™à¹‰à¸² (à¸à¸¥à¸±à¸šà¸¡à¸²à¸§à¸±à¸™à¹€à¸”à¸´à¸¡)
+    const prevBtn = within(switcher).getByRole("button", { name: "à¸à¹ˆà¸­à¸™à¸«à¸™à¹‰à¸²" });
+    prevBtn.click();
+
+    await waitFor(() => {
+      expect(readDateText()).toContain(fmtTh(start));
+    });
+
+    // à¸•à¸£à¸§à¸ˆà¸§à¹ˆà¸²à¸¡à¸µà¸à¸²à¸£à¹€à¸£à¸µà¸¢à¸ fetch à¸•à¸²à¸¡à¸ˆà¸³à¸™à¸§à¸™à¸„à¸£à¸±à¹‰à¸‡à¸—à¸µà¹ˆà¸„à¸²à¸”
+    expect(global.fetch).toHaveBeenCalledTimes(3);
+  });
+});
+
+
+

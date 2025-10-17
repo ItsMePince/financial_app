@@ -1,0 +1,39 @@
+﻿// src/context/TempCategoryContext.tsx
+// @ts-nocheck
+import React, { createContext, useContext, useState } from "react";
+
+export type TempCategory = {
+  name: string;         // à¸Šà¸·à¹ˆà¸­à¸«à¸¡à¸§à¸”à¸—à¸µà¹ˆà¸œà¸¹à¹‰à¹ƒà¸Šà¹‰à¸•à¸±à¹‰à¸‡à¹€à¸­à¸‡
+  iconKey: string;      // à¸„à¸µà¸¢à¹Œà¹„à¸­à¸„à¸­à¸™à¸—à¸µà¹ˆà¹€à¸¥à¸·à¸­à¸ (à¹ƒà¸Šà¹‰à¸£à¸°à¸šà¸¸à¸§à¹ˆà¸²à¸ˆà¸°à¸§à¸²à¸”à¹„à¸­à¸„à¸­à¸™à¸­à¸°à¹„à¸£)
+};
+
+type Ctx = {
+  tempCategory: TempCategory | null;
+  setTempCategory: (c: TempCategory) => void;
+  clearTempCategory: () => void;
+};
+
+const TempCategoryContext = createContext<Ctx | undefined>(undefined);
+
+export function TempCategoryProvider({ children }: { children: React.ReactNode }) {
+  const [tempCategory, setTempCategoryState] = useState<TempCategory | null>(null);
+
+  const setTempCategory = (c: TempCategory) => setTempCategoryState(c);
+  const clearTempCategory = () => setTempCategoryState(null);
+
+  return (
+    <TempCategoryContext.Provider value={{ tempCategory, setTempCategory, clearTempCategory }}>
+      {children}
+    </TempCategoryContext.Provider>
+  );
+}
+
+export function useTempCategory() {
+  const ctx = useContext(TempCategoryContext);
+  if (!ctx) throw new Error("useTempCategory must be used within TempCategoryProvider");
+  return ctx;
+}
+
+
+
+
