@@ -1,27 +1,13 @@
-
-FROM eclipse-temurin:21-jdk AS build
+FROM maven:3.9.9-eclipse-temurin-21 AS build
 WORKDIR /app
 
-
-COPY .mvn/ .mvn/
-COPY mvnw .
 COPY pom.xml .
-
-
-RUN sed -i 's/\r$//' mvnw && chmod +x mvnw
-
-
-RUN ./mvnw -B -DskipTests dependency:go-offline
-
-
 COPY src ./src
 
-
-RUN ./mvnw -B -DskipTests clean package
-
+RUN mvn -B -Dmaven.test.skip=true clean package
 
 FROM eclipse-temurin:21-jre
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8081
-ENTRYPOINT ["java","-jar","app.jar"]
+ENTRYPOINT ["java","-jar","/app/app.jar"]

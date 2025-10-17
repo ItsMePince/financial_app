@@ -1,4 +1,4 @@
-// src/pages/customincome.test.tsx
+﻿// src/pages/customincome.test.tsx
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
@@ -28,61 +28,61 @@ function renderWithRouter(ui: React.ReactNode) {
 }
 
 describe("CustomIncome Page", () => {
-  it("แสดงหัวข้อและ input", () => {
+  it("แส�?�?หัว�?�?อและ input", () => {
     renderWithRouter(<CustomIncome />);
     expect(screen.getByText("Custom Income")).toBeInTheDocument();
     expect(
-      screen.getByPlaceholderText(/ค้นหาไอคอนรายได้/i)
+      screen.getByPlaceholderText(/�?�?�?หา�?อ�?อ�?ราย�?�?�?/i)
     ).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("ชื่อหมวดรายได้")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("�?ื�?อหมว�?ราย�?�?�?")).toBeInTheDocument();
   });
 
-  it("กรองด้วย search", () => {
+  it("กรอ�?�?�?วย search", () => {
     renderWithRouter(<CustomIncome />);
-    const input = screen.getByPlaceholderText(/ค้นหาไอคอนรายได้/i);
-    fireEvent.change(input, { target: { value: "เงินเดือน" } });
-    expect(screen.getByText("เงินเดือน & งานประจำ")).toBeInTheDocument();
-    expect(screen.getByTitle("เงินเดือน")).toBeInTheDocument();
+    const input = screen.getByPlaceholderText(/�?�?�?หา�?อ�?อ�?ราย�?�?�?/i);
+    fireEvent.change(input, { target: { value: "�?�?ิ�?�?�?ือ�?" } });
+    expect(screen.getByText("�?�?ิ�?�?�?ือ�? & �?า�?�?ระ�?ำ")).toBeInTheDocument();
+    expect(screen.getByTitle("�?�?ิ�?�?�?ือ�?")).toBeInTheDocument();
   });
 
-  it("เลือก icon และตั้งชื่อได้", () => {
+  it("�?ลือก icon และ�?ั�?�?�?ื�?อ�?�?�?", () => {
     renderWithRouter(<CustomIncome />);
-    fireEvent.change(screen.getByPlaceholderText(/ค้นหาไอคอนรายได้/i), {
-      target: { value: "ฟรีแลนซ์" },
+    fireEvent.change(screen.getByPlaceholderText(/�?�?�?หา�?อ�?อ�?ราย�?�?�?/i), {
+      target: { value: "�?รีแล�?�?�?" },
     });
-    const chip = screen.getByTitle("ฟรีแลนซ์");
+    const chip = screen.getByTitle("�?รีแล�?�?�?");
     fireEvent.click(chip);
-    fireEvent.change(screen.getByPlaceholderText("ชื่อหมวดรายได้"), {
-      target: { value: "รายได้เสริม" },
+    fireEvent.change(screen.getByPlaceholderText("�?ื�?อหมว�?ราย�?�?�?"), {
+      target: { value: "ราย�?�?�?�?สริม" },
     });
-    expect(screen.getByDisplayValue("รายได้เสริม")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("ราย�?�?�?�?สริม")).toBeInTheDocument();
   });
 
-  it("alert ถ้าไม่เลือก icon หรือไม่กรอกชื่อ", () => {
+  it("alert �?�?า�?ม�?�?ลือก icon หรือ�?ม�?กรอก�?ื�?อ", () => {
     renderWithRouter(<CustomIncome />);
-    fireEvent.click(screen.getByRole("button", { name: "ยืนยัน" }));
-    expect(window.alert).toHaveBeenCalledWith("กรุณาเลือกไอคอนและตั้งชื่อ");
+    fireEvent.click(screen.getByRole("button", { name: "ยื�?ยั�?" }));
+    expect(window.alert).toHaveBeenCalledWith("กรุ�?า�?ลือก�?อ�?อ�?และ�?ั�?�?�?ื�?อ");
   });
 
-  it("navigate ไป /income ถ้ากรอกครบ", () => {
+  it("navigate �?�? /income �?�?ากรอก�?ร�?", () => {
     renderWithRouter(<CustomIncome />);
-    // เลือก icon
-    fireEvent.change(screen.getByPlaceholderText(/ค้นหาไอคอนรายได้/i), {
-      target: { value: "เงินเดือน" },
+    // �?ลือก icon
+    fireEvent.change(screen.getByPlaceholderText(/�?�?�?หา�?อ�?อ�?ราย�?�?�?/i), {
+      target: { value: "�?�?ิ�?�?�?ือ�?" },
     });
-    fireEvent.click(screen.getByTitle("เงินเดือน"));
+    fireEvent.click(screen.getByTitle("�?�?ิ�?�?�?ือ�?"));
 
-    // ใส่ชื่อ
-    fireEvent.change(screen.getByPlaceholderText("ชื่อหมวดรายได้"), {
-      target: { value: "เงินเดือนหลัก" },
+    // �?ส�?�?ื�?อ
+    fireEvent.change(screen.getByPlaceholderText("�?ื�?อหมว�?ราย�?�?�?"), {
+      target: { value: "�?�?ิ�?�?�?ือ�?หลัก" },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "ยืนยัน" }));
+    fireEvent.click(screen.getByRole("button", { name: "ยื�?ยั�?" }));
 
     expect(mockNavigate).toHaveBeenCalledWith("/income", {
       state: {
         customIncome: {
-          label: "เงินเดือนหลัก",
+          label: "�?�?ิ�?�?�?ือ�?หลัก",
           icon: "Briefcase",
         },
       },
@@ -90,3 +90,6 @@ describe("CustomIncome Page", () => {
     });
   });
 });
+
+
+

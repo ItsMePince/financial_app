@@ -1,4 +1,4 @@
-// src/pages/SignUp.test.tsx
+﻿// src/pages/SignUp.test.tsx
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
@@ -39,7 +39,7 @@ describe("SignUp (Frontend only)", () => {
     vi.restoreAllMocks();
   });
 
-  it("เรนเดอร์ฟอร์มได้ครบและมีลิงก์ Login", () => {
+  it("�?ร�?�?�?อร�?�?อร�?ม�?�?�?�?ร�?และมีลิ�?ก�? Login", () => {
     render(
       <MemoryRouter>
         <SignUp />
@@ -54,7 +54,7 @@ describe("SignUp (Frontend only)", () => {
     expect(loginLink).toHaveAttribute("href", "/login");
   });
 
-  it("validate: ต้องกรอกข้อมูลให้ครบถ้วน", async () => {
+  it("validate: �?�?อ�?กรอก�?�?อมูล�?ห�?�?ร�?�?�?ว�?", async () => {
     render(
       <MemoryRouter>
         <SignUp />
@@ -62,10 +62,10 @@ describe("SignUp (Frontend only)", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: /create account/i }));
-    expect(await screen.findByText(/กรุณากรอกข้อมูลให้ครบถ้วน/i)).toBeInTheDocument();
+    expect(await screen.findByText(/กรุ�?ากรอก�?�?อมูล�?ห�?�?ร�?�?�?ว�?/i)).toBeInTheDocument();
   });
 
-  it("validate: รหัสผ่านต้องยาวอย่างน้อย 6 ตัวอักษร", async () => {
+  it("validate: รหัส�?�?า�?�?�?อ�?ยาวอย�?า�?�?�?อย 6 �?ัวอักษร", async () => {
     render(
       <MemoryRouter>
         <SignUp />
@@ -74,10 +74,10 @@ describe("SignUp (Frontend only)", () => {
 
     typeIntoForm({ email: "a@b.com", username: "abc", password: "12345" });
     fireEvent.click(screen.getByRole("button", { name: /create account/i }));
-    expect(await screen.findByText(/รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร/i)).toBeInTheDocument();
+    expect(await screen.findByText(/รหัส�?�?า�?�?�?อ�?มีอย�?า�?�?�?อย 6 �?ัวอักษร/i)).toBeInTheDocument();
   });
 
-  it("เมื่อเริ่มพิมพ์ใหม่แล้ว error เดิมถูกล้าง", async () => {
+  it("�?มื�?อ�?ริ�?ม�?ิม�?�?�?หม�?แล�?ว error �?�?ิม�?ูกล�?า�?", async () => {
     render(
       <MemoryRouter>
         <SignUp />
@@ -85,13 +85,13 @@ describe("SignUp (Frontend only)", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: /create account/i }));
-    expect(await screen.findByText(/กรุณากรอกข้อมูลให้ครบถ้วน/i)).toBeInTheDocument();
+    expect(await screen.findByText(/กรุ�?ากรอก�?�?อมูล�?ห�?�?ร�?�?�?ว�?/i)).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText(/email/i), { target: { value: "me@x.com" } });
-    expect(screen.queryByText(/กรุณากรอกข้อมูลให้ครบถ้วน/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/กรุ�?ากรอก�?�?อมูล�?ห�?�?ร�?�?�?ว�?/i)).not.toBeInTheDocument();
   });
 
-  it("loading: ปุ่มและช่องกรอกถูก disabled ระหว่างส่งข้อมูล", async () => {
+  it("loading: �?ุ�?มและ�?�?อ�?กรอก�?ูก disabled ระหว�?า�?ส�?�?�?�?อมูล", async () => {
     mockFetchOnce({ success: false, message: "x" });
 
     render(
@@ -105,7 +105,7 @@ describe("SignUp (Frontend only)", () => {
 
     fireEvent.click(submit);
     expect(submit).toBeDisabled();
-    expect(submit).toHaveTextContent(/กำลังสมัครสมาชิก/i);
+    expect(submit).toHaveTextContent(/กำลั�?สมั�?รสมา�?ิก/i);
 
     await waitFor(() => {
       expect(submit).not.toBeDisabled();
@@ -113,7 +113,7 @@ describe("SignUp (Frontend only)", () => {
     });
   });
 
-  it("เส้นทาง onSubmit prop: เรียก callback ด้วยค่าฟอร์ม และไม่เรียก fetch", async () => {
+  it("�?ส�?�?�?า�? onSubmit prop: �?รียก callback �?�?วย�?�?า�?อร�?ม และ�?ม�?�?รียก fetch", async () => {
     const onSubmit = vi.fn();
     (globalThis.fetch as any) = vi.fn();
 
@@ -137,7 +137,7 @@ describe("SignUp (Frontend only)", () => {
     expect(globalThis.fetch as any).not.toHaveBeenCalled();
   });
 
-  it("เรียก fetch ด้วยพารามิเตอร์ที่ถูกต้องเมื่อไม่มี onSubmit prop", async () => {
+  it("�?รียก fetch �?�?วย�?ารามิ�?�?อร�?�?ี�?�?ูก�?�?อ�?�?มื�?อ�?ม�?มี onSubmit prop", async () => {
     mockFetchOnce({ success: false, message: "x" });
 
     render(
@@ -153,7 +153,7 @@ describe("SignUp (Frontend only)", () => {
 
     const fetchMock = globalThis.fetch as unknown as { mock: { calls: any[] } };
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe("http://localhost:8081/api/auth/signup");
+    expect(url).toBe("/api/api/auth/signup");
     expect(init.method).toBe("POST");
 
     const contentType = new Headers(init.headers as HeadersInit).get("Content-Type");
@@ -167,7 +167,7 @@ describe("SignUp (Frontend only)", () => {
     });
   });
 
-  it("API success: เก็บ user ใน localStorage และเรียก onSignUpSuccess", async () => {
+  it("API success: �?ก�?�? user �?�? localStorage และ�?รียก onSignUpSuccess", async () => {
     const fakeUser = { username: "me", email: "me@x.com", role: "member" };
     mockFetchOnce({ success: true, user: fakeUser });
     const onSignUpSuccess = vi.fn();
@@ -187,7 +187,7 @@ describe("SignUp (Frontend only)", () => {
     });
   });
 
-  it("API success (ไม่มี onSignUpSuccess): redirect ไป /Home", async () => {
+  it("API success (�?ม�?มี onSignUpSuccess): redirect �?�? /Home", async () => {
     const fakeUser = { username: "me", email: "me@x.com", role: "member" };
     mockFetchOnce({ success: true, user: fakeUser });
 
@@ -213,8 +213,8 @@ describe("SignUp (Frontend only)", () => {
     Object.defineProperty(window, "location", { value: originalLocation });
   });
 
-  it("API error: แสดงข้อความจาก server", async () => {
-    mockFetchOnce({ success: false, message: "อีเมลนี้มีผู้ใช้งานแล้ว" });
+  it("API error: แส�?�?�?�?อ�?วาม�?าก server", async () => {
+    mockFetchOnce({ success: false, message: "อี�?มล�?ี�?มี�?ู�?�?�?�?�?า�?แล�?ว" });
 
     render(
       <MemoryRouter>
@@ -225,10 +225,10 @@ describe("SignUp (Frontend only)", () => {
     typeIntoForm({});
     fireEvent.click(screen.getByRole("button", { name: /create account/i }));
 
-    expect(await screen.findByText(/อีเมลนี้มีผู้ใช้งานแล้ว/i)).toBeInTheDocument();
+    expect(await screen.findByText(/อี�?มล�?ี�?มี�?ู�?�?�?�?�?า�?แล�?ว/i)).toBeInTheDocument();
   });
 
-  it("API error (ไม่มี message): ใช้ fallback 'การสมัครสมาชิกล้มเหลว'", async () => {
+  it("API error (�?ม�?มี message): �?�?�? fallback 'การสมั�?รสมา�?ิกล�?ม�?หลว'", async () => {
     mockFetchOnce({ success: false });
 
     render(
@@ -240,10 +240,10 @@ describe("SignUp (Frontend only)", () => {
     typeIntoForm({});
     fireEvent.click(screen.getByRole("button", { name: /create account/i }));
 
-    expect(await screen.findByText(/การสมัครสมาชิกล้มเหลว/i)).toBeInTheDocument();
+    expect(await screen.findByText(/การสมั�?รสมา�?ิกล�?ม�?หลว/i)).toBeInTheDocument();
   });
 
-  it("Network error: แสดงข้อความภาษาไทยตามที่กำหนด", async () => {
+  it("Network error: แส�?�?�?�?อ�?วามภาษา�?�?ย�?าม�?ี�?กำห�?�?", async () => {
     (globalThis.fetch as any) = vi.fn().mockRejectedValueOnce(new Error("Network down"));
 
     render(
@@ -256,7 +256,10 @@ describe("SignUp (Frontend only)", () => {
     fireEvent.click(screen.getByRole("button", { name: /create account/i }));
 
     expect(
-      await screen.findByText(/เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กรุณาลองใหม่อีกครั้ง/i)
+      await screen.findByText(/�?�?ื�?อม�?�?อ�?�?ิร�?�?�?วอร�?�?ม�?�?�?�? กรุ�?าลอ�?�?หม�?อีก�?รั�?�?/i)
     ).toBeInTheDocument();
   });
 });
+
+
+

@@ -1,0 +1,212 @@
+﻿// src/pages/month.test.tsx
+import React from "react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+import Month from "./month";
+import { render, screen, waitFor, fireEvent, within } from "@testing-library/react";
+
+declare global {
+  // eslint-disable-next-line no-var
+  var fetch: any;
+}
+
+/* ---------------- Polyfill for Recharts ---------------- */
+/* ---------------- Polyfill for Recharts ---------------- */
+beforeAll(() => {
+  // @ts-ignore
+  if (typeof global.ResizeObserver === "undefined") {
+    // @ts-ignore
+    global.ResizeObserver = class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    };
+  }
+});
+
+const onlyNumber = (s: string | null | undefined) => (s ?? "").replace(/[^\d]/g, "");
+
+/** à¸ªà¸£à¹‰à¸²à¸‡ mock fetch à¸—à¸µà¹ˆ resolve à¹€à¸›à¹‡à¸™à¸„à¹ˆà¸²à¸—à¸µà¹ˆà¸£à¸°à¸šà¸¸ 1 à¸„à¸£à¸±à¹‰à¸‡ */
+function mockFetchResolveOnce(data: any, ok = true) {
+  global.fetch = vi.fn().mockResolvedValue({
+    ok,
+    json: async () => data,
+    text: async () => (typeof data === "string" ? data : JSON.stringify(data)),
+  }) as any;
+}
+
+describe("Month Page", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("à¹à¸ªà¸”à¸‡à¸ªà¸–à¸²à¸™à¸° loading à¸•à¸­à¸™à¹à¸£à¸", async () => {
+    // à¸—à¸³à¹ƒà¸«à¹‰ fetch à¸„à¹‰à¸²à¸‡à¹„à¸§à¹‰à¸à¹ˆà¸­à¸™ à¹€à¸žà¸·à¹ˆà¸­à¹€à¸Šà¹‡à¸„à¸ˆà¸­ Loading
+    let resolveFn: (v: any) => void = () => {};
+    const pending = new Promise((res) => (resolveFn = res));
+    global.fetch = vi.fn().mockReturnValueOnce(pending);
+
+    render(
+      <MemoryRouter>
+        <Month />
+      </MemoryRouter>
+    );
+
+    // à¸¡à¸µà¸‚à¹‰à¸­à¸„à¸§à¸²à¸¡ 'à¸à¸³à¸¥à¸±à¸‡à¹‚à¸«à¸¥à¸”' à¸­à¸¢à¹ˆà¸²à¸‡à¸™à¹‰à¸­à¸¢à¸«à¸™à¸¶à¹ˆà¸‡à¸ˆà¸¸à¸”
+    const loadingEls = screen.getAllByText((_, node) =>
+      !!node?.textContent?.toLowerCase().includes("load") ||
+      !!node?.textContent?.includes("à¸à¸³à¸¥à¸±à¸‡à¹‚à¸«à¸¥à¸”")
+    );
+    expect(loadingEls.length).toBeGreaterThanOrEqual(1);
+
+    // à¸›à¸¥à¹ˆà¸­à¸¢ fetch à¹ƒà¸«à¹‰à¹€à¸ªà¸£à¹‡à¸ˆ
+    resolveFn({
+      ok: true,
+      json: async () => [],
+      text: async () => "[]",
+    });
+
+    // à¸£à¸­à¹ƒà¸«à¹‰à¸‚à¹‰à¸­à¸„à¸§à¸²à¸¡à¹‚à¸«à¸¥à¸”à¸«à¸²à¸¢à¹„à¸›à¸—à¸±à¹‰à¸‡à¸«à¸¡à¸”
+    await waitFor(() => {
+      const still = screen.queryAllByText((_, node) =>
+        !!node?.textContent?.toLowerCase().includes("load") ||
+        !!node?.textContent?.includes("à¸à¸³à¸¥à¸±à¸‡à¹‚à¸«à¸¥à¸”")
+      );
+      expect(still.length).toBe(0);
+    });
+  });
+
+  it("à¹à¸ªà¸”à¸‡à¸‚à¹‰à¸­à¸„à¸§à¸²à¸¡ error à¹€à¸¡à¸·à¹ˆà¸­ API à¸¥à¹‰à¸¡à¹€à¸«à¸¥à¸§", async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      text: async () => "à¹€à¸à¸´à¸”à¸‚à¹‰à¸­à¸œà¸´à¸”à¸žà¸¥à¸²à¸”",
+    }) as any;
+
+    render(
+      <MemoryRouter>
+        <Month />
+      </MemoryRouter>
+    );
+
+    // à¸„à¸­à¸¡à¹‚à¸žà¹€à¸™à¸™à¸•à¹Œà¹à¸ªà¸”à¸‡à¸§à¹ˆà¸² "à¹‚à¸«à¸¥à¸”à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¹„à¸¡à¹ˆà¸ªà¸³à¹€à¸£à¹‡à¸ˆ (...)" à¸­à¸¢à¸¹à¹ˆà¹ƒà¸™ DOM
+    await waitFor(() => {
+      expect(screen.getByText(/à¹‚à¸«à¸¥à¸”à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¹„à¸¡à¹ˆà¸ªà¸³à¹€à¸£à¹‡à¸ˆ/i)).toBeInTheDocument();
+    });
+  });
+
+  it("à¹à¸ªà¸”à¸‡ 'à¹„à¸¡à¹ˆà¸¡à¸µà¸£à¸²à¸¢à¸à¸²à¸£à¹ƒà¸™à¹€à¸”à¸·à¸­à¸™à¸™à¸µà¹‰' à¹€à¸¡à¸·à¹ˆà¸­ API à¸„à¸·à¸™ array à¸§à¹ˆà¸²à¸‡", async () => {
+    mockFetchResolveOnce([]);
+
+    render(
+      <MemoryRouter>
+        <Month />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(/à¹„à¸¡à¹ˆà¸¡à¸µà¸£à¸²à¸¢à¸à¸²à¸£à¹ƒà¸™à¹€à¸”à¸·à¸­à¸™à¸™à¸µà¹‰/i)).toBeInTheDocument();
+    });
+
+    // KPI à¸„à¸§à¸£à¹€à¸›à¹‡à¸™ 0 à¸—à¸±à¹‰à¸‡à¸«à¸¡à¸” (à¸­à¹ˆà¸²à¸™à¸ˆà¸²à¸ kpi-inline à¹€à¸žà¸·à¹ˆà¸­à¹€à¸¥à¸µà¹ˆà¸¢à¸‡à¸Šà¸™à¸à¸±à¸š cell à¹ƒà¸™ grid)
+    const kpiInline = screen.getByText(/à¸£à¸²à¸¢à¸£à¸±à¸š:/i).closest(".kpi-inline") as HTMLElement;
+    const incomeEl  = kpiInline.querySelector("b.income") as HTMLElement;
+    const expenseEl = kpiInline.querySelector("b.expense") as HTMLElement;
+    const balanceEl = kpiInline.querySelector("b.balance") as HTMLElement;
+
+    expect(onlyNumber(incomeEl.textContent)).toBe("0");
+    expect(onlyNumber(expenseEl.textContent)).toBe("0");
+    expect(onlyNumber(balanceEl.textContent)).toBe("0");
+  });
+
+  it("à¹à¸ªà¸”à¸‡à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¹€à¸¡à¸·à¹ˆà¸­à¹‚à¸«à¸¥à¸”à¸ªà¸³à¹€à¸£à¹‡à¸ˆ à¹à¸¥à¸°à¸„à¸³à¸™à¸§à¸“ KPI à¸–à¸¹à¸à¸•à¹‰à¸­à¸‡", async () => {
+    // à¸ˆà¸±à¸” mock à¹€à¸‰à¸žà¸²à¸°à¹€à¸„à¸ªà¸™à¸µà¹‰
+    const sample = [
+      { id: 1, date: "2025-09-01", type: "INCOME",  amount: 12000, category: "à¹€à¸‡à¸´à¸™à¹€à¸”à¸·à¸­à¸™" },
+      { id: 2, date: "2025-09-01", type: "EXPENSE", amount: 3000,  category: "à¸­à¸²à¸«à¸²à¸£"   },
+    ];
+
+    const fetchMock = vi
+      .spyOn(global as any, "fetch")
+      .mockResolvedValue({
+        ok: true,
+        json: async () => sample,
+        text: async () => JSON.stringify(sample),
+      } as any);
+
+    render(
+      <MemoryRouter>
+        <Month />
+      </MemoryRouter>
+    );
+
+    // à¸¢à¸·à¸™à¸¢à¸±à¸™à¸§à¹ˆà¸²à¸¡à¸µà¸à¸²à¸£à¸¢à¸´à¸‡ fetch à¹à¸¥à¹‰à¸§
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+
+    // à¸£à¸­à¹ƒà¸«à¹‰à¸ªà¸¥à¸±à¸šà¸ˆà¸²à¸ loading à¹€à¸›à¹‡à¸™à¸à¸²à¸£à¹Œà¸”à¸ªà¸£à¸¸à¸›
+    const title = await screen.findByText(/à¸ªà¸£à¸¸à¸›à¸£à¸²à¸¢à¹€à¸”à¸·à¸­à¸™/i);
+    const summaryCard = title.closest(".summary-card") as HTMLElement;
+
+    // à¸•à¸£à¸§à¸ˆ KPI à¹€à¸‰à¸žà¸²à¸°à¹ƒà¸™à¸à¸²à¸£à¹Œà¸”à¸ªà¸£à¸¸à¸› (à¸à¸±à¸™à¸Šà¸™à¸à¸±à¸šà¸•à¸±à¸§à¹€à¸¥à¸‚à¹ƒà¸™ grid)
+    const kpi = summaryCard.querySelector(".kpi-inline") as HTMLElement;
+    expect(within(kpi).getByText(/12,?000/)).toBeInTheDocument(); // à¸£à¸²à¸¢à¸£à¸±à¸š
+    expect(within(kpi).getByText(/3,?000/)).toBeInTheDocument();  // à¸£à¸²à¸¢à¸ˆà¹ˆà¸²à¸¢
+    expect(within(kpi).getByText(/9,?000/)).toBeInTheDocument();  // à¸„à¸‡à¹€à¸«à¸¥à¸·à¸­
+
+    expect(await screen.findAllByText(/12,?000/)).not.toHaveLength(0);
+    expect(await screen.findAllByText(/3,?000/)).not.toHaveLength(0);
+    expect(await screen.findAllByText(/9,?000/)).not.toHaveLength(0);
+
+  });
+
+  it("à¹€à¸›à¸¥à¸µà¹ˆà¸¢à¸™à¹€à¸”à¸·à¸­à¸™à¹€à¸¡à¸·à¹ˆà¸­à¸à¸”à¸›à¸¸à¹ˆà¸¡ à¸à¹ˆà¸­à¸™à¸«à¸™à¹‰à¸²/à¸–à¸±à¸”à¹„à¸› à¹à¸¥à¸°à¹€à¸£à¸µà¸¢à¸ fetch à¹ƒà¸«à¸¡à¹ˆ", async () => {
+    // initial + prev + next à¸­à¸¢à¹ˆà¸²à¸‡à¸™à¹‰à¸­à¸¢ 3 mock responses
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => [], text: async () => "[]" })
+      .mockResolvedValueOnce({ ok: true, json: async () => [], text: async () => "[]" })
+      .mockResolvedValueOnce({ ok: true, json: async () => [], text: async () => "[]" });
+
+    render(
+      <MemoryRouter>
+        <Month />
+      </MemoryRouter>
+    );
+
+    // à¸£à¸­à¹ƒà¸«à¹‰à¹‚à¸«à¸¥à¸”à¸£à¸­à¸šà¹à¸£à¸à¸ˆà¸š (à¸‚à¹‰à¸­à¸„à¸§à¸²à¸¡à¸à¸³à¸¥à¸±à¸‡à¹‚à¸«à¸¥à¸”à¸«à¸²à¸¢)
+    await waitFor(() => {
+      const still = screen.queryAllByText((_, node) =>
+        !!node?.textContent?.toLowerCase().includes("load") ||
+        !!node?.textContent?.includes("à¸à¸³à¸¥à¸±à¸‡à¹‚à¸«à¸¥à¸”")
+      );
+      expect(still.length).toBe(0);
+    }, { timeout: 3000 });
+
+    const getChipText = () =>
+      (document.querySelector(".month-chip") as HTMLElement)?.textContent?.trim() ?? "";
+
+    const initialText = getChipText();
+    expect(initialText).not.toBe("");
+
+    // previous
+    fireEvent.click(screen.getByRole("button", { name: "à¸à¹ˆà¸­à¸™à¸«à¸™à¹‰à¸²" }));
+    await waitFor(() => {
+      expect(getChipText()).not.toBe(initialText);
+    }, { timeout: 3000 });
+
+    // next (à¸à¸¥à¸±à¸šà¸¡à¸²à¹€à¸—à¹ˆà¸²à¹€à¸”à¸´à¸¡)
+    fireEvent.click(screen.getByRole("button", { name: "à¸–à¸±à¸”à¹„à¸›" }));
+    await waitFor(() => {
+      expect(getChipText()).toBe(initialText);
+    }, { timeout: 3000 });
+
+    // à¸™à¸±à¸šà¸ˆà¸³à¸™à¸§à¸™à¹€à¸£à¸µà¸¢à¸ fetch â€” à¸¢à¸­à¸¡à¸£à¸±à¸š >= 2 à¹€à¸žà¸·à¹ˆà¸­à¸à¸±à¸™ timing
+    await waitFor(() => {
+      expect((global.fetch as any).mock.calls.length).toBeGreaterThanOrEqual(2);
+    }, { timeout: 3000 });
+  });
+});
+
+
+
+

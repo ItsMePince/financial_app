@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+﻿import { Link, useLocation } from "react-router-dom";
 import { Calculator, Home, BarChart3 } from "lucide-react";
 import "./buttomnav.css";
 
@@ -20,3 +20,6 @@ export default function BottomNav() {
     </div>
   );
 }
+
+
+

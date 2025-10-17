@@ -1,4 +1,4 @@
-describe('E2E Login & Auth Flow', () => {
+﻿describe('E2E Login & Auth Flow', () => {
   const sel = {
     username: 'input[placeholder*="user"], input[name="username"]',
     password: 'input[placeholder*="password"], input[name="password"]',
@@ -11,8 +11,8 @@ describe('E2E Login & Auth Flow', () => {
     cy.clearAllSessionStorage();
   });
 
-  // 🟢 E2E-LOGIN-001 : Valid login
-  it('E2E-LOGIN-001 : Valid login → 200 OK, redirect to Home', () => {
+  // ðŸŸ¢ E2E-LOGIN-001 : Valid login
+  it('E2E-LOGIN-001 : Valid login â†’ 200 OK, redirect to Home', () => {
     cy.intercept('POST', '**/api/auth/login', {
       statusCode: 200,
       body: {
@@ -40,8 +40,8 @@ describe('E2E Login & Auth Flow', () => {
     cy.url().should('include', '/home');
   });
 
-  // 🟡 E2E-LOGIN-002 : Invalid password
-  it('E2E-LOGIN-002 : Invalid password → 401 Unauthorized', () => {
+  // ðŸŸ¡ E2E-LOGIN-002 : Invalid password
+  it('E2E-LOGIN-002 : Invalid password â†’ 401 Unauthorized', () => {
     cy.intercept('POST', '**/api/auth/login', {
       statusCode: 401,
       body: { message: 'Invalid credentials' },
@@ -61,8 +61,8 @@ describe('E2E Login & Auth Flow', () => {
     cy.contains(/invalid credentials/i).should('exist');
   });
 
-  // 🟠 E2E-LOGIN-003 : Username not found
-  it('E2E-LOGIN-003 : Username not found → 401 Unauthorized', () => {
+  // ðŸŸ  E2E-LOGIN-003 : Username not found
+  it('E2E-LOGIN-003 : Username not found â†’ 401 Unauthorized', () => {
     cy.intercept('POST', '**/api/auth/login', {
       statusCode: 401,
       body: { message: 'User not found' },
@@ -82,28 +82,28 @@ describe('E2E Login & Auth Flow', () => {
     cy.contains(/user not found|invalid credentials/i).should('exist');
   });
 
-  // 🔒 E2E-AUTH-001 : Access protected page without login
-  it('E2E-AUTH-001 : Visit /home without login → redirect to /login', () => {
+  // ðŸ”’ E2E-AUTH-001 : Access protected page without login
+  it('E2E-AUTH-001 : Visit /home without login â†’ redirect to /login', () => {
     cy.clearAllLocalStorage();
     cy.visit('/home');
     cy.url().should('include', '/login');
   });
 
-  // ⏰ E2E-AUTH-002 : Token expired
-  it('E2E-AUTH-002 : Expired token → 401 and redirect login', () => {
-    // ตั้ง token ปลอมให้หมดอายุ
+  // â° E2E-AUTH-002 : Token expired
+  it('E2E-AUTH-002 : Expired token â†’ 401 and redirect login', () => {
+    // à¸•à¸±à¹‰à¸‡ token à¸›à¸¥à¸­à¸¡à¹ƒà¸«à¹‰à¸«à¸¡à¸”à¸­à¸²à¸¢à¸¸
     cy.window().then((w) => {
       w.localStorage.setItem('token', 'expired-token');
       w.localStorage.setItem('isAuthenticated', 'true');
     });
 
-    // intercept API ให้ตอบ 401
+    // intercept API à¹ƒà¸«à¹‰à¸•à¸­à¸š 401
     cy.intercept('GET', '**/api/**', { statusCode: 401 }).as('expired');
 
     cy.visit('/home');
     cy.wait('@expired');
 
-    // ล้าง token จำลองพฤติกรรมระบบจริง
+    // à¸¥à¹‰à¸²à¸‡ token à¸ˆà¸³à¸¥à¸­à¸‡à¸žà¸¤à¸•à¸´à¸à¸£à¸£à¸¡à¸£à¸°à¸šà¸šà¸ˆà¸£à¸´à¸‡
     cy.window().then((w) => {
       w.localStorage.removeItem('token');
       w.localStorage.removeItem('isAuthenticated');
@@ -113,9 +113,9 @@ describe('E2E Login & Auth Flow', () => {
     cy.url().should('include', '/login');
   });
 
-  // 🚪 E2E-AUTH-003 : Logout then Back
-  it('E2E-AUTH-003 : Logout then click Back → still not access protected', () => {
-    // จำลองล็อกอินก่อน
+  // ðŸšª E2E-AUTH-003 : Logout then Back
+  it('E2E-AUTH-003 : Logout then click Back â†’ still not access protected', () => {
+    // à¸ˆà¸³à¸¥à¸­à¸‡à¸¥à¹‡à¸­à¸à¸­à¸´à¸™à¸à¹ˆà¸­à¸™
     cy.window().then((w) => {
       w.localStorage.setItem('isAuthenticated', 'true');
       w.localStorage.setItem('token', 'valid-jwt-token');
@@ -123,11 +123,14 @@ describe('E2E Login & Auth Flow', () => {
 
     cy.visit('/home');
 
-    // จำลอง Logout (ล้างข้อมูล)
+    // à¸ˆà¸³à¸¥à¸­à¸‡ Logout (à¸¥à¹‰à¸²à¸‡à¸‚à¹‰à¸­à¸¡à¸¹à¸¥)
     cy.window().then((w) => w.localStorage.clear());
 
-    // กด Back
+    // à¸à¸” Back
     cy.go('back');
     cy.url().should('include', '/login');
   });
 });
+
+
+

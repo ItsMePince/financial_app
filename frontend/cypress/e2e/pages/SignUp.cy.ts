@@ -1,5 +1,5 @@
-// cypress/e2e/pages/signup.cy.ts
-// Flow: Login -> กด Sign Up -> สมัครด้วยข้อมูลสุ่ม -> (redirect ไป /login หรือถ้าซ้ำให้ข้าม) -> Login -> /home
+﻿// cypress/e2e/pages/signup.cy.ts
+// Flow: Login -> à¸à¸” Sign Up -> à¸ªà¸¡à¸±à¸„à¸£à¸”à¹‰à¸§à¸¢à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸ªà¸¸à¹ˆà¸¡ -> (redirect à¹„à¸› /login à¸«à¸£à¸·à¸­à¸–à¹‰à¸²à¸‹à¹‰à¸³à¹ƒà¸«à¹‰à¸‚à¹‰à¸²à¸¡) -> Login -> /home
 
 // ---------------- helpers ----------------
 function clickVisibleSignUp() {
@@ -38,7 +38,7 @@ function fillSignupForm({
       'input#username[name="username"]',
       'input[name="username"]',
       'input.su-input[autocomplete="username"]',
-      'input[placeholder*="ชื่อผู้ใช้"]',
+      'input[placeholder*="à¸Šà¸·à¹ˆà¸­à¸œà¸¹à¹‰à¹ƒà¸Šà¹‰"]',
       'input[placeholder*="user"]',
     ].join(', ')
   )
@@ -51,7 +51,7 @@ function fillSignupForm({
     [
       'input#password[name="password"][type="password"]',
       'input.su-input[type="password"][autocomplete="new-password"]',
-      'input[placeholder*="รหัสผ่าน"]',
+      'input[placeholder*="à¸£à¸«à¸±à¸ªà¸œà¹ˆà¸²à¸™"]',
     ].join(', ')
   )
     .filter(':visible')
@@ -106,43 +106,46 @@ function fillLoginForm({
 
 // ---------------- test ----------------
 describe('E2E-SIGNUP-LOGIN-001: Sign up (unique) -> Login -> Home', () => {
-  it('สมัครผู้ใช้ใหม่ด้วยข้อมูลสุ่ม กันซ้ำ แล้วล็อกอินเข้าหน้า /home สำเร็จ', () => {
-    // สร้างข้อมูลไม่ซ้ำทุกครั้ง
+  it('à¸ªà¸¡à¸±à¸„à¸£à¸œà¸¹à¹‰à¹ƒà¸Šà¹‰à¹ƒà¸«à¸¡à¹ˆà¸”à¹‰à¸§à¸¢à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸ªà¸¸à¹ˆà¸¡ à¸à¸±à¸™à¸‹à¹‰à¸³ à¹à¸¥à¹‰à¸§à¸¥à¹‡à¸­à¸à¸­à¸´à¸™à¹€à¸‚à¹‰à¸²à¸«à¸™à¹‰à¸² /home à¸ªà¸³à¹€à¸£à¹‡à¸ˆ', () => {
+    // à¸ªà¸£à¹‰à¸²à¸‡à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¹„à¸¡à¹ˆà¸‹à¹‰à¸³à¸—à¸¸à¸à¸„à¸£à¸±à¹‰à¸‡
     const uniq = Date.now();
     const email = `a${uniq}@gmail.com`;
     const username = `aa${uniq}`;
     const password = '111111';
 
-    // ไปหน้า /login
+    // à¹„à¸›à¸«à¸™à¹‰à¸² /login
     cy.visit('http://localhost:3000/login');
 
-    // ไปหน้า Sign Up
+    // à¹„à¸›à¸«à¸™à¹‰à¸² Sign Up
     clickVisibleSignUp();
 
-    // ดัก response สมัคร (เผื่อ assert หรือ handle 400 ได้)
+    // à¸”à¸±à¸ response à¸ªà¸¡à¸±à¸„à¸£ (à¹€à¸œà¸·à¹ˆà¸­ assert à¸«à¸£à¸·à¸­ handle 400 à¹„à¸”à¹‰)
     cy.intercept('POST', '**/api/auth/signup').as('signup');
 
-    // กรอกสมัคร
+    // à¸à¸£à¸­à¸à¸ªà¸¡à¸±à¸„à¸£
     fillSignupForm({ email, username, password });
 
-    // รอผลสมัคร
+    // à¸£à¸­à¸œà¸¥à¸ªà¸¡à¸±à¸„à¸£
     cy.wait('@signup', { timeout: 15000 }).then((interception) => {
       const status = interception?.response?.statusCode ?? 0;
 
       if (status >= 200 && status < 300) {
-        // สำเร็จ → ควร redirect ไป /login
+        // à¸ªà¸³à¹€à¸£à¹‡à¸ˆ â†’ à¸„à¸§à¸£ redirect à¹„à¸› /login
         cy.location('pathname', { timeout: 10000 }).should('include', '/login');
       } else {
-        // ถ้า backend ตอบ 400 (เช่น ซ้ำ) หรืออย่างอื่น → ข้าม signup ไป login เลย
+        // à¸–à¹‰à¸² backend à¸•à¸­à¸š 400 (à¹€à¸Šà¹ˆà¸™ à¸‹à¹‰à¸³) à¸«à¸£à¸·à¸­à¸­à¸¢à¹ˆà¸²à¸‡à¸­à¸·à¹ˆà¸™ â†’ à¸‚à¹‰à¸²à¸¡ signup à¹„à¸› login à¹€à¸¥à¸¢
         cy.log(`Signup not OK (status ${status}), continue to login page`);
         cy.visit('http://localhost:3000/login');
       }
     });
 
-    // ล็อกอินด้วย creds ที่เพิ่งสมัคร (หรือที่ตั้งไว้)
+    // à¸¥à¹‡à¸­à¸à¸­à¸´à¸™à¸”à¹‰à¸§à¸¢ creds à¸—à¸µà¹ˆà¹€à¸žà¸´à¹ˆà¸‡à¸ªà¸¡à¸±à¸„à¸£ (à¸«à¸£à¸·à¸­à¸—à¸µà¹ˆà¸•à¸±à¹‰à¸‡à¹„à¸§à¹‰)
     fillLoginForm({ username, password });
 
-    // ต้องไปหน้า /home
+    // à¸•à¹‰à¸­à¸‡à¹„à¸›à¸«à¸™à¹‰à¸² /home
     cy.location('pathname', { timeout: 10000 }).should('include', '/home');
   });
 });
+
+
+

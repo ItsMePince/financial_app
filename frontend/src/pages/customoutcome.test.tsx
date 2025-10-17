@@ -1,4 +1,4 @@
-// src/pages/customoutcome.test.tsx
+﻿// src/pages/customoutcome.test.tsx
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
@@ -33,44 +33,47 @@ function renderWithProvider(ui: React.ReactNode) {
 }
 
 describe("CustomOutcome Page", () => {
-  it("แสดงหัวข้อ OutcomeCustom", () => {
+  it("แส�?�?หัว�?�?อ OutcomeCustom", () => {
     renderWithProvider(<CategoryCustom />);
     expect(screen.getByText("OutcomeCustom")).toBeInTheDocument();
   });
 
-  it("สามารถค้นหาและเลือกไอคอนได้", () => {
+  it("สามาร�?�?�?�?หาและ�?ลือก�?อ�?อ�?�?�?�?", () => {
     renderWithProvider(<CategoryCustom />);
     fireEvent.change(
-      screen.getByPlaceholderText(/ค้นหาไอคอน/i),
-      { target: { value: "กาแฟ" } }
+      screen.getByPlaceholderText(/�?�?�?หา�?อ�?อ�?/i),
+      { target: { value: "กาแ�?" } }
     );
-    const coffeeBtn = screen.getByTitle("กาแฟ");
+    const coffeeBtn = screen.getByTitle("กาแ�?");
     fireEvent.click(coffeeBtn);
     expect(coffeeBtn).toHaveClass("active");
   });
 
-  it("แสดง alert ถ้าไม่เลือกไอคอนหรือไม่กรอกชื่อ", () => {
+  it("แส�?�? alert �?�?า�?ม�?�?ลือก�?อ�?อ�?หรือ�?ม�?กรอก�?ื�?อ", () => {
     renderWithProvider(<CategoryCustom />);
-    const confirmBtn = screen.getByRole("button", { name: "ยืนยัน" });
+    const confirmBtn = screen.getByRole("button", { name: "ยื�?ยั�?" });
     fireEvent.click(confirmBtn);
-    expect(window.alert).toHaveBeenCalledWith("กรุณาเลือกไอคอนและตั้งชื่อ");
+    expect(window.alert).toHaveBeenCalledWith("กรุ�?า�?ลือก�?อ�?อ�?และ�?ั�?�?�?ื�?อ");
   });
 
-  it("บันทึกและ navigate กลับ เมื่อเลือกครบถ้วน", () => {
+  it("�?ั�?�?ึกและ navigate กลั�? �?มื�?อ�?ลือก�?ร�?�?�?ว�?", () => {
     renderWithProvider(<CategoryCustom />);
     fireEvent.change(
-      screen.getByPlaceholderText(/ค้นหาไอคอน/i),
-      { target: { value: "งาน" } }
+      screen.getByPlaceholderText(/�?�?�?หา�?อ�?อ�?/i),
+      { target: { value: "�?า�?" } }
     );
-    fireEvent.click(screen.getByTitle("งาน"));
+    fireEvent.click(screen.getByTitle("�?า�?"));
 
     fireEvent.change(
-      screen.getByPlaceholderText("ชื่อหมวดหมู่"),
-      { target: { value: "งานอดิเรก" } }
+      screen.getByPlaceholderText("�?ื�?อหมว�?หมู�?"),
+      { target: { value: "�?า�?อ�?ิ�?รก" } }
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "ยืนยัน" }));
+    fireEvent.click(screen.getByRole("button", { name: "ยื�?ยั�?" }));
 
     expect(mockNavigate).toHaveBeenCalledWith(-1);
   });
 });
+
+
+

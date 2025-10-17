@@ -1,0 +1,79 @@
+﻿// src/pages/customoutcome.test.tsx
+import React from "react";
+import { render, screen, fireEvent } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+import CategoryCustom from "./customoutcome";
+import { TempCategoryProvider } from "../TempCategoryContext";
+
+// mock useNavigate
+const mockNavigate = vi.fn();
+vi.mock("react-router-dom", async (importOriginal) => {
+  const actual: any = await importOriginal();
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
+
+// mock alert
+beforeEach(() => {
+  vi.spyOn(window, "alert").mockImplementation(() => {});
+});
+afterEach(() => {
+  vi.restoreAllMocks();
+  mockNavigate.mockReset();
+});
+
+function renderWithProvider(ui: React.ReactNode) {
+  return render(
+    <MemoryRouter>
+      <TempCategoryProvider>{ui}</TempCategoryProvider>
+    </MemoryRouter>
+  );
+}
+
+describe("CustomOutcome Page", () => {
+  it("à¹à¸ªà¸”à¸‡à¸«à¸±à¸§à¸‚à¹‰à¸­ OutcomeCustom", () => {
+    renderWithProvider(<CategoryCustom />);
+    expect(screen.getByText("OutcomeCustom")).toBeInTheDocument();
+  });
+
+  it("à¸ªà¸²à¸¡à¸²à¸£à¸–à¸„à¹‰à¸™à¸«à¸²à¹à¸¥à¸°à¹€à¸¥à¸·à¸­à¸à¹„à¸­à¸„à¸­à¸™à¹„à¸”à¹‰", () => {
+    renderWithProvider(<CategoryCustom />);
+    fireEvent.change(
+      screen.getByPlaceholderText(/à¸„à¹‰à¸™à¸«à¸²à¹„à¸­à¸„à¸­à¸™/i),
+      { target: { value: "à¸à¸²à¹à¸Ÿ" } }
+    );
+    const coffeeBtn = screen.getByTitle("à¸à¸²à¹à¸Ÿ");
+    fireEvent.click(coffeeBtn);
+    expect(coffeeBtn).toHaveClass("active");
+  });
+
+  it("à¹à¸ªà¸”à¸‡ alert à¸–à¹‰à¸²à¹„à¸¡à¹ˆà¹€à¸¥à¸·à¸­à¸à¹„à¸­à¸„à¸­à¸™à¸«à¸£à¸·à¸­à¹„à¸¡à¹ˆà¸à¸£à¸­à¸à¸Šà¸·à¹ˆà¸­", () => {
+    renderWithProvider(<CategoryCustom />);
+    const confirmBtn = screen.getByRole("button", { name: "à¸¢à¸·à¸™à¸¢à¸±à¸™" });
+    fireEvent.click(confirmBtn);
+    expect(window.alert).toHaveBeenCalledWith("à¸à¸£à¸¸à¸“à¸²à¹€à¸¥à¸·à¸­à¸à¹„à¸­à¸„à¸­à¸™à¹à¸¥à¸°à¸•à¸±à¹‰à¸‡à¸Šà¸·à¹ˆà¸­");
+  });
+
+  it("à¸šà¸±à¸™à¸—à¸¶à¸à¹à¸¥à¸° navigate à¸à¸¥à¸±à¸š à¹€à¸¡à¸·à¹ˆà¸­à¹€à¸¥à¸·à¸­à¸à¸„à¸£à¸šà¸–à¹‰à¸§à¸™", () => {
+    renderWithProvider(<CategoryCustom />);
+    fireEvent.change(
+      screen.getByPlaceholderText(/à¸„à¹‰à¸™à¸«à¸²à¹„à¸­à¸„à¸­à¸™/i),
+      { target: { value: "à¸‡à¸²à¸™" } }
+    );
+    fireEvent.click(screen.getByTitle("à¸‡à¸²à¸™"));
+
+    fireEvent.change(
+      screen.getByPlaceholderText("à¸Šà¸·à¹ˆà¸­à¸«à¸¡à¸§à¸”à¸«à¸¡à¸¹à¹ˆ"),
+      { target: { value: "à¸‡à¸²à¸™à¸­à¸”à¸´à¹€à¸£à¸" } }
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "à¸¢à¸·à¸™à¸¢à¸±à¸™" }));
+
+    expect(mockNavigate).toHaveBeenCalledWith(-1);
+  });
+});
+
+
+

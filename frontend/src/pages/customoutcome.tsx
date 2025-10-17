@@ -33,84 +33,84 @@ type LucideIcon = React.ComponentType<{ className?: string }>;
 type IconItem = { key: string; label: string; Icon: LucideIcon };
 
 const ICON_SETS: Record<string, IconItem[]> = {
-  "อาหาร & เครื่องดื่ม": [
+  "อาหาร & �?�?รื�?อ�?�?ื�?ม": [
     { key: "food", label: "อาหาร", Icon: Utensils },
-    { key: "pizza", label: "พิซซ่า", Icon: Pizza },
-    { key: "drumstick", label: "ไก่ทอด", Icon: Drumstick },
-    { key: "coffee", label: "กาแฟ", Icon: Coffee },
-    { key: "beer", label: "เบียร์", Icon: Beer },
-    { key: "cupsoda", label: "โซดา", Icon: CupSoda },
-    { key: "icecream", label: "ไอศกรีม", Icon: IceCream },
-    { key: "candy", label: "ขนม", Icon: Candy },
-    { key: "cake", label: "เค้ก", Icon: Cake },
+    { key: "pizza", label: "�?ิ�?�?�?า", Icon: Pizza },
+    { key: "drumstick", label: "�?ก�?�?อ�?", Icon: Drumstick },
+    { key: "coffee", label: "กาแ�?", Icon: Coffee },
+    { key: "beer", label: "�?�?ียร�?", Icon: Beer },
+    { key: "cupsoda", label: "�?�?�?า", Icon: CupSoda },
+    { key: "icecream", label: "�?อศกรีม", Icon: IceCream },
+    { key: "candy", label: "�?�?ม", Icon: Candy },
+    { key: "cake", label: "�?�?�?ก", Icon: Cake },
   ],
-  "การเดินทาง": [
-    { key: "car", label: "รถยนต์", Icon: Car },
-    { key: "bus", label: "รถบัส", Icon: Bus },
-    { key: "bike", label: "จักรยาน", Icon: Bike },
-    { key: "plane", label: "เครื่องบิน", Icon: Plane },
-    { key: "train", label: "รถไฟ", Icon: Train },
-    { key: "ship", label: "เรือ", Icon: Ship },
-    { key: "fuel", label: "น้ำมัน", Icon: Fuel },
-    { key: "map", label: "แผนที่", Icon: Map },
-    { key: "mappin", label: "ปักหมุด", Icon: MapPin },
+  "การ�?�?ิ�?�?า�?": [
+    { key: "car", label: "ร�?ย�?�?�?", Icon: Car },
+    { key: "bus", label: "ร�?�?ัส", Icon: Bus },
+    { key: "bike", label: "�?ักรยา�?", Icon: Bike },
+    { key: "plane", label: "�?�?รื�?อ�?�?ิ�?", Icon: Plane },
+    { key: "train", label: "ร�?�?�?", Icon: Train },
+    { key: "ship", label: "�?รือ", Icon: Ship },
+    { key: "fuel", label: "�?�?ำมั�?", Icon: Fuel },
+    { key: "map", label: "แ�?�?�?ี�?", Icon: Map },
+    { key: "mappin", label: "�?ักหมุ�?", Icon: MapPin },
   ],
-  "สุขภาพ & การแพทย์": [
+  "สุ�?ภา�? & การแ�?�?ย�?": [
     { key: "stethoscope", label: "หมอ", Icon: Stethoscope },
-    { key: "heart", label: "สุขภาพ", Icon: HeartPulse },
-    { key: "activity", label: "ออกกำลัง", Icon: Activity },
+    { key: "heart", label: "สุ�?ภา�?", Icon: HeartPulse },
+    { key: "activity", label: "ออกกำลั�?", Icon: Activity },
     { key: "pill", label: "ยา", Icon: Pill },
-    { key: "hospital", label: "โรงพยาบาล", Icon: Hospital },
-    { key: "ambulance", label: "ปฐมพยาบาล", Icon: Ambulance },
+    { key: "hospital", label: "�?ร�?�?ยา�?าล", Icon: Hospital },
+    { key: "ambulance", label: "�?ฐม�?ยา�?าล", Icon: Ambulance },
   ],
-  "เสื้อผ้า & ช้อปปิ้ง": [
-    { key: "cart", label: "ช้อปปิ้ง", Icon: ShoppingCart },
-    { key: "bag", label: "กระเป๋า", Icon: ShoppingBag },
-    { key: "gift", label: "ของขวัญ", Icon: Gift },
-    { key: "tag", label: "ป้ายราคา", Icon: Tag },
-    { key: "shirt", label: "เสื้อผ้า", Icon: Shirt },
-    { key: "creditcard", label: "บัตรเครดิต", Icon: CreditCard },
-    { key: "soap", label: "ของใช้", Icon: SoapDispenserDroplet },
+  "�?สื�?อ�?�?า & �?�?อ�?�?ิ�?�?": [
+    { key: "cart", label: "�?�?อ�?�?ิ�?�?", Icon: ShoppingCart },
+    { key: "bag", label: "กระ�?�?�?า", Icon: ShoppingBag },
+    { key: "gift", label: "�?อ�?�?วัญ", Icon: Gift },
+    { key: "tag", label: "�?�?ายรา�?า", Icon: Tag },
+    { key: "shirt", label: "�?สื�?อ�?�?า", Icon: Shirt },
+    { key: "creditcard", label: "�?ั�?ร�?�?ร�?ิ�?", Icon: CreditCard },
+    { key: "soap", label: "�?อ�?�?�?�?", Icon: SoapDispenserDroplet },
   ],
-  "งาน & การเงิน": [
-    { key: "briefcase", label: "งาน", Icon: Briefcase },
-    { key: "laptop", label: "คอม", Icon: Laptop },
-    { key: "calculator", label: "คำนวณ", Icon: Calculator },
-    { key: "barchart", label: "รายงาน", Icon: BarChart },
-    { key: "coins", label: "เหรียญ", Icon: Coins },
-    { key: "wallet", label: "กระเป๋าเงิน", Icon: Wallet },
+  "�?า�? & การ�?�?ิ�?": [
+    { key: "briefcase", label: "�?า�?", Icon: Briefcase },
+    { key: "laptop", label: "�?อม", Icon: Laptop },
+    { key: "calculator", label: "�?ำ�?ว�?", Icon: Calculator },
+    { key: "barchart", label: "ราย�?า�?", Icon: BarChart },
+    { key: "coins", label: "�?หรียญ", Icon: Coins },
+    { key: "wallet", label: "กระ�?�?�?า�?�?ิ�?", Icon: Wallet },
   ],
-  "การเรียนรู้": [
-    { key: "book", label: "หนังสือ", Icon: BookOpen },
-    { key: "graduation", label: "เรียน", Icon: GraduationCap },
-    { key: "pencil", label: "เขียน", Icon: Pencil },
+  "การ�?รีย�?รู�?": [
+    { key: "book", label: "ห�?ั�?สือ", Icon: BookOpen },
+    { key: "graduation", label: "�?รีย�?", Icon: GraduationCap },
+    { key: "pencil", label: "�?�?ีย�?", Icon: Pencil },
   ],
-  "กีฬา & กิจกรรม": [
-    { key: "dumbbell", label: "ฟิตเนส", Icon: Dumbbell },
-    { key: "goal", label: "ฟุตบอล", Icon: Goal },
-    { key: "trophy", label: "ถ้วยรางวัล", Icon: Trophy },
-    { key: "volleyball", label: "วอลเลย์บอล", Icon: Volleyball },
+  "กีฬา & กิ�?กรรม": [
+    { key: "dumbbell", label: "�?ิ�?�?�?ส", Icon: Dumbbell },
+    { key: "goal", label: "�?ุ�?�?อล", Icon: Goal },
+    { key: "trophy", label: "�?�?วยรา�?วัล", Icon: Trophy },
+    { key: "volleyball", label: "วอล�?ลย�?�?อล", Icon: Volleyball },
   ],
-  "สัตว์เลี้ยง": [
-    { key: "dog", label: "สุนัข", Icon: Dog },
+  "สั�?ว�?�?ลี�?ย�?": [
+    { key: "dog", label: "สุ�?ั�?", Icon: Dog },
     { key: "cat", label: "แมว", Icon: Cat },
-    { key: "fish", label: "ปลา", Icon: Fish },
-    { key: "bird", label: "นก", Icon: Bird },
+    { key: "fish", label: "�?ลา", Icon: Fish },
+    { key: "bird", label: "�?ก", Icon: Bird },
   ],
-  "บ้าน & ครอบครัว": [
-    { key: "home", label: "บ้าน", Icon: Home },
-    { key: "sofa", label: "โซฟา", Icon: Sofa },
-    { key: "bed", label: "เตียง", Icon: Bed },
-    { key: "wrench", label: "ประแจ", Icon: Wrench },
-    { key: "hammer", label: "ค้อน", Icon: Hammer },
+  "�?�?า�? & �?รอ�?�?รัว": [
+    { key: "home", label: "�?�?า�?", Icon: Home },
+    { key: "sofa", label: "�?�?�?า", Icon: Sofa },
+    { key: "bed", label: "�?�?ีย�?", Icon: Bed },
+    { key: "wrench", label: "�?ระแ�?", Icon: Wrench },
+    { key: "hammer", label: "�?�?อ�?", Icon: Hammer },
   ],
-  "บันเทิง & ผ่อนคลาย": [
-    { key: "game", label: "เกม", Icon: Gamepad },
-    { key: "music", label: "เพลง", Icon: Music },
-    { key: "film", label: "หนัง", Icon: Film },
-    { key: "popcorn", label: "ป๊อปคอร์น", Icon: Popcorn },
-    { key: "clapper", label: "กองถ่าย", Icon: Clapperboard },
-    { key: "sprout", label: "ปลูกต้นไม้", Icon: Sprout },
+  "�?ั�?�?�?ิ�? & �?�?อ�?�?ลาย": [
+    { key: "game", label: "�?กม", Icon: Gamepad },
+    { key: "music", label: "�?�?ล�?", Icon: Music },
+    { key: "film", label: "ห�?ั�?", Icon: Film },
+    { key: "popcorn", label: "�?�?อ�?�?อร�?�?", Icon: Popcorn },
+    { key: "clapper", label: "กอ�?�?�?าย", Icon: Clapperboard },
+    { key: "sprout", label: "�?ลูก�?�?�?�?ม�?", Icon: Sprout },
   ],
 };
 
@@ -145,12 +145,12 @@ export default function CategoryCustom() {
   function handleConfirm() {
     const trimmed = name.trim();
     if (!picked || !trimmed) {
-      alert("กรุณาเลือกไอคอนและตั้งชื่อ");
+      alert("กรุ�?า�?ลือก�?อ�?อ�?และ�?ั�?�?�?ื�?อ");
       return;
     }
-    // ✅ ตั้งค่าหมวดชั่วคราวแล้วกลับไปหน้า Expense
+    // �?? �?ั�?�?�?�?าหมว�?�?ั�?ว�?ราวแล�?วกลั�?�?�?ห�?�?า Expense
     setTempCategory({ name: trimmed, iconKey: picked.key });
-    nav(-1); // กลับหน้าก่อนหน้า (Expense)
+    nav(-1); // กลั�?ห�?�?าก�?อ�?ห�?�?า (Expense)
   }
 
   return (
@@ -165,13 +165,13 @@ export default function CategoryCustom() {
         <Search className="cc-search-icon" />
         <input
           className="cc-search-input"
-          placeholder="ค้นหาไอคอน… (พิมพ์เช่น กาแฟ, รถ, งาน, music)"
+          placeholder="�?�?�?หา�?อ�?อ�?�?� (�?ิม�?�?�?�?�?�? กาแ�?, ร�?, �?า�?, music)"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
         {query && (
-          <button className="cc-search-clear" onClick={() => setQuery("")} aria-label="ล้างคำค้น">
-            ×
+          <button className="cc-search-clear" onClick={() => setQuery("")} aria-label="ล�?า�?�?ำ�?�?�?">
+            �?
           </button>
         )}
       </div>
@@ -185,7 +185,7 @@ export default function CategoryCustom() {
         <div className="cc-namefield">
           <input
             className="cc-nameinput"
-            placeholder="ชื่อหมวดหมู่"
+            placeholder="�?ื�?อหมว�?หมู�?"
             value={name}
             onChange={(e) => setName(e.target.value)}
             maxLength={32}
@@ -193,15 +193,15 @@ export default function CategoryCustom() {
           <div className="cc-underline" />
         </div>
 
-        <button className="cc-confirm" onClick={handleConfirm} aria-label="ยืนยัน">
+        <button className="cc-confirm" onClick={handleConfirm} aria-label="ยื�?ยั�?">
           <Check className="cc-checkicon" />
         </button>
       </section>
 
-      {/* Library (กรองตามคำค้น) */}
+      {/* Library (กรอ�?�?าม�?ำ�?�?�?) */}
       <section className="cc-library">
         {Object.keys(filteredSets).length === 0 ? (
-          <p className="cc-noresult">ไม่พบไอคอนที่ตรงกับ “{query}”</p>
+          <p className="cc-noresult">�?ม�?�?�?�?อ�?อ�?�?ี�?�?ร�?กั�? �??{query}�?�</p>
         ) : (
           Object.entries(filteredSets).map(([group, list]) => (
             <div key={group} className="cc-group">
@@ -227,3 +227,7 @@ export default function CategoryCustom() {
     </div>
   );
 }
+
+
+
+

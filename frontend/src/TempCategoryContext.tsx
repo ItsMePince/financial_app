@@ -3,8 +3,8 @@
 import React, { createContext, useContext, useState } from "react";
 
 export type TempCategory = {
-  name: string;         // ชื่อหมวดที่ผู้ใช้ตั้งเอง
-  iconKey: string;      // คีย์ไอคอนที่เลือก (ใช้ระบุว่าจะวาดไอคอนอะไร)
+  name: string;         // �?ื�?อหมว�?�?ี�?�?ู�?�?�?�?�?ั�?�?�?อ�?
+  iconKey: string;      // �?ีย�?�?อ�?อ�?�?ี�?�?ลือก (�?�?�?ระ�?ุว�?า�?ะวา�?�?อ�?อ�?อะ�?ร)
 };
 
 type Ctx = {
@@ -33,3 +33,7 @@ export function useTempCategory() {
   if (!ctx) throw new Error("useTempCategory must be used within TempCategoryProvider");
   return ctx;
 }
+
+
+
+

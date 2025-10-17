@@ -1,4 +1,4 @@
-// src/pages/month.test.tsx
+﻿// src/pages/month.test.tsx
 import React from "react";
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
@@ -26,7 +26,7 @@ beforeAll(() => {
 
 const onlyNumber = (s: string | null | undefined) => (s ?? "").replace(/[^\d]/g, "");
 
-/** สร้าง mock fetch ที่ resolve เป็นค่าที่ระบุ 1 ครั้ง */
+/** สร�?า�? mock fetch �?ี�? resolve �?�?�?�?�?�?า�?ี�?ระ�?ุ 1 �?รั�?�? */
 function mockFetchResolveOnce(data: any, ok = true) {
   global.fetch = vi.fn().mockResolvedValue({
     ok,
@@ -40,8 +40,8 @@ describe("Month Page", () => {
     vi.restoreAllMocks();
   });
 
-  it("แสดงสถานะ loading ตอนแรก", async () => {
-    // ทำให้ fetch ค้างไว้ก่อน เพื่อเช็คจอ Loading
+  it("แส�?�?ส�?า�?ะ loading �?อ�?แรก", async () => {
+    // �?ำ�?ห�? fetch �?�?า�?�?ว�?ก�?อ�? �?�?ื�?อ�?�?�?�?�?อ Loading
     let resolveFn: (v: any) => void = () => {};
     const pending = new Promise((res) => (resolveFn = res));
     global.fetch = vi.fn().mockReturnValueOnce(pending);
@@ -52,35 +52,35 @@ describe("Month Page", () => {
       </MemoryRouter>
     );
 
-    // มีข้อความ 'กำลังโหลด' อย่างน้อยหนึ่งจุด
+    // มี�?�?อ�?วาม 'กำลั�?�?หล�?' อย�?า�?�?�?อยห�?ึ�?�?�?ุ�?
     const loadingEls = screen.getAllByText((_, node) =>
       !!node?.textContent?.toLowerCase().includes("load") ||
-      !!node?.textContent?.includes("กำลังโหลด")
+      !!node?.textContent?.includes("กำลั�?�?หล�?")
     );
     expect(loadingEls.length).toBeGreaterThanOrEqual(1);
 
-    // ปล่อย fetch ให้เสร็จ
+    // �?ล�?อย fetch �?ห�?�?สร�?�?
     resolveFn({
       ok: true,
       json: async () => [],
       text: async () => "[]",
     });
 
-    // รอให้ข้อความโหลดหายไปทั้งหมด
+    // รอ�?ห�?�?�?อ�?วาม�?หล�?หาย�?�?�?ั�?�?หม�?
     await waitFor(() => {
       const still = screen.queryAllByText((_, node) =>
         !!node?.textContent?.toLowerCase().includes("load") ||
-        !!node?.textContent?.includes("กำลังโหลด")
+        !!node?.textContent?.includes("กำลั�?�?หล�?")
       );
       expect(still.length).toBe(0);
     });
   });
 
-  it("แสดงข้อความ error เมื่อ API ล้มเหลว", async () => {
+  it("แส�?�?�?�?อ�?วาม error �?มื�?อ API ล�?ม�?หลว", async () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: false,
       status: 500,
-      text: async () => "เกิดข้อผิดพลาด",
+      text: async () => "�?กิ�?�?�?อ�?ิ�?�?ลา�?",
     }) as any;
 
     render(
@@ -89,13 +89,13 @@ describe("Month Page", () => {
       </MemoryRouter>
     );
 
-    // คอมโพเนนต์แสดงว่า "โหลดข้อมูลไม่สำเร็จ (...)" อยู่ใน DOM
+    // �?อม�?�?�?�?�?�?�?แส�?�?ว�?า "�?หล�?�?�?อมูล�?ม�?สำ�?ร�?�? (...)" อยู�?�?�? DOM
     await waitFor(() => {
-      expect(screen.getByText(/โหลดข้อมูลไม่สำเร็จ/i)).toBeInTheDocument();
+      expect(screen.getByText(/�?หล�?�?�?อมูล�?ม�?สำ�?ร�?�?/i)).toBeInTheDocument();
     });
   });
 
-  it("แสดง 'ไม่มีรายการในเดือนนี้' เมื่อ API คืน array ว่าง", async () => {
+  it("แส�?�? '�?ม�?มีรายการ�?�?�?�?ือ�?�?ี�?' �?มื�?อ API �?ื�? array ว�?า�?", async () => {
     mockFetchResolveOnce([]);
 
     render(
@@ -105,11 +105,11 @@ describe("Month Page", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(/ไม่มีรายการในเดือนนี้/i)).toBeInTheDocument();
+      expect(screen.getByText(/�?ม�?มีรายการ�?�?�?�?ือ�?�?ี�?/i)).toBeInTheDocument();
     });
 
-    // KPI ควรเป็น 0 ทั้งหมด (อ่านจาก kpi-inline เพื่อเลี่ยงชนกับ cell ใน grid)
-    const kpiInline = screen.getByText(/รายรับ:/i).closest(".kpi-inline") as HTMLElement;
+    // KPI �?วร�?�?�?�? 0 �?ั�?�?หม�? (อ�?า�?�?าก kpi-inline �?�?ื�?อ�?ลี�?ย�?�?�?กั�? cell �?�? grid)
+    const kpiInline = screen.getByText(/รายรั�?:/i).closest(".kpi-inline") as HTMLElement;
     const incomeEl  = kpiInline.querySelector("b.income") as HTMLElement;
     const expenseEl = kpiInline.querySelector("b.expense") as HTMLElement;
     const balanceEl = kpiInline.querySelector("b.balance") as HTMLElement;
@@ -119,10 +119,10 @@ describe("Month Page", () => {
     expect(onlyNumber(balanceEl.textContent)).toBe("0");
   });
 
-  it("แสดงข้อมูลเมื่อโหลดสำเร็จ และคำนวณ KPI ถูกต้อง", async () => {
-    // จัด mock เฉพาะเคสนี้
+  it("แส�?�?�?�?อมูล�?มื�?อ�?หล�?สำ�?ร�?�? และ�?ำ�?ว�? KPI �?ูก�?�?อ�?", async () => {
+    // �?ั�? mock �?�?�?าะ�?�?ส�?ี�?
     const sample = [
-      { id: 1, date: "2025-09-01", type: "INCOME",  amount: 12000, category: "เงินเดือน" },
+      { id: 1, date: "2025-09-01", type: "INCOME",  amount: 12000, category: "�?�?ิ�?�?�?ือ�?" },
       { id: 2, date: "2025-09-01", type: "EXPENSE", amount: 3000,  category: "อาหาร"   },
     ];
 
@@ -140,18 +140,18 @@ describe("Month Page", () => {
       </MemoryRouter>
     );
 
-    // ยืนยันว่ามีการยิง fetch แล้ว
+    // ยื�?ยั�?ว�?ามีการยิ�? fetch แล�?ว
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
 
-    // รอให้สลับจาก loading เป็นการ์ดสรุป
-    const title = await screen.findByText(/สรุปรายเดือน/i);
+    // รอ�?ห�?สลั�?�?าก loading �?�?�?�?การ�?�?สรุ�?
+    const title = await screen.findByText(/สรุ�?ราย�?�?ือ�?/i);
     const summaryCard = title.closest(".summary-card") as HTMLElement;
 
-    // ตรวจ KPI เฉพาะในการ์ดสรุป (กันชนกับตัวเลขใน grid)
+    // �?รว�? KPI �?�?�?าะ�?�?การ�?�?สรุ�? (กั�?�?�?กั�?�?ัว�?ล�?�?�? grid)
     const kpi = summaryCard.querySelector(".kpi-inline") as HTMLElement;
-    expect(within(kpi).getByText(/12,?000/)).toBeInTheDocument(); // รายรับ
-    expect(within(kpi).getByText(/3,?000/)).toBeInTheDocument();  // รายจ่าย
-    expect(within(kpi).getByText(/9,?000/)).toBeInTheDocument();  // คงเหลือ
+    expect(within(kpi).getByText(/12,?000/)).toBeInTheDocument(); // รายรั�?
+    expect(within(kpi).getByText(/3,?000/)).toBeInTheDocument();  // ราย�?�?าย
+    expect(within(kpi).getByText(/9,?000/)).toBeInTheDocument();  // �?�?�?หลือ
 
     expect(await screen.findAllByText(/12,?000/)).not.toHaveLength(0);
     expect(await screen.findAllByText(/3,?000/)).not.toHaveLength(0);
@@ -159,8 +159,8 @@ describe("Month Page", () => {
 
   });
 
-  it("เปลี่ยนเดือนเมื่อกดปุ่ม ก่อนหน้า/ถัดไป และเรียก fetch ใหม่", async () => {
-    // initial + prev + next อย่างน้อย 3 mock responses
+  it("�?�?ลี�?ย�?�?�?ือ�?�?มื�?อก�?�?ุ�?ม ก�?อ�?ห�?�?า/�?ั�?�?�? และ�?รียก fetch �?หม�?", async () => {
+    // initial + prev + next อย�?า�?�?�?อย 3 mock responses
     global.fetch = vi
       .fn()
       .mockResolvedValueOnce({ ok: true, json: async () => [], text: async () => "[]" })
@@ -173,11 +173,11 @@ describe("Month Page", () => {
       </MemoryRouter>
     );
 
-    // รอให้โหลดรอบแรกจบ (ข้อความกำลังโหลดหาย)
+    // รอ�?ห�?�?หล�?รอ�?แรก�?�? (�?�?อ�?วามกำลั�?�?หล�?หาย)
     await waitFor(() => {
       const still = screen.queryAllByText((_, node) =>
         !!node?.textContent?.toLowerCase().includes("load") ||
-        !!node?.textContent?.includes("กำลังโหลด")
+        !!node?.textContent?.includes("กำลั�?�?หล�?")
       );
       expect(still.length).toBe(0);
     }, { timeout: 3000 });
@@ -189,20 +189,24 @@ describe("Month Page", () => {
     expect(initialText).not.toBe("");
 
     // previous
-    fireEvent.click(screen.getByRole("button", { name: "ก่อนหน้า" }));
+    fireEvent.click(screen.getByRole("button", { name: "ก�?อ�?ห�?�?า" }));
     await waitFor(() => {
       expect(getChipText()).not.toBe(initialText);
     }, { timeout: 3000 });
 
-    // next (กลับมาเท่าเดิม)
-    fireEvent.click(screen.getByRole("button", { name: "ถัดไป" }));
+    // next (กลั�?มา�?�?�?า�?�?ิม)
+    fireEvent.click(screen.getByRole("button", { name: "�?ั�?�?�?" }));
     await waitFor(() => {
       expect(getChipText()).toBe(initialText);
     }, { timeout: 3000 });
 
-    // นับจำนวนเรียก fetch — ยอมรับ >= 2 เพื่อกัน timing
+    // �?ั�?�?ำ�?ว�?�?รียก fetch �?? ยอมรั�? >= 2 �?�?ื�?อกั�? timing
     await waitFor(() => {
       expect((global.fetch as any).mock.calls.length).toBeGreaterThanOrEqual(2);
     }, { timeout: 3000 });
   });
 });
+
+
+
+

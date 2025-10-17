@@ -20,7 +20,7 @@ function mockFetchOnce(data: any, ok = true) {
 }
 
 const isAnyLoginError = (txt: string) =>
-  /invalid|login failed|เข้าสู่ระบบล้มเหลว|ผิดพลาด|เชื่อมต่อ|ไม่สามารถ|network/i.test(txt);
+  /invalid|login failed|�?�?�?าสู�?ระ�?�?ล�?ม�?หลว|�?ิ�?�?ลา�?|�?�?ื�?อม�?�?อ|�?ม�?สามาร�?|network/i.test(txt);
 
 describe("Login Frontend", () => {
   beforeEach(() => {
@@ -34,7 +34,7 @@ describe("Login Frontend", () => {
     vi.restoreAllMocks();
   });
 
-  it("แสดงปุ่ม login บนหน้าจอ", () => {
+  it("แส�?�?�?ุ�?ม login �?�?ห�?�?า�?อ", () => {
     render(
       <MemoryRouter>
         <Login />
@@ -43,7 +43,7 @@ describe("Login Frontend", () => {
     expect(screen.getByRole("button", { name: /login/i })).toBeInTheDocument();
   });
 
-  it("เปลี่ยนปุ่มเป็น loading ขณะ submit", async () => {
+  it("�?�?ลี�?ย�?�?ุ�?ม�?�?�?�? loading �?�?ะ submit", async () => {
     mockFetchOnce({ success: false, message: "x" });
     render(
       <MemoryRouter>
@@ -55,11 +55,11 @@ describe("Login Frontend", () => {
     const btn = screen.getByRole("button", { name: /login/i });
     fireEvent.click(btn);
     expect(btn).toBeDisabled();
-    expect(btn).toHaveTextContent(/กำลังเข้าสู่ระบบ/i);
+    expect(btn).toHaveTextContent(/กำลั�?�?�?�?าสู�?ระ�?�?/i);
     await waitFor(() => expect(btn).toHaveTextContent(/login/i));
   });
 
-  it("navigate ไป /home เมื่อ login สำเร็จ", async () => {
+  it("navigate �?�? /home �?มื�?อ login สำ�?ร�?�?", async () => {
     const fakeUser = { username: "u", role: "member" };
     mockFetchOnce({ success: true, user: fakeUser });
     render(
@@ -77,7 +77,7 @@ describe("Login Frontend", () => {
     });
   });
 
-  it("แสดง error message จาก API", async () => {
+  it("แส�?�? error message �?าก API", async () => {
     mockFetchOnce({ success: false, message: "Invalid credentials" });
     render(
       <MemoryRouter>
@@ -90,7 +90,7 @@ describe("Login Frontend", () => {
     expect(await screen.findByText((t) => isAnyLoginError(t))).toBeInTheDocument();
   });
 
-  it("แสดงข้อความ error ภาษาไทยเมื่อ network ล้มเหลว", async () => {
+  it("แส�?�?�?�?อ�?วาม error ภาษา�?�?ย�?มื�?อ network ล�?ม�?หลว", async () => {
     (globalThis.fetch as any) = vi.fn().mockRejectedValueOnce(new Error("Network down"));
     render(
       <MemoryRouter>
@@ -103,7 +103,7 @@ describe("Login Frontend", () => {
     expect(await screen.findByText((t) => isAnyLoginError(t))).toBeInTheDocument();
   });
 
-  it("กดปุ่ม Sign Up แล้ว navigate ไป /signup", () => {
+  it("ก�?�?ุ�?ม Sign Up แล�?ว navigate �?�? /signup", () => {
     render(
       <MemoryRouter>
         <Login />
@@ -113,7 +113,7 @@ describe("Login Frontend", () => {
     expect(mockNavigate).toHaveBeenCalledWith("/signup");
   });
 
-  it("เรียก fetch ด้วยพารามิเตอร์ที่ถูกต้อง", async () => {
+  it("�?รียก fetch �?�?วย�?ารามิ�?�?อร�?�?ี�?�?ูก�?�?อ�?", async () => {
     const fakeUser = { username: "u", role: "member" };
     const fetchSpy = vi.spyOn(globalThis, "fetch" as any).mockResolvedValueOnce({
       ok: true,
@@ -130,7 +130,7 @@ describe("Login Frontend", () => {
     fireEvent.click(screen.getByRole("button", { name: /login/i }));
     await waitFor(() => expect(fetchSpy).toHaveBeenCalled());
     const [url, options] = fetchSpy.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe("http://localhost:8081/api/auth/login");
+    expect(url).toBe("/api/api/auth/login");
     expect(options.method).toBe("POST");
     const contentType = new Headers(options.headers as HeadersInit).get("Content-Type");
     expect(contentType).toBe("application/json");
@@ -138,7 +138,7 @@ describe("Login Frontend", () => {
     expect(JSON.parse(String(options.body))).toEqual({ username: "u", password: "p" });
   });
 
-  it("ช่องกรอกถูก disabled ระหว่าง loading", async () => {
+  it("�?�?อ�?กรอก�?ูก disabled ระหว�?า�? loading", async () => {
     (globalThis.fetch as any) = vi.fn().mockResolvedValueOnce({
       ok: true,
       json: async () => ({ success: false, message: "x" }),
@@ -160,7 +160,7 @@ describe("Login Frontend", () => {
     await waitFor(() => expect(btn).not.toBeDisabled());
   });
 
-  it("ล้าง error ก่อนส่งครั้งใหม่ (error เก่าหายไปเมื่อกดส่งอีกครั้ง)", async () => {
+  it("ล�?า�? error ก�?อ�?ส�?�?�?รั�?�?�?หม�? (error �?ก�?าหาย�?�?�?มื�?อก�?ส�?�?อีก�?รั�?�?)", async () => {
     mockFetchOnce({ success: false, message: "Invalid credentials" });
     render(
       <MemoryRouter>
@@ -180,7 +180,7 @@ describe("Login Frontend", () => {
     expect(await screen.findByText((t) => isAnyLoginError(t))).toBeInTheDocument();
   });
 
-  it("ใช้ fallback เมื่อ server ไม่ส่ง message (แสดงสถานะหรือข้อความ Invalid response)", async () => {
+  it("�?�?�? fallback �?มื�?อ server �?ม�?ส�?�? message (แส�?�?ส�?า�?ะหรือ�?�?อ�?วาม Invalid response)", async () => {
     (globalThis.fetch as any) = vi.fn().mockResolvedValueOnce({
       ok: false,
       status: 400,
@@ -203,7 +203,7 @@ describe("Login Frontend", () => {
     expect(matches.length).toBeGreaterThan(0);
   });
 
-  it("เรียก onLoginSuccess ด้วย user ที่ได้จาก API", async () => {
+  it("�?รียก onLoginSuccess �?�?วย user �?ี�?�?�?�?�?าก API", async () => {
     const fakeUser = { username: "u", role: "member" };
     const onLoginSuccess = vi.fn();
     mockFetchOnce({ success: true, user: fakeUser });
@@ -218,7 +218,7 @@ describe("Login Frontend", () => {
     await waitFor(() => expect(onLoginSuccess).toHaveBeenCalledWith(fakeUser));
   });
 
-  it('dispatch event "auth-changed" หลังล็อกอินสำเร็จ', async () => {
+  it('dispatch event "auth-changed" หลั�?ล�?อกอิ�?สำ�?ร�?�?', async () => {
     const fakeUser = { username: "u", role: "member" };
     const dispatchSpy = vi.spyOn(window, "dispatchEvent");
     mockFetchOnce({ success: true, user: fakeUser });
@@ -237,3 +237,7 @@ describe("Login Frontend", () => {
     });
   });
 });
+
+
+
+
