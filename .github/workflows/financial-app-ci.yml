@@ -12,26 +12,15 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # ยังเก็บไว้ได้ เผื่ออนาคตอยากใช้ผล filter
   changes:
     runs-on: ubuntu-latest
-    outputs:
-      frontend: ${{ steps.filter.outputs.frontend }}
-      backend:  ${{ steps.filter.outputs.backend }}
     steps:
       - uses: actions/checkout@v4
-      - id: filter
-        uses: dorny/paths-filter@v3
-        with:
-          filters: |
-            frontend:
-              - 'frontend/**'
-            backend:
-              - 'backend/**'
 
   frontend-build:
     name: Frontend Build (no tests)
     needs: changes
-    if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.frontend == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -57,7 +46,6 @@ jobs:
   backend-build:
     name: Backend Build (no tests)
     needs: changes
-    if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.backend == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -66,17 +54,12 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
           cache: 'maven'
-
       - name: Make mvnw executable
         working-directory: backend
         run: chmod +x ./mvnw
-
-
       - name: Build (compile/package fast)
         working-directory: backend
-        run: |
-          ./mvnw -B -ntp -DskipTests -Dspring-boot.repackage.skip=true clean package
-
+        run: ./mvnw -B -ntp -DskipTests -Dspring-boot.repackage.skip=true clean package
       - name: Upload backend artifact (if exists)
         if: always()
         uses: actions/upload-artifact@v4
