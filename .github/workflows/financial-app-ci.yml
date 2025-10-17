@@ -1,27 +1,82 @@
-# Run BE (spring-boot:run, profile=test)
-- name: Run BE (spring-boot:run, profile=test)
-  working-directory: backend
-  env:
-    SPRING_PROFILES_ACTIVE: test
-  run: |
-    chmod +x ./mvnw
-    ./mvnw -q -DskipTests spring-boot:run > backend.log 2>&1 &
-    echo "API_URL=http://localhost:8081" >> "$GITHUB_ENV"   # 👈 เปลี่ยนเป็น 8081
-    sleep 10
-    tail -n 20 backend.log || true
+fullstack-e2e:
+  name: Fullstack E2E (Cypress)
+  needs: [frontend-build, backend-package]
+  if: ${{ needs.changes.outputs.frontend == 'true' || needs.changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' }}
+  runs-on: ubuntu-latest
+  timeout-minutes: 25
+  steps:
+    - uses: actions/checkout@v4
 
-# Run Cypress
-- name: Run Cypress
-  uses: cypress-io/github-action@v6
-  with:
-    working-directory: frontend
-    install: false
-    browser: electron
-    quiet: true
-    config: video=false
-    wait-on: 'http://localhost:3000,tcp:localhost:8081'     # 👈 เปลี่ยนเป็น 8081
-    wait-on-timeout: 240
-  env:
-    CI: true
-    CYPRESS_baseUrl: ${{ env.FE_URL }}
-    CYPRESS_API_URL: ${{ env.API_URL }}                     # จะกลายเป็น http://localhost:8081
+    - name: Download FE build artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: frontend-build
+        path: frontend/build
+      continue-on-error: true
+
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: npm
+        cache-dependency-path: frontend/package-lock.json
+
+    - name: Install FE deps
+      working-directory: frontend
+      run: npm ci
+
+    - name: Cache Cypress
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/Cypress
+        key: cypress-${{ runner.os }}-${{ hashFiles('frontend/package-lock.json') }}
+        restore-keys: cypress-${{ runner.os }}-
+
+    # ✅ Backend ใช้พอร์ต 8081 ให้ตรงกับ Spring Boot
+    - name: Run BE (spring-boot:run, profile=test)
+      working-directory: backend
+      env:
+        SPRING_PROFILES_ACTIVE: test
+      run: |
+        chmod +x ./mvnw
+        ./mvnw -q -DskipTests spring-boot:run > backend.log 2>&1 &
+        echo "API_URL=http://localhost:8081" >> "$GITHUB_ENV"
+        sleep 10
+        tail -n 20 backend.log || true
+
+    - name: Serve FE build
+      id: servefe
+      working-directory: frontend
+      run: |
+        npx http-server ./build -p 3000 --silent &
+        echo "FE_URL=http://localhost:3000" >> "$GITHUB_ENV"
+
+    # ✅ Cypress รอ FE/BE (8081)
+    - name: Run Cypress
+      uses: cypress-io/github-action@v6
+      with:
+        working-directory: frontend
+        install: false
+        browser: electron
+        quiet: true
+        config: video=false
+        wait-on: "http://localhost:3000,tcp:localhost:8081"
+        wait-on-timeout: 240
+      env:
+        CI: true
+        CYPRESS_baseUrl: ${{ env.FE_URL }}
+        CYPRESS_API_URL: ${{ env.API_URL }}
+
+    - name: Print backend logs on failure
+      if: failure()
+      working-directory: backend
+      run: |
+        echo "---- tail backend.log ----"
+        tail -n 120 backend.log || true
+
+    - name: Upload screenshots (if any)
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: fullstack-screenshots
+        path: frontend/cypress/screenshots/**
+        if-no-files-found: ignore
