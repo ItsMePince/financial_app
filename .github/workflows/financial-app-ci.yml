@@ -164,7 +164,7 @@ jobs:
           key: cypress-${{ runner.os }}-${{ hashFiles('frontend/package-lock.json') }}
           restore-keys: cypress-${{ runner.os }}-
 
-      # ✅ start backend (fix permission)
+      # ✅ Start backend and wait
       - name: Run BE (spring-boot:run, profile=test)
         working-directory: backend
         env:
@@ -183,23 +183,28 @@ jobs:
           npx http-server ./build -p 3000 --silent &
           echo "FE_URL=http://localhost:3000" >> "$GITHUB_ENV"
 
-      # ✅ Cypress จะรอ FE/BE เองด้วย wait-on
+      # ✅ Cypress รอ FE/BE เองด้วย wait-on
       - name: Run Cypress
         uses: cypress-io/github-action@v6
         with:
           working-directory: frontend
           install: false
           browser: electron
-          headless: true
+          quiet: true
           config: video=false
-          wait-on: |
-            http://localhost:3000
-            tcp:localhost:8080
-          wait-on-timeout: 240000
+          wait-on: 'http://localhost:3000,tcp:localhost:8080'
+          wait-on-timeout: 240
         env:
           CI: true
           CYPRESS_baseUrl: ${{ env.FE_URL }}
           CYPRESS_API_URL: ${{ env.API_URL }}
+
+      - name: Print backend logs on failure
+        if: failure()
+        working-directory: backend
+        run: |
+          echo "---- tail backend.log ----"
+          tail -n 120 backend.log || true
 
       - name: Upload screenshots (if any)
         if: always()
