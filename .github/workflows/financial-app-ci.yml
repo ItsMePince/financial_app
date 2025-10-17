@@ -1,4 +1,4 @@
-name: Financial App CI (Frontend build + Backend package)
+name: Financial App CI (Frontend + Backend)
 
 on:
   push:
@@ -28,14 +28,14 @@ jobs:
             backend:
               - 'backend/**'
 
-  frontend-build:
+  frontend:
     name: Frontend Build (no tests)
     needs: changes
-    # บน PR/dispatch ให้รันทันที, บน push จะรันเมื่อมีไฟล์ฝั่ง frontend เปลี่ยน
     if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.frontend == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -46,45 +46,47 @@ jobs:
         working-directory: frontend
         run: npm ci
 
-      # ถ้ามีสคริปต์ build จะรัน, ถ้าไม่มีจะข้าม (ไม่ error)
       - name: Build (if present)
         working-directory: frontend
         run: npm run build --if-present
 
-      # เก็บผล build (ถ้ามี)
-      - name: Upload build artifact (if exists)
+      - name: Upload frontend build
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: frontend-build
+          name: frontend-build-${{ github.run_id }}
           path: frontend/build
           if-no-files-found: ignore
 
-  backend-package:
-    name: Backend Package (skip tests)
+  backend:
+    name: Backend Build (with tests)
     needs: changes
     if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.backend == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
           cache: 'maven'
+          cache-dependency-path: backend/pom.xml
 
       - name: Make mvnw executable
         working-directory: backend
         run: chmod +x ./mvnw
 
-      - name: Package (skip tests)
+      - name: Build & test (package)
         working-directory: backend
-        run: ./mvnw -q -DskipTests package
+        run: ./mvnw -q package
 
-      - name: Upload jar (if exists)
+      - name: Upload backend artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: backend-jar
-          path: backend/target/*.jar
-          if-no-files-found: ignore
+          name: backend-artifacts-${{ github.run_id }}
+          path: |
+            backend/target/*.jar
+            backend/target/surefire-reports/**
+          if-no-files-found: warn
