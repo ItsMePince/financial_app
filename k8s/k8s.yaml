@@ -1,0 +1,123 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: financial-app
+---
+# ===== BACKEND =====
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: financial-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          image: docker.io/pinceme/my-financial-app:1.0.0
+          ports:
+            - containerPort: 8081
+          readinessProbe:
+            tcpSocket: { port: 8081 }
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket: { port: 8081 }
+            initialDelaySeconds: 20
+            periodSeconds: 20
+          resources:
+            requests: { cpu: "200m", memory: "256Mi" }
+            limits:   { cpu: "500m", memory: "512Mi" }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: financial-app
+spec:
+  selector:
+    app: backend
+  ports:
+    - name: http
+      port: 8081
+      targetPort: 8081
+  type: ClusterIP
+---
+# ===== FRONTEND =====
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: financial-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: docker.io/pinceme/financial-frontend:1.0.0
+          ports:
+            - containerPort: 80
+          readinessProbe:
+            tcpSocket: { port: 80 }
+            initialDelaySeconds: 5
+          livenessProbe:
+            tcpSocket: { port: 80 }
+            initialDelaySeconds: 10
+          resources:
+            requests: { cpu: "100m", memory: "128Mi" }
+            limits:   { cpu: "300m", memory: "256Mi" }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: financial-app
+spec:
+  selector:
+    app: frontend
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+  type: ClusterIP
+---
+# ===== INGRESS =====
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: app-ingress
+  namespace: financial-app
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: app.localtest.me
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: backend
+                port:
+                  number: 8081
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80
