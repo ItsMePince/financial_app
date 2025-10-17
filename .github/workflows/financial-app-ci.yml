@@ -12,7 +12,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # ตรวจว่าไฟล์ไหนเปลี่ยนบ้าง
+  # เช็กว่าแก้ฝั่งไหนบ้าง เพื่อรันเฉพาะที่จำเป็น
   detect-changes:
     runs-on: ubuntu-latest
     outputs:
@@ -26,8 +26,10 @@ jobs:
           filters: |
             frontend:
               - 'frontend/**'
+              - '.github/workflows/**'
             backend:
               - 'backend/**'
+              - '.github/workflows/**'
 
   # ===== FRONTEND =====
   frontend-check:
@@ -37,6 +39,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -47,6 +50,7 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      # ทำให้ไฟล์นี้เป็น no-op ใน CI เพื่อเลี่ยง dependency web-vitals
       - name: Disable reportWebVitals for CI
         working-directory: frontend
         run: |
@@ -85,6 +89,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
