@@ -1,4 +1,4 @@
-name: Financial App CI (Detect • Lint • Build • Test)
+name: Financial App CI Pipeline
 
 on:
   push:
@@ -12,11 +12,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # -------------------------------
-  # 1) Detect Changes / Prepare
-  # -------------------------------
   detect-changes:
-    name: Detect Changes & Prepare
+    name: Detect Code Changes
     runs-on: ubuntu-latest
     outputs:
       frontend: ${{ steps.filter.outputs.frontend }}
@@ -27,23 +24,18 @@ jobs:
         uses: dorny/paths-filter@v3
         with:
           filters: |
-            # Frontend อยู่ที่รากโปรเจกต์
             frontend:
               - 'package.json'
               - 'package-lock.json'
               - 'src/**'
               - 'public/**'
               - '.github/workflows/**'
-            # Backend อยู่ในโฟลเดอร์ backend/
             backend:
               - 'backend/**'
               - '.github/workflows/**'
 
-  # -------------------------------
-  # 2) Lint / Static Analysis
-  # -------------------------------
   frontend-lint:
-    name: Frontend Basic Check (safe)
+    name: Frontend Lint & Type Check
     needs: detect-changes
     if: ${{ needs.detect-changes.outputs.frontend == 'true' }}
     runs-on: ubuntu-latest
@@ -52,18 +44,18 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Install (safe)
+      - name: Install
         run: |
           npm ci || npm install
-      - name: Lint (skip if no script)
+      - name: Run Lint
         run: |
-          npm run lint --if-present || echo "No lint script. Skipping."
-      - name: TypeCheck (skip if no script)
+          npm run lint --if-present || echo "No lint script found, skipping."
+      - name: Run Type Check
         run: |
-          npm run type-check --if-present || echo "No type-check script. Skipping."
+          npm run type-check --if-present || echo "No type-check script found, skipping."
 
   backend-lint:
-    name: Backend Checkstyle (non-fatal)
+    name: Backend Static Analysis
     needs: detect-changes
     if: ${{ needs.detect-changes.outputs.backend == 'true' }}
     runs-on: ubuntu-latest
@@ -73,16 +65,13 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-      - name: Checkstyle report (non-fatal)
+      - name: Run Checkstyle
         run: |
           cd backend
-          ./mvnw -B -q -DskipTests=true checkstyle:checkstyle || echo "Skip checkstyle (safe)."
+          ./mvnw -B -q -DskipTests=true checkstyle:checkstyle || echo "Checkstyle skipped."
 
-  # -------------------------------
-  # 3) Build / Compile
-  # -------------------------------
   frontend-build:
-    name: Frontend Build (skip if not CRA)
+    name: Frontend Build
     needs: frontend-lint
     if: ${{ needs.detect-changes.outputs.frontend == 'true' }}
     runs-on: ubuntu-latest
@@ -91,19 +80,17 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Install & Build (safe)
+      - name: Install & Build
         run: |
           npm ci || npm install
-          # ถ้าไม่มี react-scripts จะข้ามอย่างปลอดภัย
           if npm list react-scripts >/dev/null 2>&1; then
-            echo "Found react-scripts. Building..."
             npm run build
           else
-            echo "react-scripts not found. Skipping frontend build safely."
+            echo "react-scripts not found, skipping build."
           fi
 
   backend-build:
-    name: Backend Build (compile only)
+    name: Backend Compile
     needs: backend-lint
     if: ${{ needs.detect-changes.outputs.backend == 'true' }}
     runs-on: ubuntu-latest
@@ -113,21 +100,18 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-      - name: Fix mvnw permission (and CRLF just in case)
+      - name: Fix mvnw permission
         run: |
           cd backend
           chmod +x mvnw || true
           sed -i 's/\r$//' mvnw || true
-      - name: Compile (no packaging)
+      - name: Compile Backend
         run: |
           cd backend
           ./mvnw -B -DskipTests=true compile || mvn -B -DskipTests=true compile
 
-  # -------------------------------
-  # 4) Test (Unit / Integration)
-  # -------------------------------
   frontend-test:
-    name: Frontend Tests (safe)
+    name: Frontend Unit Tests
     needs: frontend-build
     if: ${{ needs.detect-changes.outputs.frontend == 'true' }}
     runs-on: ubuntu-latest
@@ -136,14 +120,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Run Frontend Tests (best-effort)
+      - name: Run Frontend Tests
         run: |
           npm ci || npm install
-          # รองรับ vitest หรือสคริปต์ test ที่มีอยู่
-          npm test --yes || npm run test --if-present || echo "No frontend tests. Skipping."
+          npm test --yes || npm run test --if-present || echo "No frontend tests found, skipping."
 
   backend-test:
-    name: Backend Unit & Integration Tests
+    name: Backend Test Suite
     needs: backend-build
     if: ${{ needs.detect-changes.outputs.backend == 'true' }}
     runs-on: ubuntu-latest
@@ -153,7 +136,7 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-      - name: Run Maven Tests
+      - name: Run Backend Tests
         run: |
           cd backend
           chmod +x mvnw || true
