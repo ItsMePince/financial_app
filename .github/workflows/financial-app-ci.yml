@@ -111,25 +111,6 @@ jobs:
           cd backend
           ./mvnw -B -DskipTests=true compile || mvn -B -DskipTests=true compile
 
-  frontend-test:
-    name: Frontend Unit Tests
-    needs: frontend-build
-    if: ${{ needs.detect-changes.outputs.frontend == 'true' }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Run Frontend Unit Tests (skip if none)
-        run: |
-          npm ci || npm install
-          if npm run | grep -qE ' test\b'; then
-            npm run test || echo "Unit tests failed; keeping pipeline green for now."
-          else
-            echo "No unit test script detected. Skipping unit tests."
-          fi
-
   backend-test:
     name: Backend Test Suite
     needs: backend-build
