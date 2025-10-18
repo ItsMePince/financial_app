@@ -2,9 +2,9 @@ name: Financial App CI Pipeline
 
 on:
   push:
-    branches: [ testy ]
+    branches: [ main ]
   pull_request:
-    branches: [ testy ]
+    branches: [ main ]
   workflow_dispatch:
 
 concurrency:
