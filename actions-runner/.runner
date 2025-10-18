@@ -1,0 +1,11 @@
+﻿{
+  "agentId": 21,
+  "agentName": "MSI",
+  "poolId": 1,
+  "poolName": "Default",
+  "serverUrl": "https://pipelinesghubeus24.actions.githubusercontent.com/SCqTdcwAvhuZVMrv8rfooJo1FVf20mzdBkCrLECsNtFuQHQphO/",
+  "gitHubUrl": "https://github.com/ItsMePince/financial_app",
+  "workFolder": "_work",
+  "useV2Flow": true,
+  "serverUrlV2": "https://broker.actions.githubusercontent.com/"
+}
