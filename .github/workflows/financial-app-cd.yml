@@ -1,0 +1,174 @@
+name: CD - Build, Push & Deploy (Docker Desktop K8s)
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  NAMESPACE: financial-app
+  INGRESS_HOST: app.localtest.me
+  HEALTH_URL_BACKEND: http://app.localtest.me/api/actuator/health
+  BACKEND_IMAGE: mrp007/financial-backend
+  FRONTEND_IMAGE: mrp007/financial-frontend
+  TAG_SHA: ${{ github.sha }}
+  TAG_LATEST: latest
+
+concurrency:
+  group: cd-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-backend:
+    name: Build & Push Backend
+    runs-on: self-hosted
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Build (skip tests)
+        run: |
+          if (Test-Path mvnw) { git update-index --chmod=+x mvnw }
+          ./mvnw -q -U -DskipTests package
+        shell: pwsh
+
+      - name: Login Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build & Push backend:SHA
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: ${{ env.BACKEND_IMAGE }}:${{ env.TAG_SHA }}
+
+      - name: Tag backend:latest
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: ${{ env.BACKEND_IMAGE }}:${{ env.TAG_LATEST }}
+
+  build-frontend:
+    name: Build & Push Frontend
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install & Build FE
+        run: |
+          npm ci --prefix frontend
+          npm run build --prefix frontend
+
+      - name: Login Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build & Push frontend:SHA
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: ${{ env.FRONTEND_IMAGE }}:${{ env.TAG_SHA }}
+
+      - name: Tag frontend:latest
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: ${{ env.FRONTEND_IMAGE }}:${{ env.TAG_LATEST }}
+
+  deploy:
+    name: Deploy to Docker Desktop K8s
+    runs-on: self-hosted
+    needs: [build-backend, build-frontend]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install kubectl (Windows)
+        shell: pwsh
+        run: |
+          $Version = "v1.29.0"
+          Invoke-WebRequest -Uri "https://dl.k8s.io/release/$Version/bin/windows/amd64/kubectl.exe" -OutFile "$env:RUNNER_TEMP\kubectl.exe"
+          New-Item -ItemType Directory -Path "$HOME\bin" -Force | Out-Null
+          Copy-Item "$env:RUNNER_TEMP\kubectl.exe" "$HOME\bin\kubectl.exe" -Force
+          echo "$HOME\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          kubectl version --client
+
+      - name: Write kubeconfig from secret (base64)
+        shell: pwsh
+        env:
+          KUBE_CONFIG_B64: ${{ secrets.KUBE_CONFIG_B64 }}
+        run: |
+          New-Item -ItemType Directory -Path "$HOME\.kube" -Force | Out-Null
+          [IO.File]::WriteAllBytes("$HOME\.kube\config", [Convert]::FromBase64String($env:KUBE_CONFIG_B64))
+          Write-Host "kubeconfig written to $HOME\.kube\config"
+          kubectl config current-context
+          kubectl get nodes
+
+      - name: Ensure namespace
+        shell: pwsh
+        run: |
+          kubectl get ns $env:NAMESPACE 2>$null
+          if ($LASTEXITCODE -ne 0) { kubectl create ns $env:NAMESPACE }
+
+      - name: Apply manifests
+        shell: pwsh
+        run: kubectl apply -f k8s.yaml
+
+      - name: Set images to SHA
+        shell: pwsh
+        run: |
+          kubectl -n $env:NAMESPACE set image deploy/backend  backend=${{ env.BACKEND_IMAGE }}:${{ env.TAG_SHA }}
+          kubectl -n $env:NAMESPACE set image deploy/frontend frontend=${{ env.FRONTEND_IMAGE }}:${{ env.TAG_SHA }}
+
+      - name: Wait rollout
+        shell: pwsh
+        run: |
+          kubectl -n $env:NAMESPACE rollout status deploy/backend  --timeout=180s
+          kubectl -n $env:NAMESPACE rollout status deploy/frontend --timeout=180s
+
+      - name: Health via Ingress
+        shell: pwsh
+        env:
+          HEALTH_URL_BACKEND: ${{ env.HEALTH_URL_BACKEND }}
+        run: |
+          for ($i=1; $i -le 60; $i++) {
+            try {
+              $r = Invoke-WebRequest -Uri $env:HEALTH_URL_BACKEND -UseBasicParsing -TimeoutSec 3
+              if ($r.Content -match '"status"\s*:\s*"UP"') { Write-Host "✅ Healthy"; exit 0 }
+            } catch {}
+            Write-Host "⏳ waiting... ($i/60)"
+            Start-Sleep -Seconds 2
+          }
+          Write-Error "❌ Backend not healthy via Ingress"; exit 1
+
+      - name: Show k8s objects
+        if: always()
+        shell: pwsh
+        run: kubectl -n $env:NAMESPACE get deploy,svc,ingress -o wide
