@@ -2,7 +2,7 @@ name: CD - Build, Push & Deploy (Docker Desktop K8s)
 
 on:
   push:
-    branches: [main]
+    branches: [supawich]
 
 permissions:
   contents: read
